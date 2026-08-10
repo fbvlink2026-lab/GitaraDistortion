@@ -44,19 +44,22 @@ static DistortionCallback callback;
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(
     JNIEnv*, jobject) {
-    
+
     oboe::AudioStreamBuilder builder;
-    builder.setDirection(oboe::Direction::InputOutput)
+    builder.setDirection(oboe::Direction::Output)
            ->setSampleRate(44100)
            ->setFormat(oboe::AudioFormat::Float)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-           ->setCallback(&callback);
+           ->setCallback(&cb);
 
     if (builder.openStream(stream) == oboe::Result::OK) {
         stream->requestStart();
         LOGI("✅ NAKA-ON! TUMUGTOG KA NA!");
+    } else {
+        LOGI("❌ HINDI MA-BUKAS ANG AUDIO STREAM");
     }
 }
+
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(
