@@ -1,23 +1,41 @@
 name: Build Gitara Distortion APK
 on:
-  push:
-    branches: [ main, master ]
   workflow_dispatch: {}
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Run Setup Script
+      - name: Checkout files
+        uses: actions/checkout@v4
+
+      - name: Check setup.sh exists
+        run: |
+          ls -la
+          if [ ! -f setup.sh ]; then
+            echo "❌ HINDI MAKITA ANG setup.sh!"
+            exit 1
+          fi
+
+      - name: Run setup script
         run: |
           chmod +x setup.sh
           ./setup.sh
+
       - uses: actions/setup-java@v4
-        with: { java-version: '17', distribution: 'temurin' }
-      - name: Build APK
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
         run: |
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version=8.2
+          fi
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+
+      - name: Build APK
+        run: ./gradlew assembleDebug --no-daemon
+
       - uses: actions/upload-artifact@v4
         with:
           name: Gitara-Distortion-APK
