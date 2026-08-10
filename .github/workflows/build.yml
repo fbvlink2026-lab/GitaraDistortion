@@ -14,11 +14,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Bigyan ng pahintulot ang Gradle
-        run: chmod +x gradlew
-
-      - name: Bumuo ng APK
-        run: ./gradlew assembleDebug --no-daemon
+      - name: I-download at gamitin ang Gradle nang direkta
+        run: |
+          cd /tmp
+          wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
+          unzip -q gradle-8.2-bin.zip
+          export PATH=$PATH:/tmp/gradle-8.2/bin
+          cd $GITHUB_WORKSPACE
+          gradle assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
