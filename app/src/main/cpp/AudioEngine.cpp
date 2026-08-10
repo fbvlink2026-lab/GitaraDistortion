@@ -45,6 +45,8 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(
     JNIEnv*, jobject) {
 
+    static DistortionCallback cb;  // ✅ ILIPAT DITO SA LOOB!
+
     oboe::AudioStreamBuilder builder;
     builder.setDirection(oboe::Direction::Output)
            ->setSampleRate(44100)
