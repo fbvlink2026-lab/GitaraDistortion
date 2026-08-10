@@ -5,6 +5,16 @@ plugins {
 android {
     namespace = "com.gitaradistortion"
     compileSdk = 34
+
+    signingConfigs {
+        create("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.gitaradistortion"
         minSdk = 24
@@ -13,15 +23,20 @@ android {
         versionName = "1.0"
         externalNativeBuild { cmake { arguments("-DANDROID_STL=c++_shared") } }
     }
+
     buildFeatures { prefab = true }
+
     buildTypes {
         debug {
             isDebuggable = true
+            signingConfig = signingConfigs["debug"]
         }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs["debug"]
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
