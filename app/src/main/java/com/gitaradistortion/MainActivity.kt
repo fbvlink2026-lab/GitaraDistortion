@@ -77,11 +77,17 @@ class KnobView(context: android.content.Context) : View(context) {
 }
 
 class MainActivity : AppCompatActivity() {
-    companion object {
-        init {
+companion object {
+    init {
+        try {
             System.loadLibrary("gitaradistortion")
+            android.util.Log.i("GITARA", "✅ NA-LOAD ANG AUDIO LIBRARY!")
+        } catch (e: UnsatisfiedLinkError) {
+            android.util.Log.e("GITARA", "❌ HINDI MA-LOAD ANG LIBRARY!", e)
         }
     }
+}
+
 
     // ============== MGA UTOS PATUNGO SA C++ ==============
     external fun startAudioEngine()
