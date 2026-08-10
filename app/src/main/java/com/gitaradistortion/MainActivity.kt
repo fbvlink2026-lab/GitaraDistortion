@@ -154,22 +154,28 @@ companion object {
 
         // 🟢🔴 POWER BUTTON
         powerBtn.setOnClickListener {
-            if (!isRunning) {
-                startAudioEngine()
-                isRunning = true
-                powerBtn.text = "🟢 TURN OFF"
-                powerBtn.setBackgroundColor(0xFFFF4444.toInt())
-                statusText.text = "🟢 NAKA-ON! Tumugtog ka na!"
-                statusText.setTextColor(0xFF44FF44.toInt())
-            } else {
-                stopAudioEngine()
-                isRunning = false
-                powerBtn.text = "🔴 TURN ON"
-                powerBtn.setBackgroundColor(0xFF228833.toInt())
-                statusText.text = "⚪ NAKA-OFF — Isaksak iRig"
-                statusText.setTextColor(0xFF888888.toInt())
-            }
+    if (!isRunning) {
+        // ✅ HUMINGI MUNA NG PAHINTULOT BAGO MAGBUKAS!
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 100)
+            return@setOnClickListener
         }
+        startAudioEngine()
+        isRunning = true
+        powerBtn.text = "🟢 TURN OFF"
+        powerBtn.setBackgroundColor(0xFFFF4444.toInt())
+        statusText.text = "🟢 NAKA-ON! Tumugtog ka na!"
+        statusText.setTextColor(0xFF44FF44.toInt())
+    } else {
+        stopAudioEngine()
+        isRunning = false
+        powerBtn.text = "🔴 TURN ON"
+        powerBtn.setBackgroundColor(0xFF228833.toInt())
+        statusText.text = "⚪ NAKA-OFF — Isaksak iRig"
+        statusText.setTextColor(0xFF888888.toInt())
+    }
+}
+
 
         // 🚨 EMERGENCY BUTTON
         emergencyBtn.setOnClickListener {
