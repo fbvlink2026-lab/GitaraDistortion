@@ -1,0 +1,30 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+android {
+    namespace = "com.gitaradistortion"
+    compileSdk = 34
+    defaultConfig {
+        applicationId = "com.gitaradistortion"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+        externalNativeBuild { cmake { arguments("-DANDROID_STL=c++_shared") } }
+    }
+    buildFeatures { prefab = true }
+    buildTypes { release { isMinifyEnabled = false } }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions { jvmTarget = "1.8" }
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt") } }
+}
+dependencies {
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("com.google.oboe:oboe:1.9.0")
+}
