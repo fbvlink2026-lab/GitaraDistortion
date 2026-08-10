@@ -7,7 +7,7 @@ android {
     compileSdk = 34
 
     signingConfigs {
-        create("debug") {
+        create("mydebug") {
             storeFile = file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
@@ -29,11 +29,11 @@ android {
     buildTypes {
         debug {
             isDebuggable = true
-            signingConfig = signingConfigs["debug"]
+            signingConfig = signingConfigs["mydebug"]
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs["debug"]
+            signingConfig = signingConfigs["mydebug"]
         }
     }
 
