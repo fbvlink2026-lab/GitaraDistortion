@@ -3,31 +3,37 @@ on:
   push:
     branches: [ main, master ]
   workflow_dispatch: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Kunin ang mga file
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Ihanda ang Java
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Ihanda ang Android SDK at NDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          build-tools: "34.0.0"
+          ndk-version: "25.2.9519653"
+
       - name: I-download at ihanda ang Gradle
-        run: |
-          cd /tmp
-          wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
-          unzip -q gradle-8.2-bin.zip
-          export GRADLE_HOME=/tmp/gradle-8.2
-          echo "GRADLE_HOME=/tmp/gradle-8.2" >> $GITHUB_ENV
-          echo "/tmp/gradle-8.2/bin" >> $GITHUB_PATH
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.2"
 
-      - name: Bumuo ng APK — WALANG GRADLEW!
-        run: |
-          gradle assembleDebug --no-daemon
+      - name: Bumuo ng APK
+        run: gradle assembleDebug --no-daemon
 
-      - uses: actions/upload-artifact@v4
+      - name: Ihanda para i-download
+        uses: actions/upload-artifact@v4
         with:
           name: Gitara-Distortion-APK
           path: app/build/outputs/apk/debug/app-debug.apk
