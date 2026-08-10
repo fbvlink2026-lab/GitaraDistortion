@@ -70,7 +70,7 @@
                 android:textColor="#44DDAA"
                 android:textStyle="bold"/>
             <com.gitaradistortion.KnobView
-                android:id="@+id/volKnob"
+                android:id="@+id/toneKnob"
                 android:layout_width="90dp"
                 android:layout_height="90dp"/>
         </LinearLayout>
