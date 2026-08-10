@@ -7,28 +7,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout files
-        uses: actions/checkout@v4
-
-      - name: Run setup script
-        run: |
-          chmod +x setup.sh
-          ./setup.sh
-          ls -la  # Tignan kung nabuo ang mga file
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build APK direkta — walang gradlew!
+      - name: Download and setup Gradle
         run: |
           cd /tmp
           wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
           unzip -q gradle-8.2-bin.zip
-          export PATH=$PATH:/tmp/gradle-8.2/bin
-          cd $GITHUB_WORKSPACE
-          gradle assembleDebug --no-daemon
+          export GRADLE_HOME=/tmp/gradle-8.2
+          echo "GRADLE_HOME=/tmp/gradle-8.2" >> $GITHUB_ENV
+          echo "/tmp/gradle-8.2/bin" >> $GITHUB_PATH
+
+      - name: Make Gradle wrapper
+        run: |
+          gradle wrapper --gradle-version=8.2
+          chmod +x gradlew
+
+      - name: Build APK
+        run: ./gradlew assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
