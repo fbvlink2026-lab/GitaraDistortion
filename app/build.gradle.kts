@@ -14,7 +14,14 @@ android {
         externalNativeBuild { cmake { arguments("-DANDROID_STL=c++_shared") } }
     }
     buildFeatures { prefab = true }
-    buildTypes { release { isMinifyEnabled = false } }
+    buildTypes {
+        debug {
+            isDebuggable = true
+        }
+        release {
+            isMinifyEnabled = false
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
