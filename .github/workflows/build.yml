@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - uses: actions/checkout@v4
 
@@ -18,11 +20,11 @@ jobs:
 
       - name: 🛠️ Gumawa ng Gradle Wrapper — TUGMANG VERSYON!
         run: |
-          gradle wrapper --gradle-version 8.5 --distribution-type all
+          gradle wrapper --gradle-version 8.5 --distribution-type bin
           chmod +x gradlew
 
       - name: 📦 Bumuo ng APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --warning-mode all
 
       - uses: actions/upload-artifact@v4
         with:
