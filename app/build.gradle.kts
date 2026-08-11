@@ -22,8 +22,6 @@ android {
     buildTypes {
         debug {
             isDebuggable = true
-            jniDebuggable = false
-            renderscriptDebuggable = false
         }
         release {
             isMinifyEnabled = false
@@ -35,8 +33,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions { jvmTarget = "1.8" }
-
-    // ✅ WALANG C++ MUNA — TINANGGAL ANG EXTERNAL NATIVE BUILD!
 }
 
 dependencies {
