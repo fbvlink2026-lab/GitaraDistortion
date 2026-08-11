@@ -97,17 +97,18 @@ class KnobView(context: android.content.Context) : View(context) {
 class MainActivity : AppCompatActivity() {
     private var isOn = false
 
-    // ✅ AUDIO FUNCTIONS
+    // ✅ AUDIO FUNCTIONS — LAHAT NG 6 NA PIHITAN
     private external fun startAudioEngine(): Unit
     private external fun stopAudioEngine(): Unit
     private external fun setVolume(value: Float): Unit
     private external fun setTone(value: Float): Unit
     private external fun setDistortion(value: Float): Unit
+    private external fun setGain(value: Float): Unit
+    private external fun setChorus(value: Float): Unit
+    private external fun setReverb(value: Float): Unit
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // ✅ DITO NAKALAGAY ANG LOAD — NASA LOOB NG CLASS! TAMA NA!
         System.loadLibrary("gitaradistortion")
 
         val root = LinearLayout(this)
@@ -124,11 +125,7 @@ class MainActivity : AppCompatActivity() {
         title.setPadding(0, 10, 0, 20)
         root.addView(title)
 
-        // ========== HANAY 1 ==========
-        val row1 = LinearLayout(this)
-        row1.orientation = LinearLayout.HORIZONTAL
-        row1.gravity = Gravity.CENTER
-
+        // ========== GUMAGAWA NG PIHITAN ==========
         fun makeKnob(label: String, color: Int, setter: (Float) -> Unit): LinearLayout {
             val col = LinearLayout(this)
             col.orientation = LinearLayout.VERTICAL
@@ -139,7 +136,7 @@ class MainActivity : AppCompatActivity() {
             txt.setTextColor(color)
             txt.gravity = Gravity.CENTER
             val knob = KnobView(this)
-            knob.layoutParams = LinearLayout.LayoutParams(160, 160)
+            knob.layoutParams = LinearLayout.LayoutParams(145, 145)
             knob.baseColor = color
             knob.value = 0.5f
             knob.onValueChange = { v ->
@@ -151,18 +148,34 @@ class MainActivity : AppCompatActivity() {
             return col
         }
 
+        // ========== HANAY 1: VOLUME — TONE — DISTORTION ==========
+        val row1 = LinearLayout(this)
+        row1.orientation = LinearLayout.HORIZONTAL
+        row1.gravity = Gravity.CENTER
+        row1.setPadding(0, 0, 0, 10)
+
         row1.addView(makeKnob("🔊 VOLUME", 0xFFFF8822.toInt()) { setVolume(it) })
         row1.addView(makeKnob("🎵 TONE", 0xFF44DD88.toInt()) { setTone(it) })
         row1.addView(makeKnob("💥 DIST", 0xFFFF4444.toInt()) { setDistortion(it) })
         root.addView(row1)
 
-        // ========== ON/OFF ==========
+        // ========== HANAY 2: GAIN — CHORUS — REVERB ==========
+        val row2 = LinearLayout(this)
+        row2.orientation = LinearLayout.HORIZONTAL
+        row2.gravity = Gravity.CENTER
+
+        row2.addView(makeKnob("⚡ GAIN", 0xFFFFCC00.toInt()) { setGain(it * 2f) })
+        row2.addView(makeKnob("🎶 CHORUS", 0xFF44AAFF.toInt()) { setChorus(it) })
+        row2.addView(makeKnob("🌊 REVERB", 0xFFAA66FF.toInt()) { setReverb(it) })
+        root.addView(row2)
+
+        // ========== ON/OFF BUTTON ==========
         val statusText = TextView(this)
         statusText.text = "🔴 NAKA-OFF"
         statusText.textSize = 16f
         statusText.setTextColor(0xFFFF6666.toInt())
         statusText.gravity = Gravity.CENTER
-        statusText.setPadding(0, 30, 0, 12)
+        statusText.setPadding(0, 25, 0, 12)
         root.addView(statusText)
 
         val btn = android.widget.Button(this)
