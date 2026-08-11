@@ -12,20 +12,24 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        
-        // ✅ SIGURADUHIN TUGMA SA LAHAT NG CELLPHONE!
+
+        // ✅ Suporta sa lahat ng cellphone
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
+
+        // ✅ IKABIT ANG AUDIO C++
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+                arguments("-DANDROID_STL=c++_shared")
+            }
         }
     }
 
     buildTypes {
-        debug {
-            isDebuggable = true
-        }
-        release {
-            isMinifyEnabled = false
-        }
+        release { isMinifyEnabled = false }
+        debug { isDebuggable = true }
     }
 
     compileOptions {
@@ -33,6 +37,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions { jvmTarget = "1.8" }
+
+    // ✅ BUILD NA MAY C++
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt") } }
 }
 
 dependencies {
