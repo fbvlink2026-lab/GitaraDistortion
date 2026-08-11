@@ -1,5 +1,7 @@
 package com.gitaradistortion
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Gravity
 import android.view.MotionEvent
@@ -8,7 +10,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import kotlin.math.*
+
+// ✅ IKABIT ANG AUDIO LIBRARY
+init {
+    System.loadLibrary("gitaradistortion")
+}
 
 // 🎛️ BILOG NA PIHITAN
 class KnobView(context: android.content.Context) : View(context) {
@@ -94,9 +102,12 @@ class KnobView(context: android.content.Context) : View(context) {
 class MainActivity : AppCompatActivity() {
     private var isOn = false
 
-    // ✅ SUSULITAN LANG — WALANG C++ MUNA!
-    private external fun startAudioEngine(): Boolean
+    // ✅ AUDIO FUNCTIONS
+    private external fun startAudioEngine(): Unit
     private external fun stopAudioEngine(): Unit
+    private external fun setVolume(value: Float): Unit
+    private external fun setTone(value: Float): Unit
+    private external fun setDistortion(value: Float): Unit
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,7 +131,7 @@ class MainActivity : AppCompatActivity() {
         row1.orientation = LinearLayout.HORIZONTAL
         row1.gravity = Gravity.CENTER
 
-        fun makeKnob(label: String, color: Int): LinearLayout {
+        fun makeKnob(label: String, color: Int, setter: (Float) -> Unit): LinearLayout {
             val col = LinearLayout(this)
             col.orientation = LinearLayout.VERTICAL
             col.gravity = Gravity.CENTER
@@ -135,29 +146,19 @@ class MainActivity : AppCompatActivity() {
             knob.value = 0.5f
             knob.onValueChange = { v ->
                 txt.text = "$label\n${(v * 100).toInt()}%"
+                setter(v)
             }
             col.addView(knob)
             col.addView(txt)
             return col
         }
 
-        row1.addView(makeKnob("🔊 VOLUME", 0xFFFF8822.toInt()))
-        row1.addView(makeKnob("🎵 TONE", 0xFF44DD88.toInt()))
-        row1.addView(makeKnob("💥 DIST", 0xFFFF4444.toInt()))
+        row1.addView(makeKnob("🔊 VOLUME", 0xFFFF8822.toInt()) { setVolume(it) })
+        row1.addView(makeKnob("🎵 TONE", 0xFF44DD88.toInt()) { setTone(it) })
+        row1.addView(makeKnob("💥 DIST", 0xFFFF4444.toInt()) { setDistortion(it) })
         root.addView(row1)
 
-        // ========== HANAY 2 ==========
-        val row2 = LinearLayout(this)
-        row2.orientation = LinearLayout.HORIZONTAL
-        row2.gravity = Gravity.CENTER
-        row2.setPadding(0, 10, 0, 0)
-
-        row2.addView(makeKnob("⚡ GAIN", 0xFFFFCC00.toInt()))
-        row2.addView(makeKnob("🎶 CHORUS", 0xFF44AAFF.toInt()))
-        row2.addView(makeKnob("🌊 REVERB", 0xFFAA66FF.toInt()))
-        root.addView(row2)
-
-        // ========== ON/OFF BUTTON ==========
+        // ========== ON/OFF ==========
         val statusText = TextView(this)
         statusText.text = "🔴 NAKA-OFF"
         statusText.textSize = 16f
@@ -173,12 +174,23 @@ class MainActivity : AppCompatActivity() {
         btn.setTextColor(android.graphics.Color.WHITE)
         btn.setPadding(55, 16, 55, 16)
         btn.setOnClickListener {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
+                return@setOnClickListener
+            }
+
             isOn = !isOn
             if (isOn) {
-                statusText.text = "🟢 AUDIO — SUSULITAN LANG"
+                startAudioEngine()
+                btn.text = "🟢 TURN OFF"
+                btn.setBackgroundColor(0xFFFF4444.toInt())
+                statusText.text = "🟢 NAKA-ON — Isaksak ang gitara!"
                 statusText.setTextColor(0xFF44FF44.toInt())
-                Toast.makeText(this, "✅ Kung BERDE — ibabalik na natin ang C++!", Toast.LENGTH_LONG).show()
             } else {
+                stopAudioEngine()
+                btn.text = "🔘 TURN ON"
+                btn.setBackgroundColor(0xFF228833.toInt())
                 statusText.text = "🔴 NAKA-OFF"
                 statusText.setTextColor(0xFFFF6666.toInt())
             }
@@ -186,5 +198,16 @@ class MainActivity : AppCompatActivity() {
         root.addView(btn)
 
         setContentView(root)
+    }
+
+    override fun onRequestPermissionsResult(
+        reqCode: Int, grants: IntArray, _: IntArray
+    ) {
+        super.onRequestPermissionsResult(reqCode, grants, _)
+        if (reqCode == 123 && grants.isNotEmpty() && grants[0] == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "✅ Pahintulot nakuha! Pindutin muli ang ON!", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(this, "⚠️ Kailangan ng pahintulot sa Mikropono!", Toast.LENGTH_LONG).show()
+        }
     }
 }
