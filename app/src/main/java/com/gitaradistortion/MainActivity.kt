@@ -13,11 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlin.math.*
 
-// ✅ IKABIT ANG AUDIO LIBRARY
-init {
-    System.loadLibrary("gitaradistortion")
-}
-
 // 🎛️ BILOG NA PIHITAN
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
@@ -111,6 +106,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ✅ DITO NAKALAGAY ANG LOAD — NASA LOOB NG CLASS! TAMA NA!
+        System.loadLibrary("gitaradistortion")
 
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
