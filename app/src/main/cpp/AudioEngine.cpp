@@ -8,6 +8,9 @@
 static float gVolume = 0.5f;
 static float gTone = 0.5f;
 static float gDistortion = 2.0f;
+static float gGain = 1.0f;
+static float gChorus = 0.0f;
+static float gReverb = 0.0f;
 static float prevSample = 0.0f;
 static std::shared_ptr<oboe::AudioStream> stream;
 
@@ -21,16 +24,19 @@ public:
         for (int i = 0; i < numFrames; i++) {
             float input = buffer[i];
             
-            // DISTORTION — TANH() = ANG TUNAY NA PUMIPUTOL NG ALON!
-            float processed = std::tanh(input * gDistortion);
+            // ⚡ GAIN
+            float processed = input * gGain;
             
-            // TONE — MALAMBOT O MATINIS
+            // 💥 DISTORTION
+            processed = std::tanh(processed * gDistortion);
+            
+            // 🎵 TONE
             if (gTone < 1.0f) {
                 processed = processed * gTone + prevSample * (1.0f - gTone);
                 prevSample = processed;
             }
             
-            // VOLUME — PALAKIIN O BAWASAN
+            // 🔊 VOLUME
             buffer[i] = processed * gVolume * 0.8f;
         }
         
@@ -40,7 +46,6 @@ public:
 
 static DistortionCallback callback;
 
-// ============== MGA UTOS MULA SA ANDROID ==============
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(
     JNIEnv*, jobject) {
@@ -50,37 +55,36 @@ Java_com_gitaradistortion_MainActivity_startAudioEngine(
            ->setSampleRate(44100)
            ->setFormat(oboe::AudioFormat::Float)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-           ->setCallback(&callback);  // ✅ GAMITIN ANG NASA TAAS!
+           ->setCallback(&callback);
 
     auto result = builder.openStream(stream);
     if (result == oboe::Result::OK) {
         stream->requestStart();
-        LOGI("✅ NAKA-ON! TUMUGTOG KA NA!");
+        LOGI("✅ NAKA-ON ANG AUDIO!");
     } else {
-        LOGI("⚠️ HINDI MA-BUKAS ANG AUDIO: %s", oboe::convertToText(result));
-    }
-}  // ✅ ITO ANG KULANG — PANGSARA NG FUNCTION!
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_stopAudioEngine(
-    JNIEnv*, jobject) {
-    
-    if (stream) {
-        stream->stop();
-        stream->close();
-        stream.reset();
-        LOGI("⏹️ NAKA-OFF");
+        LOGI("⚠️ HINDI MA-BUKAS: %s", oboe::convertToText(result));
     }
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_setVolume(
-    JNIEnv*, jobject, jfloat value) { gVolume = value; }
+Java_com_gitaradistortion_MainActivity_stopAudioEngine(
+    JNIEnv*, jobject) {
+    if (stream) {
+        stream->stop();
+        stream->close();
+        stream.reset();
+        LOGI("⏹️ NAKA-OFF ANG AUDIO");
+    }
+}
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_setTone(
-    JNIEnv*, jobject, jfloat value) { gTone = value; }
+#define SET_FUNC(NAME) \
+extern "C" JNIEXPORT void JNICALL \
+Java_com_gitaradistortion_MainActivity_set##NAME( \
+    JNIEnv*, jobject, jfloat v) { g##NAME = v; }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_setDistortion(
-    JNIEnv*, jobject, jfloat value) { gDistortion = value; }
+SET_FUNC(Volume)
+SET_FUNC(Tone)
+SET_FUNC(Distortion)
+SET_FUNC(Gain)
+SET_FUNC(Chorus)
+SET_FUNC(Reverb)
