@@ -1,36 +1,34 @@
 package com.gitaradistortion
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import kotlin.math.*
 
-// 🎛️ BILOG NA PIHITAN — MAY KAP AT UMIILAW HABANG PINIPIHIT!
+// 🎛️ PIHITAN NA KATULAD NG SA GITARA — MAY TUNAY NA KAP!
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
     
     var onValueChange: ((Float) -> Unit)? = null
-    var baseColor = 0xFFFF6622.toInt()
+    var baseColor = 0xFFFF8822.toInt()
 
     private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
 
-    // ✅ KULAY NA UMIILAW — HABANG LUMALAKI ANG VALUE, MAS MABRIGHT!
-    private fun getGlowingColor(): Int {
-        val baseR = (baseColor shr 16) and 0xFF
-        val baseG = (baseColor shr 8) and 0xFF
-        val baseB = baseColor and 0xFF
-        
-        // ✅ MAS MALAKI ANG VALUE → MAS MABRIGHT ANG KULAY!
-        val brightness = 0.4f + value * 0.6f
-        val r = minOf(255, (baseR * brightness / 0.7f).toInt())
-        val g = minOf(255, (baseG * brightness / 0.7f).toInt())
-        val b = minOf(255, (baseB * brightness / 0.7f).toInt())
-        return (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+    // ✅ KULAY NA UMIILAW HABANG PINIPIHIT
+    private fun getGlowColor(): Int {
+        val f = 0.35f + value * 0.65f
+        val r = ((baseColor shr 16 and 0xFF) * f).toInt().coerceAtMost(255)
+        val g = ((baseColor shr 8 and 0xFF) * f).toInt().coerceAtMost(255)
+        val b = ((baseColor and 0xFF) * f).toInt().coerceAtMost(255)
+        return Color.rgb(r, g, b)
     }
 
     override fun onDraw(canvas: android.graphics.Canvas) {
@@ -38,46 +36,46 @@ class KnobView(context: android.content.Context) : View(context) {
         val h = height.toFloat()
         val cx = w / 2
         val cy = h / 2
-        val r = minOf(w, h) / 2 - 8f
-        val glowColor = getGlowingColor()
+        val r = minOf(w, h) / 2 - 6f
+        val glow = getGlowColor()
 
-        // ✅ ILALIM — MAITIM NA BILOG
+        // ✅ 1. ILALIM — MAITIM NA SANGGA NG PIHITAN
         paint.style = android.graphics.Paint.Style.FILL
-        paint.color = 0xFF1A1A1A.toInt()
+        paint.color = 0xFF202020.toInt()
         canvas.drawCircle(cx, cy, r, paint)
 
-        // ✅ GILID — UMIILAW NA GUHIT! MAS MAKAPAL KAPAG MATAAS ANG VALUE!
+        // ✅ 2. GILID — UMIILAW NA GUHIT
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 4f + value * 5f  // ✅ LUMALAKI ANG KAPAL!
-        paint.color = glowColor
-        canvas.drawCircle(cx, cy, r - 4f, paint)
+        paint.strokeWidth = 3.5f + value * 4f
+        paint.color = glow
+        canvas.drawCircle(cx, cy, r - 3f, paint)
 
-        // ✅ KAP — PILAK NA BILOG SA TAAS
-        val capR = r * 0.75f
+        // ✅ 3. KAP — PARANG TUNAY NA PLASTIK O METAL NA KAP NG GITARA
+        val capR = r * 0.72f
         paint.style = android.graphics.Paint.Style.FILL
-        paint.color = 0xFFE8E8E8.toInt()
+        paint.color = 0xFFF0F0F0.toInt()  // ✅ PUTING KAP KATULAD NG SA GITARA
         canvas.drawCircle(cx, cy, capR, paint)
 
-        // ✅ ANINO SA KAP
+        // ✅ 4. GILID NG KAP — ANINO PARA MAY LALIM
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 3f
-        paint.color = 0xFFBBBBBB.toInt()
-        canvas.drawCircle(cx, cy, capR - 2f, paint)
+        paint.strokeWidth = 2.5f
+        paint.color = 0xFFCCCCCC.toInt()
+        canvas.drawCircle(cx, cy, capR - 1.5f, paint)
 
-        // ✅ TANDA NG DIREKSYON — UMIILAW! MAS MAKAPAL!
+        // ✅ 5. TANDA — MAKAPAL NA GUHIT SA KAP
         val angle = -135f + (270f) * value
         val rad = Math.toRadians(angle.toDouble())
-        paint.strokeWidth = 5f + value * 4f  // ✅ LUMALAKI ANG GUHIT!
-        paint.color = glowColor
-        val indicatorLen = capR * 0.85f
-        val endX = cx + indicatorLen * sin(rad).toFloat()
-        val endY = cy - indicatorLen * cos(rad).toFloat()
+        paint.strokeWidth = 5f + value * 3f
+        paint.color = glow
+        val len = capR * 0.8f
+        val endX = cx + len * sin(rad).toFloat()
+        val endY = cy - len * cos(rad).toFloat()
         canvas.drawLine(cx, cy, endX, endY, paint)
 
-        // ✅ GITNA NG KAP — UMIILAW NA BILOG!
+        // ✅ 6. GITNA NG KAP — MUNTING BILOG
         paint.style = android.graphics.Paint.Style.FILL
-        paint.color = glowColor
-        canvas.drawCircle(cx, cy, 9f + value * 5f, paint)  // ✅ LUMALAKI RIN!
+        paint.color = glow
+        canvas.drawCircle(cx, cy, 8f + value * 4f, paint)
     }
 
     private var startAngle = 0.0
@@ -103,6 +101,10 @@ class KnobView(context: android.content.Context) : View(context) {
 }
 
 class MainActivity : AppCompatActivity() {
+    private var isOn = false
+    private lateinit var statusText: TextView
+    private lateinit var powerBtn: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -119,7 +121,7 @@ class MainActivity : AppCompatActivity() {
         title.textSize = 28f
         title.setTextColor(0xFFFF8822.toInt())
         title.gravity = Gravity.CENTER
-        title.setPadding(0, 10, 0, 30)
+        title.setPadding(0, 10, 0, 25)
         root.addView(title)
 
         // ========== HANAY 1: VOLUME — TONE — DISTORTION ==========
@@ -137,7 +139,7 @@ class MainActivity : AppCompatActivity() {
         volText.setTextColor(0xFFFF8822.toInt())
         volText.gravity = Gravity.CENTER
         val volKnob = KnobView(this)
-        volKnob.layoutParams = LinearLayout.LayoutParams(180, 180)
+        volKnob.layoutParams = LinearLayout.LayoutParams(170, 170)
         volKnob.baseColor = 0xFFFF8822.toInt()
         volKnob.value = 0.5f
         volKnob.onValueChange = { v ->
@@ -157,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         toneText.setTextColor(0xFF44DD88.toInt())
         toneText.gravity = Gravity.CENTER
         val toneKnob = KnobView(this)
-        toneKnob.layoutParams = LinearLayout.LayoutParams(180, 180)
+        toneKnob.layoutParams = LinearLayout.LayoutParams(170, 170)
         toneKnob.baseColor = 0xFF44DD88.toInt()
         toneKnob.value = 0.5f
         toneKnob.onValueChange = { v ->
@@ -177,7 +179,7 @@ class MainActivity : AppCompatActivity() {
         distText.setTextColor(0xFFFF4444.toInt())
         distText.gravity = Gravity.CENTER
         val distKnob = KnobView(this)
-        distKnob.layoutParams = LinearLayout.LayoutParams(180, 180)
+        distKnob.layoutParams = LinearLayout.LayoutParams(170, 170)
         distKnob.baseColor = 0xFFFF4444.toInt()
         distKnob.value = 0.5f
         distKnob.onValueChange = { v ->
@@ -193,7 +195,7 @@ class MainActivity : AppCompatActivity() {
         val row2 = LinearLayout(this)
         row2.orientation = LinearLayout.HORIZONTAL
         row2.gravity = Gravity.CENTER
-        row2.setPadding(0, 20, 0, 0)
+        row2.setPadding(0, 15, 0, 0)
 
         // ⚡ GAIN
         val gainCol = LinearLayout(this)
@@ -205,7 +207,7 @@ class MainActivity : AppCompatActivity() {
         gainText.setTextColor(0xFFFFCC00.toInt())
         gainText.gravity = Gravity.CENTER
         val gainKnob = KnobView(this)
-        gainKnob.layoutParams = LinearLayout.LayoutParams(180, 180)
+        gainKnob.layoutParams = LinearLayout.LayoutParams(170, 170)
         gainKnob.baseColor = 0xFFFFCC00.toInt()
         gainKnob.value = 0.5f
         gainKnob.onValueChange = { v ->
@@ -225,7 +227,7 @@ class MainActivity : AppCompatActivity() {
         chorusText.setTextColor(0xFF44AAFF.toInt())
         chorusText.gravity = Gravity.CENTER
         val chorusKnob = KnobView(this)
-        chorusKnob.layoutParams = LinearLayout.LayoutParams(180, 180)
+        chorusKnob.layoutParams = LinearLayout.LayoutParams(170, 170)
         chorusKnob.baseColor = 0xFF44AAFF.toInt()
         chorusKnob.value = 0.5f
         chorusKnob.onValueChange = { v ->
@@ -245,7 +247,7 @@ class MainActivity : AppCompatActivity() {
         reverbText.setTextColor(0xFFAA66FF.toInt())
         reverbText.gravity = Gravity.CENTER
         val reverbKnob = KnobView(this)
-        reverbKnob.layoutParams = LinearLayout.LayoutParams(180, 180)
+        reverbKnob.layoutParams = LinearLayout.LayoutParams(170, 170)
         reverbKnob.baseColor = 0xFFAA66FF.toInt()
         reverbKnob.value = 0.5f
         reverbKnob.onValueChange = { v ->
@@ -256,6 +258,48 @@ class MainActivity : AppCompatActivity() {
         row2.addView(reverbCol)
 
         root.addView(row2)
+
+        // ========== 🟢🔘 ON/OFF BUTTON ==========
+        LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(0, 35, 0, 0)
+
+            statusText = TextView(this@MainActivity).apply {
+                text = "🔴 NAKA-OFF"
+                textSize = 16f
+                setTextColor(0xFFFF6666.toInt())
+                gravity = Gravity.CENTER
+                setPadding(0, 0, 0, 15)
+            }
+            addView(statusText)
+
+            powerBtn = Button(this@MainActivity).apply {
+                text = "🔘 TURN ON"
+                textSize = 17f
+                setBackgroundColor(0xFF228833.toInt())
+                setTextColor(Color.WHITE)
+                setPadding(60, 18, 60, 18)
+
+                setOnClickListener {
+                    isOn = !isOn
+                    if (isOn) {
+                        text = "🟢 TURN OFF"
+                        setBackgroundColor(0xFFFF4444.toInt())
+                        statusText.text = "🟢 NAKA-ON — Handa na!"
+                        statusText.setTextColor(0xFF44FF44.toInt())
+                    } else {
+                        text = "🔘 TURN ON"
+                        setBackgroundColor(0xFF228833.toInt())
+                        statusText.text = "🔴 NAKA-OFF"
+                        statusText.setTextColor(0xFFFF6666.toInt())
+                    }
+                }
+            }
+            addView(powerBtn)
+            root.addView(this)
+        }
+
         setContentView(root)
     }
 }
