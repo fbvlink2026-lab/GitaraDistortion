@@ -12,7 +12,6 @@ static float gGain = 1.0f;
 static float gChorus = 0.0f;
 static float gReverb = 0.0f;
 static float prevSample = 0.0f;
-static std::shared_ptr<oboe::AudioStream> stream;
 
 class DistortionCallback : public oboe::AudioStreamCallback {
 public:
@@ -23,40 +22,29 @@ public:
         
         for (int i = 0; i < numFrames; i++) {
             float input = buffer[i];
-            
-            // ⚡ GAIN
             float processed = input * gGain;
-            
-            // 💥 DISTORTION
             processed = std::tanh(processed * gDistortion);
-            
-            // 🎵 TONE
             if (gTone < 1.0f) {
                 processed = processed * gTone + prevSample * (1.0f - gTone);
                 prevSample = processed;
             }
-            
-            // 🔊 VOLUME
             buffer[i] = processed * gVolume * 0.8f;
         }
-        
         return oboe::DataCallbackResult::Continue;
     }
 };
 
 static DistortionCallback callback;
+static std::shared_ptr<oboe::AudioStream> stream;
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_startAudioEngine(
-    JNIEnv*, jobject) {
-
+Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
     oboe::AudioStreamBuilder builder;
     builder.setDirection(oboe::Direction::Output)
            ->setSampleRate(44100)
            ->setFormat(oboe::AudioFormat::Float)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
            ->setCallback(&callback);
-
     auto result = builder.openStream(stream);
     if (result == oboe::Result::OK) {
         stream->requestStart();
@@ -67,8 +55,7 @@ Java_com_gitaradistortion_MainActivity_startAudioEngine(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_stopAudioEngine(
-    JNIEnv*, jobject) {
+Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
     if (stream) {
         stream->stop();
         stream->close();
@@ -79,8 +66,7 @@ Java_com_gitaradistortion_MainActivity_stopAudioEngine(
 
 #define SET_FUNC(NAME) \
 extern "C" JNIEXPORT void JNICALL \
-Java_com_gitaradistortion_MainActivity_set##NAME( \
-    JNIEnv*, jobject, jfloat v) { g##NAME = v; }
+Java_com_gitaradistortion_MainActivity_set##NAME(JNIEnv*, jobject, jfloat v) { g##NAME = v; }
 
 SET_FUNC(Volume)
 SET_FUNC(Tone)
