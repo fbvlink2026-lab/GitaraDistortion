@@ -132,12 +132,8 @@ class MainActivity : AppCompatActivity() {
         title.setPadding(0, 10, 0, 20)
         root.addView(title)
 
-        // ========== HANAY 1 ==========
-        val row1 = LinearLayout(this)
-        row1.orientation = LinearLayout.HORIZONTAL
-        row1.gravity = Gravity.CENTER
-
-        fun makeKnob(label: String, color: Int, setter: (Float) -> Unit): Pair<LinearLayout, KnobView> {
+        // ========== GUMAGAWA NG PIHITAN ==========
+        fun makeKnob(label: String, color: Int, setter: (Float) -> Unit): LinearLayout {
             val col = LinearLayout(this)
             col.orientation = LinearLayout.VERTICAL
             col.gravity = Gravity.CENTER
@@ -156,13 +152,21 @@ class MainActivity : AppCompatActivity() {
             }
             col.addView(knob)
             col.addView(txt)
-            return Pair(col, knob)
+            return col
         }
 
-        val (volCol, _) = makeKnob("🔊 VOLUME", 0xFFFF8822.toInt()) { setVolume(it) }
-        val (toneCol, _) = makeKnob("🎵 TONE", 0xFF44DD88.toInt()) { setTone(it) }
-        val (distCol, _) = makeKnob("💥 DIST", 0xFFFF4444.toInt()) { setDistortion(it * 3f + 0.5f) }
-        row1.addView(volCol); row1.addView(toneCol); row1.addView(distCol)
+        // ========== HANAY 1 ==========
+        val row1 = LinearLayout(this)
+        row1.orientation = LinearLayout.HORIZONTAL
+        row1.gravity = Gravity.CENTER
+
+        val volCol = makeKnob("🔊 VOLUME", 0xFFFF8822.toInt()) { setVolume(it) }
+        val toneCol = makeKnob("🎵 TONE", 0xFF44DD88.toInt()) { setTone(it) }
+        val distCol = makeKnob("💥 DIST", 0xFFFF4444.toInt()) { setDistortion(it * 3f + 0.5f) }
+        
+        row1.addView(volCol)
+        row1.addView(toneCol)
+        row1.addView(distCol)
         root.addView(row1)
 
         // ========== HANAY 2 ==========
@@ -171,10 +175,13 @@ class MainActivity : AppCompatActivity() {
         row2.gravity = Gravity.CENTER
         row2.setPadding(0, 10, 0, 0)
 
-        val (gainCol, _) = makeKnob("⚡ GAIN", 0xFFFFCC00.toInt()) { setGain(it * 2f) }
-        val (chorusCol, _) = makeKnob("🎶 CHORUS", 0xFF44AAFF.toInt()) { setChorus(it) }
-        val (revCol, _) = makeKnob("🌊 REVERB", 0xFFAA66FF.toInt()) { setReverb(it) }
-        row2.addView(gainCol); row2.addView(chorusCol); row2.addView(revCol)
+        val gainCol = makeKnob("⚡ GAIN", 0xFFFFCC00.toInt()) { setGain(it * 2f) }
+        val chorusCol = makeKnob("🎶 CHORUS", 0xFF44AAFF.toInt()) { setChorus(it) }
+        val revCol = makeKnob("🌊 REVERB", 0xFFAA66FF.toInt()) { setReverb(it) }
+        
+        row2.addView(gainCol)
+        row2.addView(chorusCol)
+        row2.addView(revCol)
         root.addView(row2)
 
         // ========== ON/OFF + PAHINTULOT ==========
