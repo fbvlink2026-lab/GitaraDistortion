@@ -54,15 +54,14 @@ Java_com_gitaradistortion_MainActivity_startAudioEngine(
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
            ->setCallback(&cb);
 
-    if (builder.openStream(stream) == oboe::Result::OK) {
+        auto result = builder.openStream(stream);
+    if (result == oboe::Result::OK) {
         stream->requestStart();
         LOGI("✅ NAKA-ON! TUMUGTOG KA NA!");
     } else {
-        LOGI("❌ HINDI MA-BUKAS ANG AUDIO STREAM");
+        LOGI("⚠️ HINDI MA-BUKAS ANG AUDIO: %s", oboe::convertToText(result));
     }
-}
-
-
+    
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(
     JNIEnv*, jobject) {
