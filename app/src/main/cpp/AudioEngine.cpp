@@ -9,6 +9,10 @@
 static float gVolume = 0.5f;
 static float gTone = 0.5f;
 static float gDistortion = 0.5f;
+static float gGain = 1.0f;
+static float gChorus = 0.0f;
+static float gReverb = 0.0f;
+static float prevSample = 0.0f;
 
 class AudioCallback : public oboe::AudioStreamCallback {
 public:
@@ -18,8 +22,21 @@ public:
         float* buffer = static_cast<float*>(data);
         for (int i = 0; i < numFrames; i++) {
             float x = buffer[i];
-            float d = 1.0f + gDistortion * 4.0f;
-            buffer[i] = std::tanh(x * d) * gVolume;
+            
+            // ⚡ GAIN
+            float processed = x * gGain;
+            
+            // 💥 DISTORTION
+            processed = std::tanh(processed * (1.0f + gDistortion * 4.0f));
+            
+            // 🎵 TONE
+            if (gTone < 1.0f) {
+                processed = processed * gTone + prevSample * (1.0f - gTone);
+                prevSample = processed;
+            }
+            
+            // 🔊 VOLUME
+            buffer[i] = processed * gVolume * 0.8f;
         }
         return oboe::DataCallbackResult::Continue;
     }
@@ -54,9 +71,13 @@ Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_setVolume(JNIEnv*, jobject, jfloat v) { gVolume = v; }
-extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_setTone(JNIEnv*, jobject, jfloat v) { gTone = v; }
-extern "C" JNIEXPORT void JNICALL
-Java_com_gitaradistortion_MainActivity_setDistortion(JNIEnv*, jobject, jfloat v) { gDistortion = v; }
+#define SET_FUNC(NAME) \
+extern "C" JNIEXPORT void JNICALL \
+Java_com_gitaradistortion_MainActivity_set##NAME(JNIEnv*, jobject, jfloat v) { g##NAME = v; }
+
+SET_FUNC(Volume)
+SET_FUNC(Tone)
+SET_FUNC(Distortion)
+SET_FUNC(Gain)
+SET_FUNC(Chorus)
+SET_FUNC(Reverb)
