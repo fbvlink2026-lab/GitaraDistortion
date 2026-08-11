@@ -6,34 +6,27 @@ android {
     namespace = "com.gitaradistortion"
     compileSdk = 34
 
-    signingConfigs {
-        create("mydebug") {
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
-    }
-
     defaultConfig {
         applicationId = "com.gitaradistortion"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        externalNativeBuild { cmake { arguments("-DANDROID_STL=c++_shared") } }
+        
+        // ✅ SIGURADUHIN TUGMA SA LAHAT NG CELLPHONE!
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
     }
-
-    buildFeatures { prefab = true }
 
     buildTypes {
         debug {
             isDebuggable = true
-            signingConfig = signingConfigs["mydebug"]
+            jniDebuggable = false
+            renderscriptDebuggable = false
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs["mydebug"]
         }
     }
 
@@ -42,11 +35,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions { jvmTarget = "1.8" }
-    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt") } }
+
+    // ✅ WALANG C++ MUNA — TINANGGAL ANG EXTERNAL NATIVE BUILD!
 }
+
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("com.google.oboe:oboe:1.9.0")
 }
