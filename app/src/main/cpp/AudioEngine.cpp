@@ -2,84 +2,117 @@
 #include <android/log.h>
 #include <oboe/Oboe.h>
 #include <cmath>
+#include <vector>
 
 #define LOG_TAG "GITARA"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-static float gVolume = 0.5f;
+static float gVolume = 0.6f;
 static float gTone = 0.5f;
-static float gDistortion = 0.5f;
-static float gGain = 1.0f;
+static float gDistortion = 0.7f;
+static float gGain = 1.5f;
 static float prevSample = 0.0f;
 
-static std::shared_ptr<oboe::AudioStream> stream;
+// ✅ BUFFER — LALAGYAN ANG TUNOG MULA SA MIKROFONO BAGO ILABAS
+std::vector<float> audioBuffer;
+std::mutex bufferMutex;
 
-class AudioCallback : public oboe::AudioStreamCallback {
+static std::shared_ptr<oboe::AudioStream> inputStream;
+static std::shared_ptr<oboe::AudioStream> outputStream;
+
+// ✅ BASAHIN ANG TUNOG MULA SA MIKROFONO → ILAGAY SA BUFFER
+class InputCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
         oboe::AudioStream*, void* data, int32_t numFrames) override {
         
-        float* buffer = static_cast<float*>(data);
+        float* in = static_cast<float*>(data);
+        std::lock_guard<std::mutex> lock(bufferMutex);
         
-        // ✅ BASAHIN → PALITAD → ILABAS — SA ISANG GALAWAN LANG! TULAD NG TONEBRIDGE!
+        audioBuffer.resize(numFrames);
         for (int i = 0; i < numFrames; i++) {
-            float input = buffer[i];          // 🎤 BASAHIN MULA SA MIKROFONO/GITARA
-            float processed = input;
-            
-            // ⚡ DAGDAG-LAKAS
-            processed *= gGain * 2.0f;
-            
-            // 💥 DISTORTION — PUMUTOL ANG TUNOG
-            float drive = 1.0f + gDistortion * 5.0f;
-            processed = std::tanh(processed * drive);
-            
-            // 🎵 TONE — MALINAW O MALAMBOT
-            if (gTone < 1.0f) {
-                processed = processed * gTone + prevSample * (1.0f - gTone);
-                prevSample = processed;
-            }
-            
-            // 🔊 ILABAS ANG TUNOG
-            buffer[i] = processed * gVolume * 0.9f;
+            audioBuffer[i] = in[i];  // ✅ I-SAVE ANG TUNOG NG GITARA
         }
         return oboe::DataCallbackResult::Continue;
     }
 };
 
-static AudioCallback callback;
+// ✅ KUNIN SA BUFFER → PALITAD → ILABAS
+class OutputCallback : public oboe::AudioStreamCallback {
+public:
+    oboe::DataCallbackResult onAudioReady(
+        oboe::AudioStream*, void* data, int32_t numFrames) override {
+        
+        float* out = static_cast<float*>(data);
+        std::lock_guard<std::mutex> lock(bufferMutex);
+        
+        for (int i = 0; i < numFrames; i++) {
+            float input = 0.0f;
+            if (i < audioBuffer.size()) input = audioBuffer[i];
+            
+            // ✅ DITO GAGAWIN ANG DISTORTION
+            float processed = input * gGain;
+            float drive = 1.0f + gDistortion * 5.0f;
+            processed = std::tanh(processed * drive);
+            
+            // 🎵 TONE
+            if (gTone < 1.0f) {
+                processed = processed * gTone + prevSample * (1.0f - gTone);
+                prevSample = processed;
+            }
+            
+            // 🔊 ILABAS
+            out[i] = processed * gVolume;
+        }
+        return oboe::DataCallbackResult::Continue;
+    }
+};
+
+static InputCallback inputCallback;
+static OutputCallback outputCallback;
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
-    if (stream) return;
+    if (inputStream || outputStream) return;
 
-    // ✅ ISANG STREAM LANG — BASAHIN AT ILABAS NANG SABAY! TAMA ITO!
+    // ✅ INPUT — BASAHIN ANG MIKROFONO
     oboe::AudioStreamBuilder builder;
-    builder.setDirection(oboe::Direction::Output)
+    builder.setDirection(oboe::Direction::Input)
            ->setSampleRate(44100)
            ->setFormat(oboe::AudioFormat::Float)
            ->setChannelCount(1)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-           ->setUsage(oboe::Usage::Media)
-           ->setContentType(oboe::ContentType::Music)
-           ->setCallback(&callback);
+           ->setCallback(&inputCallback);
 
-    auto result = builder.openStream(stream);
-    if (result == oboe::Result::OK) {
-        stream->requestStart();
-        LOGI("✅ TUNOG NAKA-ON! ISAKSAK ANG GITARA!");
-    } else {
-        LOGI("❌ ERROR: %s", oboe::convertToText(result));
+    auto result = builder.openStream(inputStream);
+    if (result != oboe::Result::OK) {
+        LOGI("❌ INPUT ERROR: %s", oboe::convertToText(result));
+        return;
     }
+    LOGI("✅ MIKROFONO NAKABASA!");
+
+    // ✅ OUTPUT — ILABAS ANG TUNOG NA MAY DISTORTION
+    builder.setDirection(oboe::Direction::Output)
+           ->setCallback(&outputCallback);
+
+    result = builder.openStream(outputStream);
+    if (result != oboe::Result::OK) {
+        LOGI("❌ OUTPUT ERROR: %s", oboe::convertToText(result));
+        return;
+    }
+
+    // ✅ SIMULAN — MUNA INPUT, SUNOD OUTPUT
+    inputStream->requestStart();
+    outputStream->requestStart();
+    LOGI("✅ TUNOG NAKA-ON! MAY DISTORTION NA!");
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
-    if (stream) {
-        stream->stop();
-        stream->close();
-        stream.reset();
-        LOGI("⏹️ NAKA-OFF");
-    }
+    if (inputStream) { inputStream->stop(); inputStream->close(); inputStream.reset(); }
+    if (outputStream) { outputStream->stop(); outputStream->close(); outputStream.reset(); }
+    audioBuffer.clear();
+    LOGI("⏹️ NAKA-OFF");
 }
 
 #define SET_FUNC(NAME) \
