@@ -8,8 +8,8 @@
 
 // ✅ MGA PIHITAN
 static float gVolume    = 0.7f;
-static float gTone      = 0.5f;   // 🎵 TONE — ITO ANG AYUSIN NATIN
-static float gNoiseGate  = 0.04f; // ✅ PAMPATAY NG INGAY — MAS MALINAW!
+static float gTone      = 0.5f;
+static float gNoiseGate = 0.04f;
 
 // ✅ BUFFER PARA SA TONE FILTER
 static float prevLpf = 0.0f;
@@ -32,10 +32,7 @@ public:
                 input = 0.0f;
             }
 
-            // ✅ TONE FILTER — TULAD NG TONEBRIDGE!
-            // Tone = 0.0 → Puro BASS (malambot)
-            // Tone = 0.5 → KATINIG (natural)
-            // Tone = 1.0 → PURO TREBLE (matalas)
+            // ✅ TONE FILTER
             float alpha = gTone * 0.85f + 0.05f;
             float lpf = alpha * prevLpf + (1.0f - alpha) * input;
             float hpf = input - lpf;
@@ -56,10 +53,10 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
     if (stream) return;
 
-    // ✅ ISANG STREAM LANG — BASAHIN AT ILABAS NANG SABAY! TULAD NG TONEBRIDGE!
+    // ✅ ISANG STREAM LANG — BASAHIN AT ILABAS NANG SABAY!
     oboe::AudioStreamBuilder builder;
     builder.setDirection(oboe::Direction::Output)
-           ->setSampleRate(48000)          // ✅ MAS MATAAS NA KALIDAD
+           ->setSampleRate(48000)
            ->setFormat(oboe::AudioFormat::Float)
            ->setChannelCount(1)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
@@ -70,7 +67,7 @@ Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
     auto result = builder.openStream(stream);
     if (result == oboe::Result::OK) {
         stream->requestStart();
-        LOGI("✅ TONEBRIDGE MODE — NAKA-ON!");
+        LOGI("✅ TONE MODE — NAKA-ON!");
     } else {
         LOGI("❌ ERROR: %s", oboe::convertToText(result));
     }
@@ -87,5 +84,11 @@ Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
     }
 }
 
+// ✅ DITO NAKALAGAY ANG KAHULUGAN NG SET_FUNC — HINDI NA MABIBIGO!
+#define SET_FUNC(NAME) \
+extern "C" JNIEXPORT void JNICALL \
+Java_com_gitaradistortion_MainActivity_set##NAME(JNIEnv*, jobject, jfloat v) { g##NAME = v; }
+
+// ✅ GAMITIN ANG SET_FUNC
 SET_FUNC(Volume)
 SET_FUNC(Tone)
