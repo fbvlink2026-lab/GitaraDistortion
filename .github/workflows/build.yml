@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      # ✅ PIGILAN ANG AWTOMATIKONG PAGBABAGO NG GRADLE
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dkotlin.statistics.enabled=false
     steps:
       - uses: actions/checkout@v4
 
@@ -18,13 +20,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: 🛠️ Gumawa ng Gradle Wrapper — TUGMANG VERSYON!
+      - name: 🛠️ I-download at i-setup ang SIGURADONG TUGMANG GRADLE 8.2
         run: |
-          gradle wrapper --gradle-version 8.5 --distribution-type bin
+          wget https://services.gradle.org/distributions/gradle-8.2-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          export PATH=/opt/gradle/gradle-8.2/bin:$PATH
+          gradle wrapper --gradle-version 8.2
           chmod +x gradlew
 
-      - name: 📦 Bumuo ng APK
-        run: ./gradlew assembleDebug --no-daemon --warning-mode all
+      - name: 📦 Bumuo ng APK — WALANG DAGDAG NA ERROR!
+        run: ./gradlew assembleDebug --no-daemon --no-build-cache
 
       - uses: actions/upload-artifact@v4
         with:
