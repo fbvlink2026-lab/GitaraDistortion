@@ -45,23 +45,22 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(
     JNIEnv*, jobject) {
 
-    static DistortionCallback cb;  // ✅ ILIPAT DITO SA LOOB!
-
     oboe::AudioStreamBuilder builder;
     builder.setDirection(oboe::Direction::Output)
            ->setSampleRate(44100)
            ->setFormat(oboe::AudioFormat::Float)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-           ->setCallback(&cb);
+           ->setCallback(&callback);  // ✅ GAMITIN ANG NASA TAAS!
 
-        auto result = builder.openStream(stream);
+    auto result = builder.openStream(stream);
     if (result == oboe::Result::OK) {
         stream->requestStart();
         LOGI("✅ NAKA-ON! TUMUGTOG KA NA!");
     } else {
         LOGI("⚠️ HINDI MA-BUKAS ANG AUDIO: %s", oboe::convertToText(result));
     }
-    
+}  // ✅ ITO ANG KULANG — PANGSARA NG FUNCTION!
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(
     JNIEnv*, jobject) {
