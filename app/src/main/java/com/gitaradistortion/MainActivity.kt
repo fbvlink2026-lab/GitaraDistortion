@@ -201,10 +201,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(
-        reqCode: Int, grants: IntArray, _: IntArray
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
     ) {
-        super.onRequestPermissionsResult(reqCode, grants, _)
-        if (reqCode == 123 && grants.isNotEmpty() && grants[0] == PackageManager.PERMISSION_GRANTED) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 123 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "✅ Pahintulot nakuha! Pindutin muli ang ON!", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(this, "⚠️ Kailangan ng pahintulot sa Mikropono!", Toast.LENGTH_LONG).show()
