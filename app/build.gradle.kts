@@ -1,7 +1,8 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    id("com.android.application") version "8.5.0"
+    id("org.jetbrains.kotlin.android") version "1.9.20"
 }
+
 android {
     namespace = "com.gitaradistortion"
     compileSdk = 34
@@ -13,12 +14,10 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // ✅ Suporta sa lahat ng cellphone
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
         }
 
-        // ✅ IKABIT ANG AUDIO C++
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
@@ -38,8 +37,9 @@ android {
     }
     kotlinOptions { jvmTarget = "1.8" }
 
-    // ✅ BUILD NA MAY C++
-    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt") } }
+    externalNativeBuild {
+        cmake { path = file("src/main/cpp/CMakeLists.txt") }
+    }
 }
 
 dependencies {
