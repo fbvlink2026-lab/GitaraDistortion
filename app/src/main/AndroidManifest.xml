@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- ✅ PAHINTULOT SA MIKROFONO — PARA MAKAPASOK ANG TUNOG NG GITARA! -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_ROUTING" />
 
-    <!-- ✅ SABIHIN KAILANGAN NG MIKROFONO — PARA LUMABAS ANG PAGPIPILIAN! -->
     <uses-feature android:name="android.hardware.microphone" android:required="true" />
 
     <application
