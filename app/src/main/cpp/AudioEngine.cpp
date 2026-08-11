@@ -12,23 +12,25 @@ static float gDistortion = 0.5f;
 static float gGain = 1.0f;
 static float prevSample = 0.0f;
 
-static std::shared_ptr<oboe::AudioStream> inputStream;
-static std::shared_ptr<oboe::AudioStream> outputStream;
+static std::shared_ptr<oboe::AudioStream> stream;
 
 class AudioCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
-        oboe::AudioStream* stream, void* data, int32_t numFrames) override {
+        oboe::AudioStream*, void* data, int32_t numFrames) override {
         
         float* buffer = static_cast<float*>(data);
         
-        // ✅ BASAHIN ANG TUNOG NG GITARA → PALITAD → ILABAS!
+        // ✅ BASAHIN → PALITAD → ILABAS — SA ISANG GALAWAN LANG! TULAD NG TONEBRIDGE!
         for (int i = 0; i < numFrames; i++) {
-            float input = buffer[i];          // BASAHIN MULA SA MIKROFONO
-            float processed = input * gGain;   // ⚡ DAGDAG-LAKAS
+            float input = buffer[i];          // 🎤 BASAHIN MULA SA MIKROFONO/GITARA
+            float processed = input;
             
-            // 💥 DISTORTION — PUMUTOL NA TUNOG
-            float drive = 1.0f + gDistortion * 4.0f;
+            // ⚡ DAGDAG-LAKAS
+            processed *= gGain * 2.0f;
+            
+            // 💥 DISTORTION — PUMUTOL ANG TUNOG
+            float drive = 1.0f + gDistortion * 5.0f;
             processed = std::tanh(processed * drive);
             
             // 🎵 TONE — MALINAW O MALAMBOT
@@ -37,8 +39,8 @@ public:
                 prevSample = processed;
             }
             
-            // 🔊 VOLUME — ILABAS ANG TUNOG
-            buffer[i] = processed * gVolume * 0.8f;
+            // 🔊 ILABAS ANG TUNOG
+            buffer[i] = processed * gVolume * 0.9f;
         }
         return oboe::DataCallbackResult::Continue;
     }
@@ -48,41 +50,36 @@ static AudioCallback callback;
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
-    if (outputStream) return;
+    if (stream) return;
 
-    // ✅ PAGBASA NG TUNOG MULA SA MIKROFONO
+    // ✅ ISANG STREAM LANG — BASAHIN AT ILABAS NANG SABAY! TAMA ITO!
     oboe::AudioStreamBuilder builder;
-    builder.setDirection(oboe::Direction::Input)
-           ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+    builder.setDirection(oboe::Direction::Output)
            ->setSampleRate(44100)
            ->setFormat(oboe::AudioFormat::Float)
-           ->setChannelCount(1);
-    
-    auto result = builder.openStream(inputStream);
-    if (result != oboe::Result::OK) {
-        LOGI("❌ HINDI MA-BASA ANG MIKROFONO: %s", oboe::convertToText(result));
-        return;
-    }
-
-    // ✅ PAGLALABAS NG TUNOG NA MAY DISTORTION
-    builder.setDirection(oboe::Direction::Output)
+           ->setChannelCount(1)
+           ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+           ->setUsage(oboe::Usage::Media)
+           ->setContentType(oboe::ContentType::Music)
            ->setCallback(&callback);
-    
-    result = builder.openStream(outputStream);
+
+    auto result = builder.openStream(stream);
     if (result == oboe::Result::OK) {
-        inputStream->start();
-        outputStream->start();
-        LOGI("✅ NAKA-ON! MAY TUNOG NA!");
+        stream->requestStart();
+        LOGI("✅ TUNOG NAKA-ON! ISAKSAK ANG GITARA!");
     } else {
-        LOGI("❌ HINDI MA-LABAS ANG TUNOG: %s", oboe::convertToText(result));
+        LOGI("❌ ERROR: %s", oboe::convertToText(result));
     }
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
-    if (inputStream) { inputStream->stop(); inputStream->close(); inputStream.reset(); }
-    if (outputStream) { outputStream->stop(); outputStream->close(); outputStream.reset(); }
-    LOGI("⏹️ NAKA-OFF");
+    if (stream) {
+        stream->stop();
+        stream->close();
+        stream.reset();
+        LOGI("⏹️ NAKA-OFF");
+    }
 }
 
 #define SET_FUNC(NAME) \
