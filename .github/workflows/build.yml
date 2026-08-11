@@ -10,23 +10,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🛠️ Opisyal na Android Builder — WALANG KULANG!
-        uses: android-actions/setup-android@v3
-
-      - name: ☕ Ihanda ang Java
+      - name: ☕ Ihanda ang Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: ✨ KUMUHA NG GRADLE AT AYUSIN ANG LAHAT
+      - name: 🛠️ Gumawa ng Gradle Wrapper — TUGMANG VERSYON!
         run: |
-          # ✅ I-download ang tamang Gradle — KUSA NANG GAGAWIN!
-          gradle wrapper --gradle-version 8.2
+          gradle wrapper --gradle-version 8.5 --distribution-type all
           chmod +x gradlew
 
-      - name: 📦 BUMUO NG APK!
-        run: ./gradlew assembleDebug --no-daemon
+      - name: 📦 Bumuo ng APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
