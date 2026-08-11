@@ -2,32 +2,32 @@
 #include <android/log.h>
 #include <oboe/Oboe.h>
 #include <cmath>
-#include <vector>
 
 #define LOG_TAG "GITARA"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-// ✅ MGA PIHITAN — LAHAT TATLO: VOLUME, TONE, REVERB
-static float gVolume    = 0.70f;  // 🔊 LAKAS NG TUNOG
-static float gTone      = 0.50f;  // 🎵 KULAY NG TUNOG — MALINAW NA BOSES
-static float gReverb    = 0.30f;  // 🌊 LALIM / ESPASYO — PARANG SA HALL
-static float gNoiseGate = 0.04f;  // ✅ PATAY NG INGAY
+// ✅ MGA PIHITAN
+static float gVolume    = 0.80f;
+static float gTone      = 0.50f;
+static float gReverb    = 0.25f;
+static float gNoiseGate = 0.03f;
+static float prevLpf    = 0.0f;
 
-// ✅ BUFFER PARA SA TONE FILTER
-static float prevLpf = 0.0f;
-
-// ✅ REVERB — PAGPAPALALIM NG TUNOG (DELAY + PAGHINA)
-static const int REVERB_LENGTH = 1024; // LAKI NG ESPASYO
+// ✅ REVERB BUFFER
+static const int REVERB_LENGTH = 800;
 static float reverbBuffer[REVERB_LENGTH] = {0};
 static int reverbIndex = 0;
-static const float REVERB_DECAY = 0.6f; // BILIS NG PAGHINA
+static const float REVERB_DECAY = 0.55f;
 
-std::vector<float> audioBuffer;
-std::mutex bufferMutex;
 static std::shared_ptr<oboe::AudioStream> inputStream;
 static std::shared_ptr<oboe::AudioStream> outputStream;
 
-// ✅ INPUT — BASAHIN ANG MIKROFONO
+// ✅ KARANIWANG BUFFER — DIREKTA ANG KOPYA!
+static float sharedBuffer[2048];
+static std::atomic<bool> hasNewData{false};
+static std::mutex bufferMutex;
+
+// ✅ INPUT — BASAHIN → DIREKTA SA BUFFER
 class InputCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
@@ -35,15 +35,18 @@ public:
         
         float* in = static_cast<float*>(data);
         std::lock_guard<std::mutex> lock(bufferMutex);
-        audioBuffer.resize(numFrames);
-        for (int i = 0; i < numFrames; i++) {
-            audioBuffer[i] = in[i];
+        
+        // ✅ KOPYAHIN AGAD — WALANG HULI!
+        int count = numFrames < 2048 ? numFrames : 2048;
+        for (int i = 0; i < count; i++) {
+            sharedBuffer[i] = in[i];
         }
+        hasNewData = true;
         return oboe::DataCallbackResult::Continue;
     }
 };
 
-// ✅ OUTPUT — AYUSIN ANG TUNOG → VOLUME → TONE → REVERB → ILABAS
+// ✅ OUTPUT — KUNIN SA BUFFER → AYUSIN → ILABAS
 class OutputCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
@@ -56,30 +59,31 @@ public:
 
         for (int i = 0; i < numFrames; i++) {
             float input = 0.0f;
-            if (i < audioBuffer.size()) input = audioBuffer[i];
+            
+            // ✅ KUNIN ANG TUNOG — KUNG MAY BAGONG DATOS
+            if (hasNewData && i < 2048) {
+                input = sharedBuffer[i];
+            }
 
-            // ✅ NOISE GATE — PATAY ANG INGAY KUNG WALANG TUMUTUGTOG
+            // ✅ NOISE GATE
             if (std::fabs(input) < gNoiseGate) input = 0.0f;
 
-            // ✅ TONE FILTER — MALINAW NA BOSES
-            // 0.0 = Puro BASS → 0.5 = Balansado → 1.0 = Puro Treble
+            // ✅ TONE
             float lpf = alpha * prevLpf + (1.0f - alpha) * input;
             float hpf = input - lpf;
             float dry = lpf * (1.0f - gTone) * 1.8f + hpf * gTone * 1.2f;
             prevLpf = lpf;
 
-            // ✅ REVERB — DAGDAG NA ESPASYO AT LALIM
-            float reverbIn = dry;
+            // ✅ REVERB
             float reverbOut = reverbBuffer[reverbIndex];
-            reverbBuffer[reverbIndex] = reverbIn + reverbOut * REVERB_DECAY;
+            reverbBuffer[reverbIndex] = dry + reverbOut * REVERB_DECAY;
             reverbIndex = (reverbIndex + 1) % REVERB_LENGTH;
 
-            // ✅ PAGHALUHIN: TUNOG + REVERB
+            // ✅ PAGHALUHIN + VOLUME
             float wet = dry * (1.0f - gReverb) + reverbOut * gReverb * 0.5f;
-
-            // ✅ VOLUME — BALANSADO AT HINDI PUMUTOK
-            out[i] = wet * gVolume * 0.9f;
+            out[i] = wet * gVolume * 0.95f;
         }
+        hasNewData = false;
         return oboe::DataCallbackResult::Continue;
     }
 };
@@ -91,10 +95,10 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
     if (inputStream || outputStream) return;
 
-    // ✅ INPUT — PARA LUMABAS ANG MENSAHE NG MIKROFONO
+    // ✅ INPUT — MIKROFONO
     oboe::AudioStreamBuilder builder;
     builder.setDirection(oboe::Direction::Input)
-           ->setSampleRate(44100)
+           ->setSampleRate(48000)
            ->setFormat(oboe::AudioFormat::Float)
            ->setChannelCount(1)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
@@ -102,33 +106,32 @@ Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
 
     auto result = builder.openStream(inputStream);
     if (result != oboe::Result::OK) {
-        LOGI("❌ INPUT ERROR: %s", oboe::convertToText(result));
+        LOGI("❌ INPUT: %s", oboe::convertToText(result));
         return;
     }
 
-    // ✅ OUTPUT — ILABAS ANG AYUS NA TUNOG
+    // ✅ OUTPUT — SPEAKER
     builder.setDirection(oboe::Direction::Output)
            ->setCallback(&outputCallback);
 
     result = builder.openStream(outputStream);
     if (result != oboe::Result::OK) {
-        LOGI("❌ OUTPUT ERROR: %s", oboe::convertToText(result));
+        LOGI("❌ OUTPUT: %s", oboe::convertToText(result));
         return;
     }
 
     inputStream->requestStart();
     outputStream->requestStart();
-    LOGI("✅ VOLUME+TONE+REVERB — NAKA-ON!");
+    LOGI("✅ NAKA-ON! DAPAT MAY TUNOG NA!");
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
     if (inputStream) { inputStream->stop(); inputStream->close(); inputStream.reset(); }
     if (outputStream) { outputStream->stop(); outputStream->close(); outputStream.reset(); }
-    audioBuffer.clear();
     prevLpf = 0.0f;
-    // ✅ LINISIN ANG REVERB BUFFER
     for (int i = 0; i < REVERB_LENGTH; i++) reverbBuffer[i] = 0.0f;
+    hasNewData = false;
     LOGI("⏹️ NAKA-OFF");
 }
 
