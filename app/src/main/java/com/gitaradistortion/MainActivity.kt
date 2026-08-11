@@ -155,7 +155,7 @@ companion object {
         // 🟢🔴 POWER BUTTON
         powerBtn.setOnClickListener {
     if (!isRunning) {
-        // ✅ HUMINGI MUNA NG PAHINTULOT BAGO MAGBUKAS!
+        // ✅ HUMINGI MUNA NG PAHINTULOT SA MIKROPONO!
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 100)
             return@setOnClickListener
