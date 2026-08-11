@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("gitaradistortion")
 
-# ✅ KUSA NANG I-DOWNLOAD ANG OBOE — WALANG HIHIRAP!
+# ✅ KUSA NANG I-DOWNLOAD ANG OBOE
 include(FetchContent)
 FetchContent_Declare(
         oboe
@@ -16,9 +16,9 @@ add_library(
         AudioEngine.cpp
 )
 
-# ✅ IKABIT ANG OBOE
+# ✅ IKABIT ANG OBOE — WALANG "::oboe"!
 target_link_libraries(gitaradistortion
-        oboe::oboe
+        oboe
         android
         log
 )
