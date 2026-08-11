@@ -20,7 +20,7 @@ init {
     System.loadLibrary("gitaradistortion")
 }
 
-// 🎛️ PIHITAN
+// 🎛️ BILOG NA PIHITAN
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
@@ -132,59 +132,148 @@ class MainActivity : AppCompatActivity() {
         title.setPadding(0, 10, 0, 20)
         root.addView(title)
 
-        // ========== GUMAGAWA NG PIHITAN ==========
-        fun makeKnob(label: String, color: Int, setter: (Float) -> Unit): LinearLayout {
-            val col = LinearLayout(this)
-            col.orientation = LinearLayout.VERTICAL
-            col.gravity = Gravity.CENTER
-            val txt = TextView(this)
-            txt.text = "$label\n50%"
-            txt.textSize = 13f
-            txt.setTextColor(color)
-            txt.gravity = Gravity.CENTER
-            val knob = KnobView(this)
-            knob.layoutParams = LinearLayout.LayoutParams(160, 160)
-            knob.baseColor = color
-            knob.value = 0.5f
-            knob.onValueChange = { v ->
-                txt.text = "$label\n${(v * 100).toInt()}%"
-                setter(v)
-            }
-            col.addView(knob)
-            col.addView(txt)
-            return col
-        }
-
-        // ========== HANAY 1 ==========
+        // ========== HANAY 1: VOLUME — TONE — DISTORTION ==========
         val row1 = LinearLayout(this)
         row1.orientation = LinearLayout.HORIZONTAL
         row1.gravity = Gravity.CENTER
 
-        val volCol = makeKnob("🔊 VOLUME", 0xFFFF8822.toInt()) { setVolume(it) }
-        val toneCol = makeKnob("🎵 TONE", 0xFF44DD88.toInt()) { setTone(it) }
-        val distCol = makeKnob("💥 DIST", 0xFFFF4444.toInt()) { setDistortion(it * 3f + 0.5f) }
-        
+        // 🔊 VOLUME
+        val volCol = LinearLayout(this)
+        volCol.orientation = LinearLayout.VERTICAL
+        volCol.gravity = Gravity.CENTER
+        val volText = TextView(this)
+        volText.text = "🔊 VOLUME\n50%"
+        volText.textSize = 13f
+        volText.setTextColor(0xFFFF8822.toInt())
+        volText.gravity = Gravity.CENTER
+        val volKnob = KnobView(this)
+        volKnob.layoutParams = LinearLayout.LayoutParams(160, 160)
+        volKnob.baseColor = 0xFFFF8822.toInt()
+        volKnob.value = 0.5f
+        volKnob.onValueChange = { v ->
+            volText.text = "🔊 VOLUME\n${(v * 100).toInt()}%"
+            setVolume(v)
+        }
+        volCol.addView(volKnob)
+        volCol.addView(volText)
         row1.addView(volCol)
+
+        // 🎵 TONE
+        val toneCol = LinearLayout(this)
+        toneCol.orientation = LinearLayout.VERTICAL
+        toneCol.gravity = Gravity.CENTER
+        val toneText = TextView(this)
+        toneText.text = "🎵 TONE\n50%"
+        toneText.textSize = 13f
+        toneText.setTextColor(0xFF44DD88.toInt())
+        toneText.gravity = Gravity.CENTER
+        val toneKnob = KnobView(this)
+        toneKnob.layoutParams = LinearLayout.LayoutParams(160, 160)
+        toneKnob.baseColor = 0xFF44DD88.toInt()
+        toneKnob.value = 0.5f
+        toneKnob.onValueChange = { v ->
+            toneText.text = "🎵 TONE\n${(v * 100).toInt()}%"
+            setTone(v)
+        }
+        toneCol.addView(toneKnob)
+        toneCol.addView(toneText)
         row1.addView(toneCol)
+
+        // 💥 DISTORTION
+        val distCol = LinearLayout(this)
+        distCol.orientation = LinearLayout.VERTICAL
+        distCol.gravity = Gravity.CENTER
+        val distText = TextView(this)
+        distText.text = "💥 DIST\n50%"
+        distText.textSize = 13f
+        distText.setTextColor(0xFFFF4444.toInt())
+        distText.gravity = Gravity.CENTER
+        val distKnob = KnobView(this)
+        distKnob.layoutParams = LinearLayout.LayoutParams(160, 160)
+        distKnob.baseColor = 0xFFFF4444.toInt()
+        distKnob.value = 0.5f
+        distKnob.onValueChange = { v ->
+            distText.text = "💥 DIST\n${(v * 100).toInt()}%"
+            setDistortion(v * 3f + 0.5f)
+        }
+        distCol.addView(distKnob)
+        distCol.addView(distText)
         row1.addView(distCol)
+
         root.addView(row1)
 
-        // ========== HANAY 2 ==========
+        // ========== HANAY 2: GAIN — CHORUS — REVERB ==========
         val row2 = LinearLayout(this)
         row2.orientation = LinearLayout.HORIZONTAL
         row2.gravity = Gravity.CENTER
         row2.setPadding(0, 10, 0, 0)
 
-        val gainCol = makeKnob("⚡ GAIN", 0xFFFFCC00.toInt()) { setGain(it * 2f) }
-        val chorusCol = makeKnob("🎶 CHORUS", 0xFF44AAFF.toInt()) { setChorus(it) }
-        val revCol = makeKnob("🌊 REVERB", 0xFFAA66FF.toInt()) { setReverb(it) }
-        
+        // ⚡ GAIN
+        val gainCol = LinearLayout(this)
+        gainCol.orientation = LinearLayout.VERTICAL
+        gainCol.gravity = Gravity.CENTER
+        val gainText = TextView(this)
+        gainText.text = "⚡ GAIN\n50%"
+        gainText.textSize = 13f
+        gainText.setTextColor(0xFFFFCC00.toInt())
+        gainText.gravity = Gravity.CENTER
+        val gainKnob = KnobView(this)
+        gainKnob.layoutParams = LinearLayout.LayoutParams(160, 160)
+        gainKnob.baseColor = 0xFFFFCC00.toInt()
+        gainKnob.value = 0.5f
+        gainKnob.onValueChange = { v ->
+            gainText.text = "⚡ GAIN\n${(v * 100).toInt()}%"
+            setGain(v * 2f)
+        }
+        gainCol.addView(gainKnob)
+        gainCol.addView(gainText)
         row2.addView(gainCol)
+
+        // 🎶 CHORUS
+        val chorusCol = LinearLayout(this)
+        chorusCol.orientation = LinearLayout.VERTICAL
+        chorusCol.gravity = Gravity.CENTER
+        val chorusText = TextView(this)
+        chorusText.text = "🎶 CHORUS\n50%"
+        chorusText.textSize = 13f
+        chorusText.setTextColor(0xFF44AAFF.toInt())
+        chorusText.gravity = Gravity.CENTER
+        val chorusKnob = KnobView(this)
+        chorusKnob.layoutParams = LinearLayout.LayoutParams(160, 160)
+        chorusKnob.baseColor = 0xFF44AAFF.toInt()
+        chorusKnob.value = 0.5f
+        chorusKnob.onValueChange = { v ->
+            chorusText.text = "🎶 CHORUS\n${(v * 100).toInt()}%"
+            setChorus(v)
+        }
+        chorusCol.addView(chorusKnob)
+        chorusCol.addView(chorusText)
         row2.addView(chorusCol)
-        row2.addView(revCol)
+
+        // 🌊 REVERB
+        val reverbCol = LinearLayout(this)
+        reverbCol.orientation = LinearLayout.VERTICAL
+        reverbCol.gravity = Gravity.CENTER
+        val reverbText = TextView(this)
+        reverbText.text = "🌊 REVERB\n50%"
+        reverbText.textSize = 13f
+        reverbText.setTextColor(0xFFAA66FF.toInt())
+        reverbText.gravity = Gravity.CENTER
+        val reverbKnob = KnobView(this)
+        reverbKnob.layoutParams = LinearLayout.LayoutParams(160, 160)
+        reverbKnob.baseColor = 0xFFAA66FF.toInt()
+        reverbKnob.value = 0.5f
+        reverbKnob.onValueChange = { v ->
+            reverbText.text = "🌊 REVERB\n${(v * 100).toInt()}%"
+            setReverb(v)
+        }
+        reverbCol.addView(reverbKnob)
+        reverbCol.addView(reverbText)
+        row2.addView(reverbCol)
+
         root.addView(row2)
 
-        // ========== ON/OFF + PAHINTULOT ==========
+        // ========== ON/OFF BUTTON ==========
         LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -218,7 +307,7 @@ class MainActivity : AppCompatActivity() {
                         startAudioEngine()
                         text = "🟢 TURN OFF"
                         setBackgroundColor(0xFFFF4444.toInt())
-                        statusText.text = "🟢 NAKA-ON — Hukay na ang gitara!"
+                        statusText.text = "🟢 NAKA-ON — Isaksak ang gitara!"
                         statusText.setTextColor(0xFF44FF44.toInt())
                     } else {
                         stopAudioEngine()
