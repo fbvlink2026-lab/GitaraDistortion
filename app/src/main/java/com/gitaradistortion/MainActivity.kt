@@ -6,6 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlin.math.*
 
@@ -91,6 +92,12 @@ class KnobView(context: android.content.Context) : View(context) {
 }
 
 class MainActivity : AppCompatActivity() {
+    private var isOn = false
+
+    // ✅ SUSULITAN LANG — WALANG C++ MUNA!
+    private external fun startAudioEngine(): Boolean
+    private external fun stopAudioEngine(): Unit
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -149,6 +156,34 @@ class MainActivity : AppCompatActivity() {
         row2.addView(makeKnob("🎶 CHORUS", 0xFF44AAFF.toInt()))
         row2.addView(makeKnob("🌊 REVERB", 0xFFAA66FF.toInt()))
         root.addView(row2)
+
+        // ========== ON/OFF BUTTON ==========
+        val statusText = TextView(this)
+        statusText.text = "🔴 NAKA-OFF"
+        statusText.textSize = 16f
+        statusText.setTextColor(0xFFFF6666.toInt())
+        statusText.gravity = Gravity.CENTER
+        statusText.setPadding(0, 30, 0, 12)
+        root.addView(statusText)
+
+        val btn = android.widget.Button(this)
+        btn.text = "🔘 TURN ON"
+        btn.textSize = 17f
+        btn.setBackgroundColor(0xFF228833.toInt())
+        btn.setTextColor(android.graphics.Color.WHITE)
+        btn.setPadding(55, 16, 55, 16)
+        btn.setOnClickListener {
+            isOn = !isOn
+            if (isOn) {
+                statusText.text = "🟢 AUDIO — SUSULITAN LANG"
+                statusText.setTextColor(0xFF44FF44.toInt())
+                Toast.makeText(this, "✅ Kung BERDE — ibabalik na natin ang C++!", Toast.LENGTH_LONG).show()
+            } else {
+                statusText.text = "🔴 NAKA-OFF"
+                statusText.setTextColor(0xFFFF6666.toInt())
+            }
+        }
+        root.addView(btn)
 
         setContentView(root)
     }
