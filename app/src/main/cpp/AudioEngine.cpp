@@ -2,125 +2,90 @@
 #include <android/log.h>
 #include <oboe/Oboe.h>
 #include <cmath>
-#include <vector>
 
 #define LOG_TAG "GITARA"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-// ✅ MGA PIHITAN — TONE LANG ANG GAGANA, IBA NAKA-PATAY MUNA
+// ✅ MGA PIHITAN
 static float gVolume    = 0.7f;
-static float gTone      = 0.5f;   // 🎵 TONE — SIMULA DITO
-static float gDistortion= 0.0f;   // ❌ PATAY MUNA
-static float gGain      = 1.0f;   // ❌ PATAY MUNA
-static float gNoiseGate = 0.05f;  // ✅ DAGDAG — PAMPATAY NG INGAY!
+static float gTone      = 0.5f;   // 🎵 TONE — ITO ANG AYUSIN NATIN
+static float gNoiseGate  = 0.04f; // ✅ PAMPATAY NG INGAY — MAS MALINAW!
 
-// ✅ BUFFER AT VARIABLES PARA SA TONE FILTER
-std::vector<float> audioBuffer;
-static float prevLpf = 0.0f;  // Low-pass (malambot/mababa)
-static float prevHpf = 0.0f;  // High-pass (matalas/mataas)
-std::mutex bufferMutex;
+// ✅ BUFFER PARA SA TONE FILTER
+static float prevLpf = 0.0f;
 
-static std::shared_ptr<oboe::AudioStream> inputStream;
-static std::shared_ptr<oboe::AudioStream> outputStream;
+static std::shared_ptr<oboe::AudioStream> stream;
 
-class InputCallback : public oboe::AudioStreamCallback {
+// ✅ ISANG CALLBACK LANG — TULAD NG TONEBRIDGE!
+class AudioCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
         oboe::AudioStream*, void* data, int32_t numFrames) override {
         
-        float* in = static_cast<float*>(data);
-        std::lock_guard<std::mutex> lock(bufferMutex);
-        audioBuffer.resize(numFrames);
-        for (int i = 0; i < numFrames; i++) {
-            audioBuffer[i] = in[i];
-        }
-        return oboe::DataCallbackResult::Continue;
-    }
-};
-
-class OutputCallback : public oboe::AudioStreamCallback {
-public:
-    oboe::DataCallbackResult onAudioReady(
-        oboe::AudioStream*, void* data, int32_t numFrames) override {
-        
-        float* out = static_cast<float*>(data);
-        std::lock_guard<std::mutex> lock(bufferMutex);
-        
-        // ✅ KUWENTA NG TONE FILTER
-        // Tone = 0.0 → Puro MABABA (malambot/bass)
-        // Tone = 0.5 → KATINIG (pantay)
-        // Tone = 1.0 → PURO MATAAS (matalas/treble)
-        float alpha = gTone * 0.85f + 0.05f;
+        float* buffer = static_cast<float*>(data);
 
         for (int i = 0; i < numFrames; i++) {
-            float input = 0.0f;
-            if (i < audioBuffer.size()) input = audioBuffer[i];
+            float input = buffer[i];
 
             // ✅ NOISE GATE — PATAYIN ANG INGAY KUNG MAHINA ANG TUGTOG
             if (std::fabs(input) < gNoiseGate) {
                 input = 0.0f;
             }
 
-            // ✅ TONE FILTER — DITO GINAGAWA ANG KULAY NG TUNOG
-            float lpf = alpha * prevLpf + (1.0f - alpha) * input;  // mababa
-            float hpf = input - lpf;                                // mataas
-            float processed = lpf * (1.0f - gTone) * 2.0f + hpf * gTone * 1.2f;
+            // ✅ TONE FILTER — TULAD NG TONEBRIDGE!
+            // Tone = 0.0 → Puro BASS (malambot)
+            // Tone = 0.5 → KATINIG (natural)
+            // Tone = 1.0 → PURO TREBLE (matalas)
+            float alpha = gTone * 0.85f + 0.05f;
+            float lpf = alpha * prevLpf + (1.0f - alpha) * input;
+            float hpf = input - lpf;
+            float processed = lpf * (1.0f - gTone) * 2.0f + hpf * gTone * 1.3f;
 
             prevLpf = lpf;
 
-            // ✅ VOLUME LANG ANG ILABAS
-            out[i] = processed * gVolume;
+            // ✅ ILABAS
+            buffer[i] = processed * gVolume;
         }
         return oboe::DataCallbackResult::Continue;
     }
 };
 
-static InputCallback inputCallback;
-static OutputCallback outputCallback;
+static AudioCallback callback;
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
-    if (inputStream || outputStream) return;
+    if (stream) return;
 
+    // ✅ ISANG STREAM LANG — BASAHIN AT ILABAS NANG SABAY! TULAD NG TONEBRIDGE!
     oboe::AudioStreamBuilder builder;
-    builder.setDirection(oboe::Direction::Input)
-           ->setSampleRate(44100)
+    builder.setDirection(oboe::Direction::Output)
+           ->setSampleRate(48000)          // ✅ MAS MATAAS NA KALIDAD
            ->setFormat(oboe::AudioFormat::Float)
            ->setChannelCount(1)
            ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-           ->setCallback(&inputCallback);
+           ->setUsage(oboe::Usage::Media)
+           ->setContentType(oboe::ContentType::Music)
+           ->setCallback(&callback);
 
-    auto result = builder.openStream(inputStream);
-    if (result != oboe::Result::OK) {
-        LOGI("❌ INPUT ERROR: %s", oboe::convertToText(result));
-        return;
+    auto result = builder.openStream(stream);
+    if (result == oboe::Result::OK) {
+        stream->requestStart();
+        LOGI("✅ TONEBRIDGE MODE — NAKA-ON!");
+    } else {
+        LOGI("❌ ERROR: %s", oboe::convertToText(result));
     }
-
-    builder.setDirection(oboe::Direction::Output)->setCallback(&outputCallback);
-    result = builder.openStream(outputStream);
-    if (result != oboe::Result::OK) {
-        LOGI("❌ OUTPUT ERROR: %s", oboe::convertToText(result));
-        return;
-    }
-
-    inputStream->requestStart();
-    outputStream->requestStart();
-    LOGI("✅ TONE MODE — NAKA-ON!");
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
-    if (inputStream) { inputStream->stop(); inputStream->close(); inputStream.reset(); }
-    if (outputStream) { outputStream->stop(); outputStream->close(); outputStream.reset(); }
-    audioBuffer.clear();
-    prevLpf = prevHpf = 0.0f;
-    LOGI("⏹️ NAKA-OFF");
+    if (stream) {
+        stream->stop();
+        stream->close();
+        stream.reset();
+        prevLpf = 0.0f;
+        LOGI("⏹️ NAKA-OFF");
+    }
 }
 
-// ✅ TONE LANG ANG GAGANA — IBA HINDI PA
-#define SET_TONE(NAME) \
-extern "C" JNIEXPORT void JNICALL \
-Java_com_gitaradistortion_MainActivity_set##NAME(JNIEnv*, jobject, jfloat v) { g##NAME = v; }
-
-SET_TONE(Volume)
-SET_TONE(Tone)
+SET_FUNC(Volume)
+SET_FUNC(Tone)
