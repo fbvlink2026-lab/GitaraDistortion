@@ -1,17 +1,14 @@
 package com.gitaradistortion
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import kotlin.math.*
 
-// 🎛️ BILOG NA PIHITAN — PARANG TUNAY NA AMPLIFIER!
+// 🎛️ BILOG NA PIHITAN — PARANG TUNAY NA PEDAL!
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
@@ -30,28 +27,28 @@ class KnobView(context: android.content.Context) : View(context) {
 
         // Bilog na katawan
         paint.style = android.graphics.Paint.Style.FILL
-        paint.color = 0xFF2A2A30.toInt()
+        paint.color = 0xFF222222.toInt()
         canvas.drawCircle(cx, cy, r, paint)
 
         // Gilid na kulay
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 6f
+        paint.strokeWidth = 5f
         paint.color = color
-        canvas.drawCircle(cx, cy, r - 3f, paint)
+        canvas.drawCircle(cx, cy, r - 2f, paint)
 
         // Pihitang linya
         val angle = -135f + (270f) * value
         val rad = Math.toRadians(angle.toDouble())
-        paint.strokeWidth = 5f
+        paint.strokeWidth = 4f
         paint.color = color
-        val endX = cx + (r - 25f) * sin(rad).toFloat()
-        val endY = cy - (r - 25f) * cos(rad).toFloat()
+        val endX = cx + (r - 22f) * sin(rad).toFloat()
+        val endY = cy - (r - 22f) * cos(rad).toFloat()
         canvas.drawLine(cx, cy, endX, endY, paint)
 
-        // Gitna ng pihitan
+        // Gitna
         paint.style = android.graphics.Paint.Style.FILL
         paint.color = color
-        canvas.drawCircle(cx, cy, 12f, paint)
+        canvas.drawCircle(cx, cy, 10f, paint)
     }
 
     private var startAngle = 0.0
@@ -77,45 +74,12 @@ class KnobView(context: android.content.Context) : View(context) {
 }
 
 class MainActivity : AppCompatActivity() {
-companion object {
-    init {
-        try {
-            System.loadLibrary("gitaradistortion")
-            android.util.Log.i("GITARA", "✅ NA-LOAD ANG AUDIO LIBRARY!")
-        } catch (e: UnsatisfiedLinkError) {
-            android.util.Log.e("GITARA", "❌ HINDI MA-LOAD ANG LIBRARY!", e)
-        }
-    }
-}
-
-
-    // ============== MGA UTOS PATUNGO SA C++ ==============
-    external fun startAudioEngine()
-    external fun stopAudioEngine()
-    external fun setVolume(v: Float)
-    external fun setTone(v: Float)
-    external fun setDistortion(v: Float)
-
-    private var isRunning = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Humingi ng pahintulot na gamitin ang mikropono/iRig
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                100
-            )
-        }
-
-        // ============== IKONEKTA ANG MGA BAGAY SA SCREEN ==============
+        // 🎛️ IKONEKTA ANG MGA BAGAY — WALANG AUDIO MUNA!
         val statusText = findViewById<TextView>(R.id.statusText)
         val volumeText = findViewById<TextView>(R.id.volumeText)
         val toneText = findViewById<TextView>(R.id.toneText)
@@ -126,70 +90,36 @@ companion object {
         val powerBtn = findViewById<Button>(R.id.powerBtn)
         val emergencyBtn = findViewById<Button>(R.id.emergencyBtn)
 
-        // 🔊 VOLUME PIHITAN
+        // 🔊 VOLUME
         volKnob.color = 0xFFFF8822.toInt()
         volKnob.value = 0.5f
         volKnob.onValueChange = { v ->
-            setVolume(v)
             volumeText.text = "🔊 VOLUME: ${(v * 100).toInt()}%"
         }
 
-        // 🎵 TONE PIHITAN
+        // 🎵 TONE
         toneKnob.color = 0xFF22DD88.toInt()
         toneKnob.value = 0.5f
         toneKnob.onValueChange = { v ->
-            val toneValue = 0.05f + v * 2.95f
-            setTone(toneValue)
             toneText.text = "🎵 TONE: ${(v * 100).toInt()}%"
         }
 
-        // 💥 DISTORTION PIHITAN
+        // 💥 DISTORTION
         distKnob.color = 0xFFFF3333.toInt()
         distKnob.value = 0.5f
         distKnob.onValueChange = { v ->
-            val distValue = 0.5f + v * 9.5f
-            setDistortion(distValue)
-            distText.text = "💥 DIST: %.1fx".format(distValue)
+            distText.text = "💥 DISTORT: ${(v * 100).toInt()}%"
         }
 
-        // 🟢🔴 POWER BUTTON
+        // 🟢🔴 POWER BUTTON — WALANG AUDIO MUNA!
         powerBtn.setOnClickListener {
-    if (!isRunning) {
-        // ✅ HUMINGI MUNA NG PAHINTULOT SA MIKROPONO!
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 100)
-            return@setOnClickListener
+            statusText.text = "✅ GUMAGANA ANG SCREEN!"
+            statusText.setTextColor(0xFF44FF44.toInt())
         }
-        startAudioEngine()
-        isRunning = true
-        powerBtn.text = "🟢 TURN OFF"
-        powerBtn.setBackgroundColor(0xFFFF4444.toInt())
-        statusText.text = "🟢 NAKA-ON! Tumugtog ka na!"
-        statusText.setTextColor(0xFF44FF44.toInt())
-    } else {
-        stopAudioEngine()
-        isRunning = false
-        powerBtn.text = "🔴 TURN ON"
-        powerBtn.setBackgroundColor(0xFF228833.toInt())
-        statusText.text = "⚪ NAKA-OFF — Isaksak iRig"
-        statusText.setTextColor(0xFF888888.toInt())
-    }
-}
 
-
-        // 🚨 EMERGENCY BUTTON
+        // 🚨 EMERGENCY
         emergencyBtn.setOnClickListener {
-            stopAudioEngine()
-            isRunning = false
-            volKnob.value = 0f; setVolume(0f)
-            toneKnob.value = 0.5f
-            distKnob.value = 0.5f
-            volumeText.text = "🔊 VOLUME: 0%"
-            toneText.text = "🎵 TONE: 50%"
-            distText.text = "💥 DIST: 5.3x"
-            powerBtn.text = "🔴 TURN ON"
-            powerBtn.setBackgroundColor(0xFF228833.toInt())
-            statusText.text = "🚨 EMERGENCY — LAHAT TUMIGIL"
+            statusText.text = "🚨 NAKA-OFF"
             statusText.setTextColor(0xFFFF4444.toInt())
         }
     }
