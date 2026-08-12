@@ -6,7 +6,7 @@
 #define LOG_TAG "GITARA"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-// ✅ LAHAT NG ANTAS — HINDI NAGBABAGO KAHIT NAKA-OFF
+// ✅ ANTAS NG BAWAT EPEKTO
 static float gVolumeLevel    = 0.75f;
 static float gToneLevel      = 0.50f;
 static float gReverbLevel    = 0.25f;
@@ -16,10 +16,10 @@ static float gOverdriveLevel = 0.00f;
 static float gDistortionLevel= 0.00f;
 static float gPhaserLevel    = 0.00f;
 
-// ✅ ON/OFF — HIIWALAY SA ANTAS
+// ✅ ON/OFF — KAPAG NAKA-OFF = WALANG DUMADAAN!
 static bool gEnableVolume    = true;
-static bool gEnableTone      = true;
-static bool gEnableReverb    = true;
+static bool gEnableTone      = false;  // ✅ NAKA-OFF MUNA
+static bool gEnableReverb    = false;  // ✅ NAKA-OFF MUNA
 static bool gEnableNoiseGate = true;
 static bool gEnableGain      = false;
 static bool gEnableOverdrive = false;
@@ -59,7 +59,7 @@ public:
     }
 };
 
-// ✅ TAMANG PAGKAKASUNOD: GATE → GAIN → OVERDRIVE → DIST → TONE → PHASER → REVERB → VOLUME
+// ✅ TAMANG DALUYAN — KAPAG NAKA-OFF = WALANG DUMADAAN!
 class OutputCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
@@ -75,27 +75,27 @@ public:
             float input = 0.0f;
             if (hasNewData && i < 2048) input = sharedBuffer[i];
 
-            // 🚧 1. NOISE GATE — PATAYIN ANG INGAY UNA!
+            // 🚧 NOISE GATE — KAPAG NAKA-ON LANG
             if (gEnableNoiseGate && std::fabs(input) < gNoiseGateLevel) input = 0.0f;
 
             float proc = input;
 
-            // ⚡ 2. GAIN — DAGDAG-LAKAS
+            // ⚡ GAIN — KAPAG NAKA-ON LANG
             if (gEnableGain) proc *= gGainLevel;
 
-            // 🔥 3. OVERDRIVE — MALAMBOT AT MAINIT NA PALITAD
+            // 🔥 OVERDRIVE — KAPAG NAKA-ON LANG
             if (gEnableOverdrive && gOverdriveLevel > 0.01f) {
                 float drive = 1.0f + gOverdriveLevel * 3.0f;
                 proc = std::sin(proc * drive) * (1.0f - gOverdriveLevel * 0.3f) + proc * gOverdriveLevel * 0.3f;
             }
 
-            // 💥 4. DISTORTION — MATALAS AT PUMUTOK NA PALITAD
+            // 💥 DISTORTION — KAPAG NAKA-ON LANG
             if (gEnableDistortion && gDistortionLevel > 0.01f) {
                 float drive = 1.0f + gDistortionLevel * 4.0f;
                 proc = std::tanh(proc * drive);
             }
 
-            // 🎵 5. TONE — AYUSIN ANG KULAY
+            // 🎵 TONE — KAPAG NAKA-ON LANG
             if (gEnableTone) {
                 float lpf = alpha * prevLpf + (1.0f - alpha) * proc;
                 float hpf = proc - lpf;
@@ -103,7 +103,7 @@ public:
                 prevLpf = lpf;
             }
 
-            // 🫧 6. PHASER — GALAW NA TUNOG
+            // 🫧 PHASER — KAPAG NAKA-ON LANG
             if (gEnablePhaser && gPhaserLevel > 0.01f) {
                 float lfo = (std::sin(phaserLfo) + 1.0f) * 0.4f + 0.1f;
                 float wet = proc;
@@ -118,7 +118,7 @@ public:
                 proc = proc * (1.0f - gPhaserLevel) + wet * gPhaserLevel;
             }
 
-            // 🌊 7. REVERB — DAGDAG NA LALIM
+            // 🌊 REVERB — KAPAG NAKA-ON LANG
             if (gEnableReverb) {
                 float reverbOut = reverbBuffer[reverbIndex];
                 reverbBuffer[reverbIndex] = proc + reverbOut * REVERB_DECAY;
@@ -126,7 +126,7 @@ public:
                 proc = proc * (1.0f - gReverbLevel) + reverbOut * gReverbLevel * 0.5f;
             }
 
-            // 🔊 8. VOLUME — HULING AYUS NG LAKAS
+            // 🔊 VOLUME — KAPAG NAKA-ON LANG
             if (gEnableVolume) proc *= gVolumeLevel * 0.95f;
 
             out[i] = proc;
@@ -143,6 +143,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
     if (inputStream || outputStream) return;
 
+    // ✅ I-LOCK SA USB/AUDIO INTERFACE — KUNG MAY NAKAKONEKTA (iRig)
     oboe::AudioStreamBuilder builder;
     builder.setDirection(oboe::Direction::Input)
            ->setSampleRate(48000)
@@ -152,15 +153,21 @@ Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
            ->setCallback(&inputCallback);
 
     auto result = builder.openStream(inputStream);
-    if (result != oboe::Result::OK) return;
+    if (result != oboe::Result::OK) {
+        LOGI("❌ INPUT ERROR: %s", oboe::convertToText(result));
+        return;
+    }
 
     builder.setDirection(oboe::Direction::Output)->setCallback(&outputCallback);
     result = builder.openStream(outputStream);
-    if (result != oboe::Result::OK) return;
+    if (result != oboe::Result::OK) {
+        LOGI("❌ OUTPUT ERROR: %s", oboe::convertToText(result));
+        return;
+    }
 
     inputStream->requestStart();
     outputStream->requestStart();
-    LOGI("✅ LAHAT NAKABUO — MAY NOISE GATE NA!");
+    LOGI("✅ GUMAGANA! Isaksak ang gitara sa iRig!");
 }
 
 extern "C" JNIEXPORT void JNICALL
