@@ -3,6 +3,7 @@ package com.gitaradistortion
 import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -159,7 +160,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         System.loadLibrary("gitaradistortion")
         prefs = getSharedPreferences("FxSettings", Context.MODE_PRIVATE)
-
         rebuildUI()
     }
 
@@ -330,7 +330,7 @@ class MainActivity : AppCompatActivity() {
         btn.setTextColor(Color.WHITE)
         btn.setPadding(50, 10, 50, 10)
         btn.setOnClickListener {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
                 return@setOnClickListener
