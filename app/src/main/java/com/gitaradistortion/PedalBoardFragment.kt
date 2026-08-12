@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.gitaradistortion.pedals.NoiseGatePedal
+import com.gitaradistortion.pedals.VolumePedal
 
 class PedalBoardFragment : Fragment() {
     override fun onCreateView(
@@ -35,13 +37,19 @@ class PedalBoardFragment : Fragment() {
         hint.setPadding(0, 0, 0, 20)
         root.addView(hint)
 
-        val empty = TextView(ctx)
-        empty.text = "Wala pang ikinabit na pedal\n\n📦 Pumunta sa Cabinet → pindutin \"Ikabit\""
-        empty.textSize = 15f
-        empty.setTextColor(0xFF777777.toInt())
-        empty.gravity = Gravity.CENTER
-        root.addView(empty)
+        // ✅ UNANG DALAWANG PEDAL — NASA BOARD NA!
+        val row = LinearLayout(ctx)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER
+        row.setPadding(8, 8, 8, 8)
 
+        val noiseGate = NoiseGatePedal()
+        row.addView(noiseGate.makeView(ctx))
+
+        val volume = VolumePedal()
+        row.addView(volume.makeView(ctx))
+
+        root.addView(row)
         return root
     }
 }
