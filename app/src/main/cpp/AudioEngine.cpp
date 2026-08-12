@@ -5,6 +5,12 @@
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "GITARA", __VA_ARGS__)
 
+// === HELPER: C++ version ng coerceIn ===
+template<typename T>
+inline T clampVal(T v, T min, T max) {
+    return v < min ? min : v > max ? max : v;
+}
+
 // ✅ MASTER
 static float gMasterVolume = 0.75f;
 
@@ -76,7 +82,7 @@ public:
                     prevGate *= 1.0f - gGateRelease * 0.05f;
                     input *= prevGate;
                 } else {
-                    prevGate = fmin(prevGate + 0.08f, 1.0f);
+                    prevGate = prevGate + 0.08f > 1.0f ? 1.0f : prevGate + 0.08f;
                     input *= prevGate;
                 }
             }
@@ -110,7 +116,7 @@ public:
             if (gDistEnabled && gDistGain > 0.01f) {
                 float drive = 1.0f + gDistGain * 5.0f;
                 input = input < -1.0f/drive ? -1.0f : 
-                        input > 1.0f/drive ? 1.0f : sinf(input * drive * M_PI) / drive;
+                        input > 1.0f/drive ? 1.0f : sinf(input * drive * (float)M_PI) / drive;
                 static float distLast = 0.0f;
                 float dAlpha = 0.05f + gDistTone * 0.15f;
                 input = dAlpha * input + (1.0f - dAlpha) * distLast;
@@ -175,7 +181,7 @@ static DistortionCallback callback;
 // ✅ MASTER
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setMasterVolume(JNIEnv*, jobject, float v) {
-    gMasterVolume = v.coerceIn(0.05f, 1.0f);
+    gMasterVolume = clampVal(v, 0.05f, 1.0f);
 }
 
 // ✅ PANEL 1
@@ -197,11 +203,11 @@ Java_com_gitaradistortion_MainActivity_setToneEnabled(JNIEnv*, jobject, jboolean
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setReverbMix(JNIEnv*, jobject, float v) {
-    gReverbMix = v.coerceIn(0.0f, 0.8f);
+    gReverbMix = clampVal(v, 0.0f, 0.8f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setReverbDecay(JNIEnv*, jobject, float v) {
-    gReverbDecay = v.coerceIn(0.1f, 1.0f);
+    gReverbDecay = clampVal(v, 0.1f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setReverbEnabled(JNIEnv*, jobject, jboolean e) {
@@ -209,11 +215,11 @@ Java_com_gitaradistortion_MainActivity_setReverbEnabled(JNIEnv*, jobject, jboole
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setNoiseGateThresh(JNIEnv*, jobject, float v) {
-    gGateThresh = v.coerceIn(0.0f, 0.5f);
+    gGateThresh = clampVal(v, 0.0f, 0.5f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setNoiseGateRelease(JNIEnv*, jobject, float v) {
-    gGateRelease = v.coerceIn(0.1f, 1.0f);
+    gGateRelease = clampVal(v, 0.1f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setNoiseGateEnabled(JNIEnv*, jobject, jboolean e) {
@@ -223,11 +229,11 @@ Java_com_gitaradistortion_MainActivity_setNoiseGateEnabled(JNIEnv*, jobject, jbo
 // ✅ PANEL 2
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setGainDrive(JNIEnv*, jobject, float v) {
-    gGainDrive = v.coerceIn(0.0f, 1.0f);
+    gGainDrive = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setGainLevel(JNIEnv*, jobject, float v) {
-    gGainLevel = v.coerceIn(0.0f, 1.0f);
+    gGainLevel = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setGainEnabled(JNIEnv*, jobject, jboolean e) {
@@ -235,15 +241,15 @@ Java_com_gitaradistortion_MainActivity_setGainEnabled(JNIEnv*, jobject, jboolean
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setOverdriveGain(JNIEnv*, jobject, float v) {
-    gOverdriveGain = v.coerceIn(0.0f, 1.0f);
+    gOverdriveGain = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setOverdriveTone(JNIEnv*, jobject, float v) {
-    gOverdriveTone = v.coerceIn(0.0f, 1.0f);
+    gOverdriveTone = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setOverdriveLevel(JNIEnv*, jobject, float v) {
-    gOverdriveLevel = v.coerceIn(0.0f, 1.0f);
+    gOverdriveLevel = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setOverdriveEnabled(JNIEnv*, jobject, jboolean e) {
@@ -251,15 +257,15 @@ Java_com_gitaradistortion_MainActivity_setOverdriveEnabled(JNIEnv*, jobject, jbo
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDistortionGain(JNIEnv*, jobject, float v) {
-    gDistGain = v.coerceIn(0.0f, 1.0f);
+    gDistGain = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDistortionTone(JNIEnv*, jobject, float v) {
-    gDistTone = v.coerceIn(0.0f, 1.0f);
+    gDistTone = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDistortionLevel(JNIEnv*, jobject, float v) {
-    gDistLevel = v.coerceIn(0.0f, 1.0f);
+    gDistLevel = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDistortionEnabled(JNIEnv*, jobject, jboolean e) {
@@ -267,15 +273,15 @@ Java_com_gitaradistortion_MainActivity_setDistortionEnabled(JNIEnv*, jobject, jb
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setPhaserRate(JNIEnv*, jobject, float v) {
-    gPhaserRate = v.coerceIn(0.0f, 1.0f);
+    gPhaserRate = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setPhaserDepth(JNIEnv*, jobject, float v) {
-    gPhaserDepth = v.coerceIn(0.0f, 1.0f);
+    gPhaserDepth = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setPhaserMix(JNIEnv*, jobject, float v) {
-    gPhaserMix = v.coerceIn(0.0f, 1.0f);
+    gPhaserMix = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setPhaserEnabled(JNIEnv*, jobject, jboolean e) {
@@ -285,15 +291,15 @@ Java_com_gitaradistortion_MainActivity_setPhaserEnabled(JNIEnv*, jobject, jboole
 // ✅ PANEL 3 — DELAY + WAH-WAH
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDelayTime(JNIEnv*, jobject, float v) {
-    gDelayTime = v.coerceIn(0.1f, 0.8f);
+    gDelayTime = clampVal(v, 0.1f, 0.8f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDelayFeedback(JNIEnv*, jobject, float v) {
-    gDelayFeedback = v.coerceIn(0.1f, 0.6f);
+    gDelayFeedback = clampVal(v, 0.1f, 0.6f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDelayMix(JNIEnv*, jobject, float v) {
-    gDelayMix = v.coerceIn(0.0f, 0.8f);
+    gDelayMix = clampVal(v, 0.0f, 0.8f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setDelayEnabled(JNIEnv*, jobject, jboolean e) {
@@ -301,11 +307,11 @@ Java_com_gitaradistortion_MainActivity_setDelayEnabled(JNIEnv*, jobject, jboolea
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setWahFreq(JNIEnv*, jobject, float v) {
-    gWahFreq = v.coerceIn(0.0f, 1.0f);
+    gWahFreq = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setWahRange(JNIEnv*, jobject, float v) {
-    gWahRange = v.coerceIn(0.0f, 1.0f);
+    gWahRange = clampVal(v, 0.0f, 1.0f);
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_setWahEnabled(JNIEnv*, jobject, jboolean e) {
