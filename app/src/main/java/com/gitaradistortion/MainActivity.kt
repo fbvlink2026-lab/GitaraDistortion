@@ -1,13 +1,15 @@
 package com.gitaradistortion
 
 import android.Manifest
-import android.content.pm.PackageManager
+import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -15,7 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlin.math.*
 
-// 🎛️ PIHITAN — MAY SARILING LAKI AT PWEDE HILAHIN
+// 🎛️ BILOG NA PIHITAN
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
@@ -101,98 +103,9 @@ class KnobView(context: android.content.Context) : View(context) {
     }
 }
 
-// 🎛️ BAWAT EPEKTO — BUONG BAHAGI
-class FxView(
-    context: android.content.Context,
-    val icon: String,
-    val fxName: String,
-    val color: Int,
-    initValue: Float,
-    initSize: Int,
-    val onLevelChange: (Float) -> Unit,
-    val onEnableChange: (Boolean) -> Unit
-) : LinearLayout(context) {
-    
-    var currentSize = initSize
-        set(v) {
-            field = v.coerceIn(80, 150)
-            updateSize()
-        }
-    
-    var isEnabled = false
-    val knob: KnobView
-    val btnSwitch: Button
-    val txtLabel: TextView
-    val txtValue: TextView
-
-    init {
-        orientation = LinearLayout.VERTICAL
-        gravity = Gravity.CENTER
-        setPadding(4, 4, 4, 8)
-        setBackgroundColor(0xFF222222.toInt())
-        elevation = 4f
-
-        btnSwitch = Button(context)
-        btnSwitch.text = "⚪ OFF"
-        btnSwitch.setTextColor(Color.WHITE)
-        btnSwitch.setBackgroundColor(Color.parseColor("#444444"))
-        btnSwitch.textSize = 10f
-        btnSwitch.setPadding(2, 1, 2, 1)
-        btnSwitch.minWidth = 70
-        btnSwitch.setOnClickListener {
-            isEnabled = !isEnabled
-            btnSwitch.text = if (isEnabled) "🟢 ON" else "⚪ OFF"
-            btnSwitch.setBackgroundColor(if (isEnabled) color else Color.parseColor("#444444"))
-            onEnableChange(isEnabled)
-        }
-        addView(btnSwitch)
-
-        knob = KnobView(context)
-        knob.baseColor = color
-        knob.value = initValue
-        knob.onValueChange = { v ->
-            txtValue.text = "${(v * 100).toInt()}%"
-            onLevelChange(v)
-        }
-        addView(knob, LayoutParams(currentSize, currentSize))
-
-        txtLabel = TextView(context)
-        txtLabel.text = "$icon $fxName"
-        txtLabel.setTextColor(Color.WHITE)
-        txtLabel.textSize = 10f
-        txtLabel.gravity = Gravity.CENTER
-        txtLabel.setPadding(0, 3, 0, 1)
-        addView(txtLabel)
-
-        txtValue = TextView(context)
-        txtValue.text = "${(initValue * 100).toInt()}%"
-        txtValue.setTextColor(color)
-        txtValue.textSize = 11f
-        txtValue.gravity = Gravity.CENTER
-        addView(txtValue)
-
-        // ✅ HAWAKAN MO SA GILID → PICHIRIN PARA LAKIHAN/LIITAN
-        setOnLongClickListener {
-            Toast.makeText(context, "👉 HILAHIN PATAAS/PABABA = LAKI | HILAHIN KALIWA/KANAN = ILIPAT", Toast.LENGTH_LONG).show()
-            true
-        }
-    }
-
-    private fun updateSize() {
-        val lp = knob.layoutParams
-        lp.width = currentSize
-        lp.height = currentSize
-        knob.layoutParams = lp
-    }
-}
-
 class MainActivity : AppCompatActivity() {
     private var isOn = false
-    private lateinit var container: LinearLayout
-    private var draggedFx: FxView? = null
-    private var startX = 0f
-    private var startY = 0f
-    private var originalIndex = -1
+    private lateinit var prefs: SharedPreferences
 
     private external fun startAudioEngine(): Unit
     private external fun stopAudioEngine(): Unit
@@ -214,35 +127,43 @@ class MainActivity : AppCompatActivity() {
     private external fun setPhaserLevel(v: Float): Unit
     private external fun setPhaserEnabled(e: Boolean): Unit
 
-    // ✅ KAHULUGAN NG BAWAT EPEKTO
-    data class FxData(
+    data class FxDef(
+        val id: String,
         val icon: String,
         val name: String,
         val color: Int,
         val defValue: Float,
-        val defSize: Int,
+        val defaultPos: Int,
+        val defaultSizePercent: Int,
         val setLevel: (Float) -> Unit,
         val setEnabled: (Boolean) -> Unit
     )
 
-    // ✅ ORIHINAL NA AYOS — DALAWANG HANAY
     private val allFx = listOf(
-        // KALIWA
-        FxData("🔊", "VOLUME", 0xFFFF8822.toInt(), 0.75f, 110, { setVolumeLevel(it) }, { setVolumeEnabled(it) }),
-        FxData("🎵", "TONE", 0xFF44DD88.toInt(), 0.50f, 110, { setToneLevel(it) }, { setToneEnabled(it) }),
-        FxData("🌊", "REVERB", 0xFFAA66FF.toInt(), 0.25f, 100, { setReverbLevel(it) }, { setReverbEnabled(it) }),
-        FxData("🚧", "NOISE GATE", 0xFF66DDDD.toInt(), 0.04f, 100, { setNoiseGateLevel(it * 0.15f) }, { setNoiseGateEnabled(it) }),
-        // KANAN
-        FxData("⚡", "GAIN", 0xFFFFFF00.toInt(), 0.50f, 110, { setGainLevel(it * 2f) }, { setGainEnabled(it) }),
-        FxData("🔥", "OVERDRIVE", 0xFFFFAA00.toInt(), 0.00f, 110, { setOverdriveLevel(it) }, { setOverdriveEnabled(it) }),
-        FxData("💥", "DISTORTION", 0xFFFF4444.toInt(), 0.00f, 120, { setDistortionLevel(it) }, { setDistortionEnabled(it) }),
-        FxData("🫧", "PHASER", 0xFF44AAFF.toInt(), 0.00f, 100, { setPhaserLevel(it) }, { setPhaserEnabled(it) })
+        FxDef("VOL", "🔊", "VOLUME", 0xFFFF8822.toInt(), 0.75f, 1, 100, { setVolumeLevel(it) }, { setVolumeEnabled(it) }),
+        FxDef("TON", "🎵", "TONE", 0xFF44DD88.toInt(), 0.50f, 2, 100, { setToneLevel(it) }, { setToneEnabled(it) }),
+        FxDef("REV", "🌊", "REVERB", 0xFFAA66FF.toInt(), 0.25f, 3, 90, { setReverbLevel(it) }, { setReverbEnabled(it) }),
+        FxDef("NOI", "🚧", "NOISE GATE", 0xFF66DDDD.toInt(), 0.04f, 4, 90, { setNoiseGateLevel(it * 0.15f) }, { setNoiseGateEnabled(it) }),
+        FxDef("GAI", "⚡", "GAIN", 0xFFFFFF00.toInt(), 0.50f, 5, 100, { setGainLevel(it * 2f) }, { setGainEnabled(it) }),
+        FxDef("OVE", "🔥", "OVERDRIVE", 0xFFFFAA00.toInt(), 0.00f, 6, 100, { setOverdriveLevel(it) }, { setOverdriveEnabled(it) }),
+        FxDef("DIS", "💥", "DISTORTION", 0xFFFF4444.toInt(), 0.00f, 7, 110, { setDistortionLevel(it) }, { setDistortionEnabled(it) }),
+        FxDef("PHA", "🫧", "PHASER", 0xFF44AAFF.toInt(), 0.00f, 8, 90, { setPhaserLevel(it) }, { setPhaserEnabled(it) })
     )
+
+    private fun getPos(fx: FxDef): Int = prefs.getInt("POS_${fx.id}", fx.defaultPos)
+    private fun getSizePercent(fx: FxDef): Int = prefs.getInt("SZ_${fx.id}", fx.defaultSizePercent)
+    private fun savePos(fxId: String, pos: Int) = prefs.edit().putInt("POS_$fxId", pos).apply()
+    private fun saveSize(fxId: String, percent: Int) = prefs.edit().putInt("SZ_$fxId", percent).apply()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         System.loadLibrary("gitaradistortion")
+        prefs = getSharedPreferences("FxSettings", Context.MODE_PRIVATE)
 
+        rebuildUI()
+    }
+
+    private fun rebuildUI() {
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
@@ -250,56 +171,164 @@ class MainActivity : AppCompatActivity() {
         root.setPadding(8, 8, 8, 4)
 
         val title = TextView(this)
-        title.text = "🎸  HILAHIN MO PALIPAT-LIPAT! PICHIRIN PARA LAKIHAN! 🎸"
-        title.textSize = 13f
+        title.text = "🎸  GUITAR EFFECTS  🎸"
+        title.textSize = 20f
         title.setTextColor(0xFFFF9922.toInt())
         title.gravity = Gravity.CENTER
-        title.setPadding(0, 4, 0, 8)
+        title.setPadding(0, 4, 0, 4)
         root.addView(title)
 
-        // ✅ LALAGYAN NG LAHAT NG EPEKTO — DALAWANG HANAY
-        container = LinearLayout(this)
-        container.orientation = LinearLayout.HORIZONTAL
-        container.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        val hint = TextView(this)
+        hint.text = "📝 Ilagay: PUWESTO(1-8) | LAKI%(80-120) → I-SAVE → I-RESTART ANG APP"
+        hint.textSize = 10f
+        hint.setTextColor(0xFFAAAAAA.toInt())
+        hint.gravity = Gravity.CENTER
+        hint.setPadding(0, 0, 0, 8)
+        root.addView(hint)
+
+        val sortedFx = allFx.sortedBy { getPos(it) }
+
+        fun makeEffectView(fx: FxDef): LinearLayout {
+            val col = LinearLayout(this)
+            col.orientation = LinearLayout.VERTICAL
+            col.gravity = Gravity.CENTER
+            col.setPadding(4, 4, 4, 8)
+            col.setBackgroundColor(0xFF222222.toInt())
+
+            val szPercent = getSizePercent(fx)
+            val knobSize = (85 * szPercent / 100).coerceIn(70, 115)
+
+            val btnSwitch = Button(this)
+            btnSwitch.text = "⚪ OFF"
+            btnSwitch.setTextColor(Color.WHITE)
+            btnSwitch.setBackgroundColor(Color.parseColor("#444444"))
+            btnSwitch.textSize = 10f
+            btnSwitch.setPadding(2, 1, 2, 1)
+            btnSwitch.minWidth = 65
+            var isEffectOn = false
+            btnSwitch.setOnClickListener {
+                isEffectOn = !isEffectOn
+                btnSwitch.text = if (isEffectOn) "🟢 ON" else "⚪ OFF"
+                btnSwitch.setBackgroundColor(if (isEffectOn) fx.color else Color.parseColor("#444444"))
+                fx.setEnabled(isEffectOn)
+            }
+            col.addView(btnSwitch)
+
+            val knob = KnobView(this)
+            knob.baseColor = fx.color
+            knob.value = fx.defValue
+            val txtVal = TextView(this)
+            txtVal.text = "${(fx.defValue * 100).toInt()}%"
+            txtVal.setTextColor(fx.color)
+            txtVal.textSize = 11f
+            txtVal.gravity = Gravity.CENTER
+            knob.onValueChange = { v ->
+                txtVal.text = "${(v * 100).toInt()}%"
+                fx.setLevel(v)
+            }
+            col.addView(knob, LinearLayout.LayoutParams(knobSize, knobSize))
+
+            val txtLabel = TextView(this)
+            txtLabel.text = "${fx.icon} ${fx.name}"
+            txtLabel.setTextColor(Color.WHITE)
+            txtLabel.textSize = 10f
+            txtLabel.gravity = Gravity.CENTER
+            txtLabel.setPadding(0, 2, 0, 1)
+            col.addView(txtLabel)
+
+            val txtSize = TextView(this)
+            txtSize.text = "Laki: $szPercent%"
+            txtSize.setTextColor(0xFF888888.toInt())
+            txtSize.textSize = 9f
+            txtSize.gravity = Gravity.CENTER
+            col.addView(txtSize)
+
+            val rowInput = LinearLayout(this)
+            rowInput.orientation = LinearLayout.HORIZONTAL
+            rowInput.gravity = Gravity.CENTER
+            rowInput.setPadding(2, 2, 2, 2)
+
+            val etPos = EditText(this)
+            etPos.hint = "Pwesto"
+            etPos.setText("${getPos(fx)}")
+            etPos.textSize = 10f
+            etPos.setTextColor(Color.WHITE)
+            etPos.setHintTextColor(0xFF666666.toInt())
+            etPos.setBackgroundColor(0xFF333333.toInt())
+            etPos.setPadding(4, 0, 4, 0)
+            etPos.minWidth = 45
+            etPos.gravity = Gravity.CENTER
+            rowInput.addView(etPos)
+
+            val etSz = EditText(this)
+            etSz.hint = "Laki%"
+            etSz.setText("$szPercent")
+            etSz.textSize = 10f
+            etSz.setTextColor(Color.WHITE)
+            etSz.setHintTextColor(0xFF666666.toInt())
+            etSz.setBackgroundColor(0xFF333333.toInt())
+            etSz.setPadding(4, 0, 4, 0)
+            etSz.minWidth = 45
+            etSz.gravity = Gravity.CENTER
+            rowInput.addView(etSz)
+
+            val btnSave = Button(this)
+            btnSave.text = "✓"
+            btnSave.textSize = 10f
+            btnSave.setTextColor(Color.WHITE)
+            btnSave.setBackgroundColor(0xFF226622.toInt())
+            btnSave.setPadding(6, 0, 6, 0)
+            btnSave.minWidth = 35
+            btnSave.setOnClickListener {
+                val newPos = etPos.text.toString().toIntOrNull()
+                val newSz = etSz.text.toString().toIntOrNull()
+                if (newPos != null && newPos in 1..8 && newSz != null && newSz in 80..120) {
+                    savePos(fx.id, newPos)
+                    saveSize(fx.id, newSz)
+                    Toast.makeText(this, "✅ NAI-SAVE! I-RESTART ANG APP!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "⚠️ PUWESTO: 1-8 | LAKI: 80-120", Toast.LENGTH_SHORT).show()
+                }
+            }
+            rowInput.addView(btnSave)
+
+            col.addView(rowInput)
+            return col
+        }
 
         val colLeft = LinearLayout(this)
         colLeft.orientation = LinearLayout.VERTICAL
         colLeft.gravity = Gravity.CENTER
         colLeft.setPadding(4, 0, 4, 0)
+        sortedFx.take(4).forEach { colLeft.addView(makeEffectView(it)) }
 
         val colRight = LinearLayout(this)
         colRight.orientation = LinearLayout.VERTICAL
         colRight.gravity = Gravity.CENTER
         colRight.setPadding(4, 0, 4, 0)
+        sortedFx.drop(4).forEach { colRight.addView(makeEffectView(it)) }
 
-        // ✅ ILAGAY SA DALAWANG HANAY
-        allFx.take(4).forEach { data ->
-            val fx = FxView(this, data.icon, data.name, data.color, data.defValue, data.defSize, data.setLevel, data.setEnabled)
-            colLeft.addView(fx)
-        }
-        allFx.drop(4).forEach { data ->
-            val fx = FxView(this, data.icon, data.name, data.color, data.defValue, data.defSize, data.setLevel, data.setEnabled)
-            colRight.addView(fx)
-        }
-
-        container.addView(colLeft)
-        container.addView(colRight)
-        root.addView(container)
+        val twoCols = LinearLayout(this)
+        twoCols.orientation = LinearLayout.HORIZONTAL
+        twoCols.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        twoCols.addView(colLeft)
+        twoCols.addView(colRight)
+        root.addView(twoCols)
 
         val statusText = TextView(this)
-        statusText.text = "👉 HAWAKAN NG MATAGAL → HILAHIN = ILIPAT | PATAAS/PABABA = LAKIHAN/LIITAN"
-        statusText.textSize = 10f
-        statusText.setTextColor(0xFFAAAAAA.toInt())
+        statusText.text = "🔴 NAKA-OFF — Isaksak ang iRig bago mag-ON"
+        statusText.textSize = 12f
+        statusText.setTextColor(0xFFFF6666.toInt())
         statusText.gravity = Gravity.CENTER
         statusText.setPadding(0, 4, 0, 4)
         root.addView(statusText)
 
         val btn = Button(this)
         btn.text = "🔘  POWER"
-        btn.textSize = 18f
+        btn.textSize = 16f
         btn.setBackgroundColor(0xFF228833.toInt())
         btn.setTextColor(Color.WHITE)
-        btn.setPadding(60, 12, 60, 12)
+        btn.setPadding(50, 10, 50, 10)
         btn.setOnClickListener {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
