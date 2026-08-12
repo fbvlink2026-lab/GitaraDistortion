@@ -1,212 +1,342 @@
-#include <jni.h>
-#include <android/log.h>
 #include <oboe/Oboe.h>
 #include <cmath>
+#include <jni.h>
+#include <android/log.h>
 
-#define LOG_TAG "GITARA"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "GITARA", __VA_ARGS__)
 
-// ✅ ANTAS NG BAWAT EPEKTO
-static float gVolumeLevel    = 0.75f;
-static float gToneLevel      = 0.50f;
-static float gReverbLevel    = 0.25f;
-static float gNoiseGateLevel = 0.04f;
-static float gGainLevel      = 1.00f;
-static float gOverdriveLevel = 0.00f;
-static float gDistortionLevel= 0.00f;
-static float gPhaserLevel    = 0.00f;
+// ✅ MASTER
+static float gMasterVolume = 0.75f;
 
-// ✅ ON/OFF — KAPAG NAKA-OFF = WALANG DUMADAAN!
-static bool gEnableVolume    = true;
-static bool gEnableTone      = false;  // ✅ NAKA-OFF MUNA
-static bool gEnableReverb    = false;  // ✅ NAKA-OFF MUNA
-static bool gEnableNoiseGate = true;
-static bool gEnableGain      = false;
-static bool gEnableOverdrive = false;
-static bool gEnableDistortion= false;
-static bool gEnablePhaser    = false;
+// ✅ PANEL 1
+static float gVolume = 0.5f;
+static bool gVolumeEnabled = false;
+static float gTone = 0.5f;
+static bool gToneEnabled = false;
+static float gReverbMix = 0.25f;
+static float gReverbDecay = 0.5f;
+static bool gReverbEnabled = false;
+static float gGateThresh = 0.04f;
+static float gGateRelease = 0.5f;
+static bool gGateEnabled = false;
 
-// ✅ MGA BUFFER
-static float prevLpf = 0.0f;
-static const int REVERB_LENGTH = 800;
-static float reverbBuffer[REVERB_LENGTH] = {0};
-static int reverbIndex = 0;
-static const float REVERB_DECAY = 0.55f;
+// ✅ PANEL 2
+static float gGainDrive = 0.5f;
+static float gGainLevel = 0.5f;
+static bool gGainEnabled = false;
+static float gOverdriveGain = 0.0f;
+static float gOverdriveTone = 0.5f;
+static float gOverdriveLevel = 0.5f;
+static bool gOverdriveEnabled = false;
+static float gDistGain = 0.0f;
+static float gDistTone = 0.5f;
+static float gDistLevel = 0.5f;
+static bool gDistEnabled = false;
+static float gPhaserRate = 0.5f;
+static float gPhaserDepth = 0.5f;
+static float gPhaserMix = 0.3f;
+static bool gPhaserEnabled = false;
 
-static const int PHASER_STAGES = 6;
-static float phaserBuffer[PHASER_STAGES][200] = {{0}};
-static int phaserPos[PHASER_STAGES] = {0};
-static float phaserLfo = 0.0f;
-static const float PHASER_LFO_SPEED = 0.08f;
+// ✅ PANEL 3 — DELAY + WAH-WAH
+static float gDelayTime = 0.35f;
+static float gDelayFeedback = 0.21f;
+static float gDelayMix = 0.3f;
+static bool gDelayEnabled = false;
+static float gWahFreq = 0.5f;
+static float gWahRange = 0.5f;
+static bool gWahEnabled = false;
 
-static float sharedBuffer[2048];
-static std::atomic<bool> hasNewData{false};
-static std::mutex bufferMutex;
+// ✅ BUFFER AT ESTADO
+static float delayBuffer[48000] = {0.0f};
+static int delayIndex = 0;
+static float prevGate = 0.0f;
+static float reverbBuffer[2][24000] = {{0.0f},{0.0f}};
+static int reverbPos = 0;
+static float wahPhase = 0.0f;
+static float lastWah = 0.0f;
+static float phaserPhase = 0.0f;
 
-static std::shared_ptr<oboe::AudioStream> inputStream;
-static std::shared_ptr<oboe::AudioStream> outputStream;
+static std::shared_ptr<oboe::AudioStream> stream;
 
-class InputCallback : public oboe::AudioStreamCallback {
-public:
-    oboe::DataCallbackResult onAudioReady(
-        oboe::AudioStream*, void* data, int32_t numFrames) override {
-        float* in = static_cast<float*>(data);
-        std::lock_guard<std::mutex> lock(bufferMutex);
-        int count = numFrames < 2048 ? numFrames : 2048;
-        for (int i = 0; i < count; i++) sharedBuffer[i] = in[i];
-        hasNewData = true;
-        return oboe::DataCallbackResult::Continue;
-    }
-};
-
-// ✅ TAMANG DALUYAN — KAPAG NAKA-OFF = WALANG DUMADAAN!
-class OutputCallback : public oboe::AudioStreamCallback {
+class DistortionCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
         oboe::AudioStream*, void* data, int32_t numFrames) override {
         
-        float* out = static_cast<float*>(data);
-        std::lock_guard<std::mutex> lock(bufferMutex);
-
-        float alpha = gToneLevel * 0.85f + 0.05f;
-        phaserLfo += PHASER_LFO_SPEED;
-
+        float* buffer = static_cast<float*>(data);
+        
         for (int i = 0; i < numFrames; i++) {
-            float input = 0.0f;
-            if (hasNewData && i < 2048) input = sharedBuffer[i];
+            float input = buffer[i];
 
-            // 🚧 NOISE GATE — KAPAG NAKA-ON LANG
-            if (gEnableNoiseGate && std::fabs(input) < gNoiseGateLevel) input = 0.0f;
-
-            float proc = input;
-
-            // ⚡ GAIN — KAPAG NAKA-ON LANG
-            if (gEnableGain) proc *= gGainLevel;
-
-            // 🔥 OVERDRIVE — KAPAG NAKA-ON LANG
-            if (gEnableOverdrive && gOverdriveLevel > 0.01f) {
-                float drive = 1.0f + gOverdriveLevel * 3.0f;
-                proc = std::sin(proc * drive) * (1.0f - gOverdriveLevel * 0.3f) + proc * gOverdriveLevel * 0.3f;
-            }
-
-            // 💥 DISTORTION — KAPAG NAKA-ON LANG
-            if (gEnableDistortion && gDistortionLevel > 0.01f) {
-                float drive = 1.0f + gDistortionLevel * 4.0f;
-                proc = std::tanh(proc * drive);
-            }
-
-            // 🎵 TONE — KAPAG NAKA-ON LANG
-            if (gEnableTone) {
-                float lpf = alpha * prevLpf + (1.0f - alpha) * proc;
-                float hpf = proc - lpf;
-                proc = lpf * (1.0f - gToneLevel) * 1.8f + hpf * gToneLevel * 1.2f;
-                prevLpf = lpf;
-            }
-
-            // 🫧 PHASER — KAPAG NAKA-ON LANG
-            if (gEnablePhaser && gPhaserLevel > 0.01f) {
-                float lfo = (std::sin(phaserLfo) + 1.0f) * 0.4f + 0.1f;
-                float wet = proc;
-                for (int s = 0; s < PHASER_STAGES; s++) {
-                    int delay = (int)(lfo * 40.0f) + 5;
-                    phaserBuffer[s][phaserPos[s]] = wet;
-                    int read = (phaserPos[s] - delay + 200) % 200;
-                    float dly = phaserBuffer[s][read];
-                    wet = wet * 0.7f + dly * 0.3f;
-                    phaserPos[s] = (phaserPos[s] + 1) % 200;
+            // === NOISE GATE ===
+            if (gGateEnabled) {
+                float level = fabs(input);
+                float threshold = gGateThresh * 0.3f;
+                if (level < threshold) {
+                    prevGate *= 1.0f - gGateRelease * 0.05f;
+                    input *= prevGate;
+                } else {
+                    prevGate = fmin(prevGate + 0.08f, 1.0f);
+                    input *= prevGate;
                 }
-                proc = proc * (1.0f - gPhaserLevel) + wet * gPhaserLevel;
             }
 
-            // 🌊 REVERB — KAPAG NAKA-ON LANG
-            if (gEnableReverb) {
-                float reverbOut = reverbBuffer[reverbIndex];
-                reverbBuffer[reverbIndex] = proc + reverbOut * REVERB_DECAY;
-                reverbIndex = (reverbIndex + 1) % REVERB_LENGTH;
-                proc = proc * (1.0f - gReverbLevel) + reverbOut * gReverbLevel * 0.5f;
+            // === VOLUME ===
+            if (gVolumeEnabled) input *= (0.2f + gVolume * 1.8f);
+
+            // === TONE ===
+            if (gToneEnabled) {
+                static float last = 0.0f;
+                float alpha = 0.02f + gTone * 0.18f;
+                input = alpha * input + (1.0f - alpha) * last;
+                last = input;
             }
 
-            // 🔊 VOLUME — KAPAG NAKA-ON LANG
-            if (gEnableVolume) proc *= gVolumeLevel * 0.95f;
+            // === GAIN ===
+            if (gGainEnabled) input *= (0.5f + gGainDrive * 3.5f) * (0.3f + gGainLevel * 0.7f);
 
-            out[i] = proc;
+            // === OVERDRIVE ===
+            if (gOverdriveEnabled && gOverdriveGain > 0.01f) {
+                float drive = 1.0f + gOverdriveGain * 4.0f;
+                input = tanhf(input * drive) / drive;
+                static float odLast = 0.0f;
+                float odAlpha = 0.05f + gOverdriveTone * 0.15f;
+                input = odAlpha * input + (1.0f - odAlpha) * odLast;
+                odLast = input;
+                input *= (0.3f + gOverdriveLevel * 0.7f);
+            }
+
+            // === DISTORTION ===
+            if (gDistEnabled && gDistGain > 0.01f) {
+                float drive = 1.0f + gDistGain * 5.0f;
+                input = input < -1.0f/drive ? -1.0f : 
+                        input > 1.0f/drive ? 1.0f : sinf(input * drive * M_PI) / drive;
+                static float distLast = 0.0f;
+                float dAlpha = 0.05f + gDistTone * 0.15f;
+                input = dAlpha * input + (1.0f - dAlpha) * distLast;
+                distLast = input;
+                input *= (0.3f + gDistLevel * 0.7f);
+            }
+
+            // === PHASER ===
+            if (gPhaserEnabled && gPhaserMix > 0.01f) {
+                phaserPhase += 0.001f + gPhaserRate * 0.005f;
+                if (phaserPhase > (float)M_PI * 2.0f) phaserPhase -= (float)M_PI * 2.0f;
+                float lfo = sinf(phaserPhase) * gPhaserDepth;
+                float delayed = sinf(input * 4.0f + lfo);
+                input = input * (1.0f - gPhaserMix) + delayed * gPhaserMix * 0.5f;
+            }
+
+            // === WAH-WAH ===
+            if (gWahEnabled) {
+                float baseFreq = 200.0f + gWahFreq * 1800.0f;
+                float range = gWahRange * 800.0f;
+                wahPhase += 2.0f * (float)M_PI * 0.5f / 44100.0f;
+                float lfo = (sinf(wahPhase) + 1.0f) * 0.5f;
+                float cutoff = baseFreq + lfo * range;
+                float alpha = cutoff / 22050.0f;
+                input = alpha * input + (1.0f - alpha) * lastWah;
+                lastWah = input;
+            }
+
+            // === DELAY / ECHO ===
+            if (gDelayEnabled) {
+                int delaySamples = (int)(gDelayTime * 44100.0f);
+                float delayed = delayBuffer[(delayIndex - delaySamples + 48000) % 48000];
+                float dry = input;
+                input = dry * (1.0f - gDelayMix) + delayed * gDelayMix;
+                delayBuffer[delayIndex] = dry + delayed * gDelayFeedback;
+                delayIndex = (delayIndex + 1) % 48000;
+            }
+
+            // === REVERB ===
+            if (gReverbEnabled && gReverbMix > 0.01f) {
+                int d1 = (int)(gReverbDecay * 8000.0f) + 1000;
+                float fb = gReverbDecay * 0.5f;
+                float rv = reverbBuffer[0][(reverbPos - d1 + 24000) % 24000];
+                reverbBuffer[0][reverbPos] = input + rv * fb;
+                float outRv = reverbBuffer[0][(reverbPos - d1/2 + 24000) % 24000];
+                input = input * (1.0f - gReverbMix) + outRv * gReverbMix;
+                reverbPos = (reverbPos + 1) % 24000;
+            }
+
+            // === MASTER VOLUME ===
+            input *= gMasterVolume;
+
+            // I-saferi para hindi pumutok ang tunog
+            buffer[i] = input > 1.0f ? 1.0f : input < -1.0f ? -1.0f : input;
         }
-        hasNewData = false;
         return oboe::DataCallbackResult::Continue;
     }
 };
 
-static InputCallback inputCallback;
-static OutputCallback outputCallback;
+static DistortionCallback callback;
 
+// ✅ MASTER
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setMasterVolume(JNIEnv*, jobject, float v) {
+    gMasterVolume = v.coerceIn(0.05f, 1.0f);
+}
+
+// ✅ PANEL 1
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setVolumeLevel(JNIEnv*, jobject, float v) {
+    gVolume = v;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setVolumeEnabled(JNIEnv*, jobject, jboolean e) {
+    gVolumeEnabled = e;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setToneLevel(JNIEnv*, jobject, float v) {
+    gTone = v;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setToneEnabled(JNIEnv*, jobject, jboolean e) {
+    gToneEnabled = e;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setReverbMix(JNIEnv*, jobject, float v) {
+    gReverbMix = v.coerceIn(0.0f, 0.8f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setReverbDecay(JNIEnv*, jobject, float v) {
+    gReverbDecay = v.coerceIn(0.1f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setReverbEnabled(JNIEnv*, jobject, jboolean e) {
+    gReverbEnabled = e;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setNoiseGateThresh(JNIEnv*, jobject, float v) {
+    gGateThresh = v.coerceIn(0.0f, 0.5f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setNoiseGateRelease(JNIEnv*, jobject, float v) {
+    gGateRelease = v.coerceIn(0.1f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setNoiseGateEnabled(JNIEnv*, jobject, jboolean e) {
+    gGateEnabled = e;
+}
+
+// ✅ PANEL 2
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setGainDrive(JNIEnv*, jobject, float v) {
+    gGainDrive = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setGainLevel(JNIEnv*, jobject, float v) {
+    gGainLevel = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setGainEnabled(JNIEnv*, jobject, jboolean e) {
+    gGainEnabled = e;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setOverdriveGain(JNIEnv*, jobject, float v) {
+    gOverdriveGain = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setOverdriveTone(JNIEnv*, jobject, float v) {
+    gOverdriveTone = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setOverdriveLevel(JNIEnv*, jobject, float v) {
+    gOverdriveLevel = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setOverdriveEnabled(JNIEnv*, jobject, jboolean e) {
+    gOverdriveEnabled = e;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDistortionGain(JNIEnv*, jobject, float v) {
+    gDistGain = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDistortionTone(JNIEnv*, jobject, float v) {
+    gDistTone = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDistortionLevel(JNIEnv*, jobject, float v) {
+    gDistLevel = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDistortionEnabled(JNIEnv*, jobject, jboolean e) {
+    gDistEnabled = e;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setPhaserRate(JNIEnv*, jobject, float v) {
+    gPhaserRate = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setPhaserDepth(JNIEnv*, jobject, float v) {
+    gPhaserDepth = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setPhaserMix(JNIEnv*, jobject, float v) {
+    gPhaserMix = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setPhaserEnabled(JNIEnv*, jobject, jboolean e) {
+    gPhaserEnabled = e;
+}
+
+// ✅ PANEL 3 — DELAY + WAH-WAH
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDelayTime(JNIEnv*, jobject, float v) {
+    gDelayTime = v.coerceIn(0.1f, 0.8f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDelayFeedback(JNIEnv*, jobject, float v) {
+    gDelayFeedback = v.coerceIn(0.1f, 0.6f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDelayMix(JNIEnv*, jobject, float v) {
+    gDelayMix = v.coerceIn(0.0f, 0.8f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setDelayEnabled(JNIEnv*, jobject, jboolean e) {
+    gDelayEnabled = e;
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setWahFreq(JNIEnv*, jobject, float v) {
+    gWahFreq = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setWahRange(JNIEnv*, jobject, float v) {
+    gWahRange = v.coerceIn(0.0f, 1.0f);
+}
+extern "C" JNIEXPORT void JNICALL
+Java_com_gitaradistortion_MainActivity_setWahEnabled(JNIEnv*, jobject, jboolean e) {
+    gWahEnabled = e;
+}
+
+// ✅ SIMULA AT TIGIL
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
-    if (inputStream || outputStream) return;
-
-    // ✅ I-LOCK SA USB/AUDIO INTERFACE — KUNG MAY NAKAKONEKTA (iRig)
     oboe::AudioStreamBuilder builder;
-    builder.setDirection(oboe::Direction::Input)
-           ->setSampleRate(48000)
-           ->setFormat(oboe::AudioFormat::Float)
-           ->setChannelCount(1)
-           ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-           ->setCallback(&inputCallback);
-
-    auto result = builder.openStream(inputStream);
-    if (result != oboe::Result::OK) {
-        LOGI("❌ INPUT ERROR: %s", oboe::convertToText(result));
-        return;
+    builder.setDirection(oboe::Direction::InputOutput);
+    builder.setSampleRate(44100);
+    builder.setChannelCount(1);
+    builder.setFormat(oboe::AudioFormat::Float);
+    builder.setPerformanceMode(oboe::PerformanceMode::LowLatency);
+    builder.setDataCallback(&callback);
+    
+    oboe::Result res = builder.openStream(stream);
+    if (res == oboe::Result::OK && stream) {
+        stream->requestStart();
+        LOGI("✅ AUDIO ENGINE NAKABUKAS!");
+    } else {
+        LOGI("❌ HINDI MAKABUKAS NG AUDIO STREAM");
     }
-
-    builder.setDirection(oboe::Direction::Output)->setCallback(&outputCallback);
-    result = builder.openStream(outputStream);
-    if (result != oboe::Result::OK) {
-        LOGI("❌ OUTPUT ERROR: %s", oboe::convertToText(result));
-        return;
-    }
-
-    inputStream->requestStart();
-    outputStream->requestStart();
-    LOGI("✅ GUMAGANA! Isaksak ang gitara sa iRig!");
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
-    if (inputStream) { inputStream->stop(); inputStream->close(); inputStream.reset(); }
-    if (outputStream) { outputStream->stop(); outputStream->close(); outputStream.reset(); }
-    prevLpf = phaserLfo = reverbIndex = 0;
-    for (int i = 0; i < REVERB_LENGTH; i++) reverbBuffer[i] = 0;
-    for (int s = 0; s < PHASER_STAGES; s++) {
-        for (int i = 0; i < 200; i++) phaserBuffer[s][i] = 0;
-        phaserPos[s] = 0;
+    if (stream) {
+        stream->requestStop();
+        stream->close();
+        stream.reset();
     }
-    hasNewData = false;
 }
-
-// ✅ ITAKDA ANG ANTAS
-#define SET_LEVEL(NAME) \
-extern "C" JNIEXPORT void JNICALL \
-Java_com_gitaradistortion_MainActivity_set##NAME##Level(JNIEnv*, jobject, jfloat v) { g##NAME##Level = v; }
-
-// ✅ ITUKA ANG ON/OFF
-#define SET_SWITCH(NAME) \
-extern "C" JNIEXPORT void JNICALL \
-Java_com_gitaradistortion_MainActivity_set##NAME##Enabled(JNIEnv*, jobject, jboolean e) { gEnable##NAME = (e != JNI_FALSE); }
-
-SET_LEVEL(Volume)
-SET_LEVEL(Tone)
-SET_LEVEL(Reverb)
-SET_LEVEL(NoiseGate)
-SET_LEVEL(Gain)
-SET_LEVEL(Overdrive)
-SET_LEVEL(Distortion)
-SET_LEVEL(Phaser)
-
-SET_SWITCH(Volume)
-SET_SWITCH(Tone)
-SET_SWITCH(Reverb)
-SET_SWITCH(NoiseGate)
-SET_SWITCH(Gain)
-SET_SWITCH(Overdrive)
-SET_SWITCH(Distortion)
-SET_SWITCH(Phaser)
