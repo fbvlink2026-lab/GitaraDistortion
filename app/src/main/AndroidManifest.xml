@@ -13,8 +13,9 @@
         android:icon="@android:drawable/sym_def_app_icon"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
+        <!-- ✅ LOADING SCREEN — UNANG BUBUKAS! -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -22,5 +23,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- ✅ PANGUNAHING SCREEN — HINDI NA UNANG BUBUKAS -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
     </application>
 </manifest>
