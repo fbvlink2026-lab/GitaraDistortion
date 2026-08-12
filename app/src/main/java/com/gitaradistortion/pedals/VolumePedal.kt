@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+// ✅ TUKUYIN ANG TAMANG LUGAR — NAKITA NA!
 import com.gitaradistortion.KnobView
 
 class VolumePedal {
@@ -47,7 +48,6 @@ class VolumePedal {
         val knob = KnobView(ctx)
         knob.baseColor = 0xFFFF8822.toInt()
         knob.value = level
-        // ✅ BASAHIN DIREKTA ANG HALAGA — WALANG PARAMETER! WALANG ERROR!
         knob.onValueChange = {
             level = knob.value
             onLevelChanged?.invoke(level)
