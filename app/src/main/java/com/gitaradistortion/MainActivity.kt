@@ -168,22 +168,22 @@ class MainActivity : AppCompatActivity() {
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
         root.gravity = Gravity.CENTER_HORIZONTAL
-        root.setPadding(12, 12, 12, 8)
+        root.setPadding(8, 8, 8, 4)
 
         val title = TextView(this)
         title.text = "🎸  GUITAR EFFECTS  🎸"
-        title.textSize = 24f
+        title.textSize = 20f
         title.setTextColor(0xFFFF9922.toInt())
         title.gravity = Gravity.CENTER
-        title.setPadding(0, 4, 0, 8)
+        title.setPadding(0, 4, 0, 4)
         root.addView(title)
 
         val hint = TextView(this)
-        hint.text = "📝 PUWESTO: 1-8  |  LAKI: 80-120  → I-SAVE → I-RESTART"
-        hint.textSize = 11f
+        hint.text = "PUWESTO:1-8 | LAKI:80-120 → I-SAVE → I-RESTART"
+        hint.textSize = 10f
         hint.setTextColor(0xFFAAAAAA.toInt())
         hint.gravity = Gravity.CENTER
-        hint.setPadding(0, 0, 0, 12)
+        hint.setPadding(0, 0, 0, 6)
         root.addView(hint)
 
         val sortedFx = allFx.sortedBy { getPos(it) }
@@ -192,19 +192,19 @@ class MainActivity : AppCompatActivity() {
             val col = LinearLayout(this)
             col.orientation = LinearLayout.VERTICAL
             col.gravity = Gravity.CENTER
-            col.setPadding(8, 8, 8, 12)
+            col.setPadding(6, 6, 6, 8)
             col.setBackgroundColor(0xFF1E1E1E.toInt())
 
             val szPercent = getSizePercent(fx)
-            val knobSize = (90 * szPercent / 100).coerceIn(75, 120)
+            val knobSize = (85 * szPercent / 100).coerceIn(70, 110)
 
             val btnSwitch = Button(this)
             btnSwitch.text = "⚪ OFF"
             btnSwitch.setTextColor(Color.WHITE)
             btnSwitch.setBackgroundColor(Color.parseColor("#444444"))
-            btnSwitch.textSize = 11f
-            btnSwitch.setPadding(6, 2, 6, 2)
-            btnSwitch.minWidth = 80
+            btnSwitch.textSize = 10f
+            btnSwitch.setPadding(4, 1, 4, 1)
+            btnSwitch.minWidth = 70
             var isEffectOn = false
             btnSwitch.setOnClickListener {
                 isEffectOn = !isEffectOn
@@ -220,7 +220,7 @@ class MainActivity : AppCompatActivity() {
             val txtVal = TextView(this)
             txtVal.text = "${(fx.defValue * 100).toInt()}%"
             txtVal.setTextColor(fx.color)
-            txtVal.textSize = 12f
+            txtVal.textSize = 11f
             txtVal.gravity = Gravity.CENTER
             knob.onValueChange = { v ->
                 txtVal.text = "${(v * 100).toInt()}%"
@@ -231,66 +231,66 @@ class MainActivity : AppCompatActivity() {
             val txtLabel = TextView(this)
             txtLabel.text = "${fx.icon} ${fx.name}"
             txtLabel.setTextColor(Color.WHITE)
-            txtLabel.textSize = 12f
+            txtLabel.textSize = 10f
             txtLabel.gravity = Gravity.CENTER
-            txtLabel.setPadding(0, 4, 0, 1)
+            txtLabel.setPadding(0, 2, 0, 1)
             col.addView(txtLabel)
 
             val txtSize = TextView(this)
-            txtSize.text = "Laki: $szPercent%"
+            txtSize.text = "$szPercent%"
             txtSize.setTextColor(0xFF888888.toInt())
-            txtSize.textSize = 10f
+            txtSize.textSize = 9f
             txtSize.gravity = Gravity.CENTER
-            txtSize.setPadding(0, 0, 0, 6)
+            txtSize.setPadding(0, 0, 0, 4)
             col.addView(txtSize)
 
             val rowInput = LinearLayout(this)
             rowInput.orientation = LinearLayout.HORIZONTAL
             rowInput.gravity = Gravity.CENTER
-            rowInput.setPadding(4, 4, 4, 4)
+            rowInput.setPadding(3, 2, 3, 2)
             rowInput.setBackgroundColor(0xFF2A2A2A.toInt())
 
             val etPos = EditText(this)
-            etPos.hint = "P#"
+            etPos.hint = "#"
             etPos.setText("${getPos(fx)}")
-            etPos.textSize = 12f
+            etPos.textSize = 11f
             etPos.setTextColor(Color.WHITE)
             etPos.setHintTextColor(0xFF666666.toInt())
             etPos.setBackgroundColor(0xFF383838.toInt())
-            etPos.setPadding(8, 4, 8, 4)
-            etPos.minWidth = 50
-            etPos.maxWidth = 50
+            etPos.setPadding(4, 2, 4, 2)
+            etPos.minWidth = 36
+            etPos.maxWidth = 36
             etPos.gravity = Gravity.CENTER
             rowInput.addView(etPos)
 
             val space = TextView(this)
-            space.minWidth = 12
+            space.minWidth = 6
             rowInput.addView(space)
 
             val etSz = EditText(this)
             etSz.hint = "%"
             etSz.setText("$szPercent")
-            etSz.textSize = 12f
+            etSz.textSize = 11f
             etSz.setTextColor(Color.WHITE)
             etSz.setHintTextColor(0xFF666666.toInt())
             etSz.setBackgroundColor(0xFF383838.toInt())
-            etSz.setPadding(8, 4, 8, 4)
-            etSz.minWidth = 50
-            etSz.maxWidth = 50
+            etSz.setPadding(4, 2, 4, 2)
+            etSz.minWidth = 36
+            etSz.maxWidth = 36
             etSz.gravity = Gravity.CENTER
             rowInput.addView(etSz)
 
             val space2 = TextView(this)
-            space2.minWidth = 10
+            space2.minWidth = 4
             rowInput.addView(space2)
 
             val btnSave = Button(this)
             btnSave.text = "✓"
-            btnSave.textSize = 12f
+            btnSave.textSize = 11f
             btnSave.setTextColor(Color.WHITE)
             btnSave.setBackgroundColor(0xFF227733.toInt())
-            btnSave.setPadding(10, 2, 10, 2)
-            btnSave.minWidth = 40
+            btnSave.setPadding(6, 1, 6, 1)
+            btnSave.minWidth = 30
             btnSave.setOnClickListener {
                 val newPos = etPos.text.toString().toIntOrNull()
                 val newSz = etSz.text.toString().toIntOrNull()
@@ -299,7 +299,7 @@ class MainActivity : AppCompatActivity() {
                     saveSize(fx.id, newSz)
                     Toast.makeText(this, "✅ NAI-SAVE! I-RESTART ANG APP!", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "⚠️ PUWESTO: 1-8 | LAKI: 80-120", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "⚠️ PUWESTO:1-8 | LAKI:80-120", Toast.LENGTH_SHORT).show()
                 }
             }
             rowInput.addView(btnSave)
@@ -311,13 +311,13 @@ class MainActivity : AppCompatActivity() {
         val colLeft = LinearLayout(this)
         colLeft.orientation = LinearLayout.VERTICAL
         colLeft.gravity = Gravity.CENTER
-        colLeft.setPadding(6, 0, 6, 0)
+        colLeft.setPadding(4, 0, 4, 0)
         sortedFx.take(4).forEach { colLeft.addView(makeEffectView(it)) }
 
         val colRight = LinearLayout(this)
         colRight.orientation = LinearLayout.VERTICAL
         colRight.gravity = Gravity.CENTER
-        colRight.setPadding(6, 0, 6, 0)
+        colRight.setPadding(4, 0, 4, 0)
         sortedFx.drop(4).forEach { colRight.addView(makeEffectView(it)) }
 
         val twoCols = LinearLayout(this)
@@ -329,18 +329,18 @@ class MainActivity : AppCompatActivity() {
 
         val statusText = TextView(this)
         statusText.text = "🔴 NAKA-OFF — Isaksak ang iRig bago mag-ON"
-        statusText.textSize = 13f
+        statusText.textSize = 11f
         statusText.setTextColor(0xFFFF6666.toInt())
         statusText.gravity = Gravity.CENTER
-        statusText.setPadding(0, 8, 0, 8)
+        statusText.setPadding(0, 4, 0, 4)
         root.addView(statusText)
 
         val btn = Button(this)
         btn.text = "🔘  POWER"
-        btn.textSize = 18f
+        btn.textSize = 16f
         btn.setBackgroundColor(0xFF228833.toInt())
         btn.setTextColor(Color.WHITE)
-        btn.setPadding(60, 12, 60, 12)
+        btn.setPadding(50, 8, 50, 8)
         btn.setOnClickListener {
             if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
