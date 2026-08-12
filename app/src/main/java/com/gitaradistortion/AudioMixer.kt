@@ -6,6 +6,7 @@ import kotlin.math.exp
 object AudioMixer {
     private const val SAFE_LIMIT = 0.9f
 
+    // ✅ MGA HALAGA — may sariling set na awtomatik
     var noiseGateThreshold = 0.04f
     var volumeLevel = 0.75f
     var gainAmount = 0.5f
@@ -18,6 +19,12 @@ object AudioMixer {
     var gainOn = false
     var distortionOn = false
     var toneOn = false
+
+    // ✅ IBA ANG PANGALAN — WALANG PAGBANGGA!
+    fun updateNoiseGateEnabled(enabled: Boolean) { noiseGateOn = enabled }
+    fun updateNoiseGateThreshold(value: Float) { noiseGateThreshold = value }
+    fun updateVolumeEnabled(enabled: Boolean) { volumeOn = enabled }
+    fun updateVolumeLevel(value: Float) { volumeLevel = value }
 
     fun process(input: Float): Float {
         try {
@@ -52,10 +59,4 @@ object AudioMixer {
         val enx = exp(-x)
         return (ex - enx) / (ex + enx)
     }
-
-    // ✅ MGA GLOBAL NA TAWAG — PARA SA PEDAL BOARD!
-    fun setNoiseGateEnabled(enabled: Boolean) { noiseGateOn = enabled }
-    fun setNoiseGateLevel(level: Float) { noiseGateThreshold = level }
-    fun setVolumeEnabled(enabled: Boolean) { volumeOn = enabled }
-    fun setVolumeLevel(level: Float) { volumeLevel = level }
 }

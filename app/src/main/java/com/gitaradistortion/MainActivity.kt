@@ -9,11 +9,11 @@ import androidx.core.app.ActivityCompat
 
 class MainActivity : AppCompatActivity() {
     companion object {
-        // ✅ GLOBAL NA TAWAG — PARA SA PEDAL BOARD!
-        fun setNoiseGateEnabledGlobal(enabled: Boolean) { AudioMixer.noiseGateOn = enabled }
-        fun setNoiseGateLevelGlobal(level: Float) { AudioMixer.noiseGateThreshold = level }
-        fun setVolumeEnabledGlobal(enabled: Boolean) { AudioMixer.volumeOn = enabled }
-        fun setVolumeLevelGlobal(level: Float) { AudioMixer.volumeLevel = level }
+        // ✅ TUMUGMA SA BAGONG PANGALAN — WALANG PAGBANGGA!
+        fun setNoiseGateEnabledGlobal(enabled: Boolean) { AudioMixer.updateNoiseGateEnabled(enabled) }
+        fun setNoiseGateLevelGlobal(level: Float) { AudioMixer.updateNoiseGateThreshold(level) }
+        fun setVolumeEnabledGlobal(enabled: Boolean) { AudioMixer.updateVolumeEnabled(enabled) }
+        fun setVolumeLevelGlobal(level: Float) { AudioMixer.updateVolumeLevel(level) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
