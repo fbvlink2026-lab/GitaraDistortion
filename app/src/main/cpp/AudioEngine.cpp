@@ -318,11 +318,12 @@ Java_com_gitaradistortion_MainActivity_setWahEnabled(JNIEnv*, jobject, jboolean 
     gWahEnabled = e;
 }
 
-// ✅ SIMULA AT TIGIL
+// ✅ SIMULA AT TIGIL — INAYOS NA ANG OBOE!
 extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
     oboe::AudioStreamBuilder builder;
-    builder.setDirection(oboe::Direction::InputOutput);
+    // ✅ OBOE: Hiwalay ang Input at Output — HINDI PWEDE ANG InputOutput!
+    builder.setDirection(oboe::Direction::Input);
     builder.setSampleRate(44100);
     builder.setChannelCount(1);
     builder.setFormat(oboe::AudioFormat::Float);
