@@ -10,31 +10,34 @@ import android.widget.TextView
 class NoiseGatePedal {
     var isEnabled = false
     var threshold = 0.04f
+    var decay = 0.3f
+    // ✅ MAY MGA TAWAG NA!
     var onEnabledChanged: ((Boolean) -> Unit)? = null
-    var onLevelChanged: ((Float) -> Unit)? = null
+    var onThresholdChanged: ((Float) -> Unit)? = null
+    var onDecayChanged: ((Float) -> Unit)? = null
 
     fun makeView(ctx: Context): LinearLayout {
         val card = LinearLayout(ctx)
         card.orientation = LinearLayout.VERTICAL
         card.gravity = Gravity.CENTER
-        card.setPadding(16, 12, 16, 12)
-        card.setBackgroundColor(0xFF2A3A3A.toInt())
-        card.minimumWidth = 160
+        card.setPadding(20, 16, 20, 16)
+        card.setBackgroundColor(0xFF1E3A3A.toInt())
+        card.minimumWidth = 200
 
         val title = TextView(ctx)
         title.text = "🚧 NOISE GATE"
-        title.setTextColor(0xFF66DDDD.toInt())
-        title.textSize = 14f
-        title.setPadding(0, 0, 0, 8)
+        title.setTextColor(0xFF44DDDD.toInt())
+        title.textSize = 15f
+        title.setPadding(0, 0, 0, 10)
         card.addView(title)
 
         val btn = Button(ctx)
         btn.text = "⚪ OFF"
         btn.setTextColor(Color.WHITE)
         btn.setBackgroundColor(0xFF444444.toInt())
-        btn.textSize = 11f
-        btn.setPadding(8, 2, 8, 2)
-        btn.minWidth = 80
+        btn.textSize = 12f
+        btn.setPadding(12, 4, 12, 4)
+        btn.minWidth = 100
         btn.setOnClickListener {
             isEnabled = !isEnabled
             btn.text = if (isEnabled) "🟢 ON" else "⚪ OFF"
@@ -43,26 +46,48 @@ class NoiseGatePedal {
         }
         card.addView(btn)
 
-        val knob = KnobView(ctx)
-        knob.baseColor = 0xFF66DDDD.toInt()
-        knob.value = threshold
-        // ✅ LIGTAS NA PAGTANGGAP — WALANG CRASH!
-        knob.onValueChange = { v ->
+        val knobsRow = LinearLayout(ctx)
+        knobsRow.orientation = LinearLayout.HORIZONTAL
+        knobsRow.gravity = Gravity.CENTER
+        knobsRow.setPadding(0, 12, 0, 4)
+
+        val knob1 = LinearLayout(ctx)
+        knob1.orientation = LinearLayout.VERTICAL
+        knob1.gravity = Gravity.CENTER
+        val thresholdKnob = KnobView(ctx)
+        thresholdKnob.baseColor = 0xFF44DDDD.toInt()
+        thresholdKnob.value = threshold
+        thresholdKnob.onValueChange = { v ->
             threshold = v
-            try {
-                onLevelChanged?.invoke(v)
-            } catch (_: Exception) {}
+            onThresholdChanged?.invoke(v)
         }
-        val knobLayout = LinearLayout.LayoutParams(70, 70)
-        knobLayout.setMargins(0, 10, 0, 4)
-        card.addView(knob, knobLayout)
+        knob1.addView(thresholdKnob, LinearLayout.LayoutParams(60, 60))
+        val lbl1 = TextView(ctx)
+        lbl1.text = "THRESHOLD"
+        lbl1.setTextColor(0xFF88AAAA.toInt())
+        lbl1.textSize = 9f
+        knob1.addView(lbl1)
+        knobsRow.addView(knob1)
 
-        val lbl = TextView(ctx)
-        lbl.text = "THRESHOLD"
-        lbl.setTextColor(0xFFAAAAAA.toInt())
-        lbl.textSize = 10f
-        card.addView(lbl)
+        val knob2 = LinearLayout(ctx)
+        knob2.orientation = LinearLayout.VERTICAL
+        knob2.gravity = Gravity.CENTER
+        val decayKnob = KnobView(ctx)
+        decayKnob.baseColor = 0xFF44DDDD.toInt()
+        decayKnob.value = decay
+        decayKnob.onValueChange = { v ->
+            decay = v
+            onDecayChanged?.invoke(v)
+        }
+        knob2.addView(decayKnob, LinearLayout.LayoutParams(60, 60))
+        val lbl2 = TextView(ctx)
+        lbl2.text = "DECAY"
+        lbl2.setTextColor(0xFF88AAAA.toInt())
+        lbl2.textSize = 9f
+        knob2.addView(lbl2)
+        knobsRow.addView(knob2)
 
+        card.addView(knobsRow)
         return card
     }
 }

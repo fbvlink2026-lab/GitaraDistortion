@@ -8,8 +8,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.gitaradistortion.pedals.NoiseGatePedal
-import com.gitaradistortion.pedals.VolumePedal
 
 class PedalBoardFragment : Fragment() {
     override fun onCreateView(
@@ -36,12 +34,12 @@ class PedalBoardFragment : Fragment() {
 
         val noiseGate = NoiseGatePedal()
         noiseGate.onEnabledChanged = { MainActivity.setNoiseGateEnabledGlobal(it) }
-        noiseGate.onThresholdChanged = { MainActivity.setNoiseGateLevelGlobal(it) }
+        noiseGate.onThresholdChanged = { v -> MainActivity.setNoiseGateLevelGlobal(v) }
         row.addView(noiseGate.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
         val volume = VolumePedal()
         volume.onEnabledChanged = { MainActivity.setVolumeEnabledGlobal(it) }
-        volume.onLevelChanged = { MainActivity.setVolumeLevelGlobal(it) }
+        volume.onLevelChanged = { v -> MainActivity.setVolumeLevelGlobal(v) }
         row.addView(volume.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
         root.addView(row)
