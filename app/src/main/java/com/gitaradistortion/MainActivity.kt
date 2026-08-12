@@ -18,10 +18,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlin.math.*
 
-// 🎛️ BILOG NA PIHITAN
+// 🎛️ BILOG NA PIHITAN — TAMA NA ANG HALAGA!
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
-        set(v) { field = v.coerceIn(0f, 1f); invalidate() }
+        set(v) { 
+            field = v.coerceIn(0f, 1f)
+            invalidate()
+            onValueChange?.invoke(field)
+        }
     
     var onValueChange: ((Float) -> Unit)? = null
     var baseColor = 0xFFFF8822.toInt()
@@ -41,22 +45,22 @@ class KnobView(context: android.content.Context) : View(context) {
         val h = height.toFloat()
         val cx = w / 2
         val cy = h / 2
-        val r = minOf(w, h) / 2 - 4f
+        val r = minOf(w, h) / 2 - 6f
         val glow = getGlowColor()
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 3f
+        paint.strokeWidth = 4f
         paint.color = 0xFF555555.toInt()
         canvas.drawCircle(cx, cy, r, paint)
 
         paint.style = android.graphics.Paint.Style.FILL
         paint.color = 0xFF1A1A1A.toInt()
-        canvas.drawCircle(cx, cy, r - 2f, paint)
+        canvas.drawCircle(cx, cy, r - 3f, paint)
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 4f + value * 4f
+        paint.strokeWidth = 5f + value * 5f
         paint.color = glow
-        canvas.drawCircle(cx, cy, r - 4f, paint)
+        canvas.drawCircle(cx, cy, r - 5f, paint)
 
         val capR = r * 0.65f
         paint.style = android.graphics.Paint.Style.FILL
@@ -64,13 +68,13 @@ class KnobView(context: android.content.Context) : View(context) {
         canvas.drawCircle(cx, cy, capR, paint)
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 2f
+        paint.strokeWidth = 2.5f
         paint.color = 0xFFBBBBBB.toInt()
-        canvas.drawCircle(cx, cy, capR - 1f, paint)
+        canvas.drawCircle(cx, cy, capR - 1.5f, paint)
 
         val angle = -135f + (270f) * value
         val rad = Math.toRadians(angle.toDouble())
-        paint.strokeWidth = 5f + value * 2f
+        paint.strokeWidth = 6f + value * 3f
         paint.color = glow
         val len = capR * 0.75f
         val endX = cx + len * sin(rad).toFloat()
@@ -79,7 +83,7 @@ class KnobView(context: android.content.Context) : View(context) {
 
         paint.style = android.graphics.Paint.Style.FILL
         paint.color = glow
-        canvas.drawCircle(cx, cy, 8f + value * 3f, paint)
+        canvas.drawCircle(cx, cy, 10f + value * 4f, paint)
     }
 
     private var startAngle = 0.0
@@ -96,7 +100,6 @@ class KnobView(context: android.content.Context) : View(context) {
                 if (delta > 180) delta -= 360.0
                 if (delta < -180) delta += 360.0
                 value += (delta / 270.0).toFloat()
-                onValueChange?.invoke(value)
                 startAngle = angle
             }
         }
@@ -168,22 +171,22 @@ class MainActivity : AppCompatActivity() {
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
         root.gravity = Gravity.CENTER_HORIZONTAL
-        root.setPadding(6, 4, 6, 2)
+        root.setPadding(8, 6, 8, 4)
 
         val title = TextView(this)
         title.text = "🎸  GUITAR EFFECTS  🎸"
-        title.textSize = 18f
+        title.textSize = 20f
         title.setTextColor(0xFFFF9922.toInt())
         title.gravity = Gravity.CENTER
-        title.setPadding(0, 2, 0, 2)
+        title.setPadding(0, 4, 0, 4)
         root.addView(title)
 
         val hint = TextView(this)
         hint.text = "Puwesto:1-8 | Laki:80-120 → I-SAVE → I-RESTART"
-        hint.textSize = 9f
+        hint.textSize = 10f
         hint.setTextColor(0xFFAAAAAA.toInt())
         hint.gravity = Gravity.CENTER
-        hint.setPadding(0, 0, 0, 4)
+        hint.setPadding(0, 0, 0, 6)
         root.addView(hint)
 
         val sortedFx = allFx.sortedBy { getPos(it) }
@@ -192,20 +195,20 @@ class MainActivity : AppCompatActivity() {
             val card = LinearLayout(this)
             card.orientation = LinearLayout.VERTICAL
             card.gravity = Gravity.CENTER
-            card.setPadding(6, 6, 6, 6)
+            card.setPadding(10, 8, 10, 8)
             card.setBackgroundColor(0xFF1E1E1E.toInt())
-            card.minimumWidth = 150
+            card.minimumWidth = 175  // ✅ MAS MALAPAD ANG KAHON!
 
             val szPercent = getSizePercent(fx)
-            val knobSize = (75 * szPercent / 100).coerceIn(65, 95)
+            val knobSize = (85 * szPercent / 100).coerceIn(75, 110)  // ✅ MAS MALAKI ANG PIHITAN!
 
             val btnSwitch = Button(this)
             btnSwitch.text = "⚪ OFF"
             btnSwitch.setTextColor(Color.WHITE)
             btnSwitch.setBackgroundColor(Color.parseColor("#444444"))
-            btnSwitch.textSize = 9f
-            btnSwitch.setPadding(4, 1, 4, 1)
-            btnSwitch.minWidth = 60
+            btnSwitch.textSize = 10f
+            btnSwitch.setPadding(6, 2, 6, 2)
+            btnSwitch.minWidth = 70
             var isEffectOn = false
             btnSwitch.setOnClickListener {
                 isEffectOn = !isEffectOn
@@ -218,80 +221,85 @@ class MainActivity : AppCompatActivity() {
             val knob = KnobView(this)
             knob.baseColor = fx.color
             knob.value = fx.defValue
+
             val txtVal = TextView(this)
             txtVal.text = "${(fx.defValue * 100).toInt()}%"
             txtVal.setTextColor(fx.color)
-            txtVal.textSize = 10f
+            txtVal.textSize = 12f
             txtVal.gravity = Gravity.CENTER
+
+            // ✅ AYUS NA! NAGBABAGO NA ANG HALAGA KAPAG PIHITIN!
             knob.onValueChange = { v ->
                 txtVal.text = "${(v * 100).toInt()}%"
                 fx.setLevel(v)
             }
+
             card.addView(knob, LinearLayout.LayoutParams(knobSize, knobSize))
+            card.addView(txtVal)
 
             val txtLabel = TextView(this)
             txtLabel.text = "${fx.icon} ${fx.name}"
             txtLabel.setTextColor(Color.WHITE)
-            txtLabel.textSize = 10f
+            txtLabel.textSize = 11f
             txtLabel.gravity = Gravity.CENTER
-            txtLabel.setPadding(0, 2, 0, 1)
+            txtLabel.setPadding(0, 3, 0, 1)
             card.addView(txtLabel)
 
             val txtSize = TextView(this)
-            txtSize.text = "$szPercent%"
+            txtSize.text = "Laki: $szPercent%"
             txtSize.setTextColor(0xFF888888.toInt())
             txtSize.textSize = 9f
             txtSize.gravity = Gravity.CENTER
-            txtSize.setPadding(0, 0, 0, 3)
+            txtSize.setPadding(0, 0, 0, 5)
             card.addView(txtSize)
 
             val rowInput = LinearLayout(this)
             rowInput.orientation = LinearLayout.HORIZONTAL
             rowInput.gravity = Gravity.CENTER
-            rowInput.setPadding(2, 2, 2, 2)
+            rowInput.setPadding(4, 3, 4, 3)
             rowInput.setBackgroundColor(0xFF2A2A2A.toInt())
 
             val etPos = EditText(this)
             etPos.hint = "#"
             etPos.setText("${getPos(fx)}")
-            etPos.textSize = 10f
+            etPos.textSize = 11f
             etPos.setTextColor(Color.WHITE)
             etPos.setHintTextColor(0xFF666666.toInt())
             etPos.setBackgroundColor(0xFF383838.toInt())
-            etPos.setPadding(2, 0, 2, 0)
-            etPos.minWidth = 28
-            etPos.maxWidth = 28
+            etPos.setPadding(4, 2, 4, 2)
+            etPos.minWidth = 32
+            etPos.maxWidth = 32
             etPos.gravity = Gravity.CENTER
             rowInput.addView(etPos)
 
             val space = TextView(this)
-            space.minWidth = 3
+            space.minWidth = 4
             rowInput.addView(space)
 
             val etSz = EditText(this)
             etSz.hint = "%"
             etSz.setText("$szPercent")
-            etSz.textSize = 10f
+            etSz.textSize = 11f
             etSz.setTextColor(Color.WHITE)
             etSz.setHintTextColor(0xFF666666.toInt())
             etSz.setBackgroundColor(0xFF383838.toInt())
-            etSz.setPadding(2, 0, 2, 0)
-            etSz.minWidth = 28
-            etSz.maxWidth = 28
+            etSz.setPadding(4, 2, 4, 2)
+            etSz.minWidth = 32
+            etSz.maxWidth = 32
             etSz.gravity = Gravity.CENTER
             rowInput.addView(etSz)
 
             val space2 = TextView(this)
-            space2.minWidth = 3
+            space2.minWidth = 4
             rowInput.addView(space2)
 
             val btnSave = Button(this)
             btnSave.text = "✓"
-            btnSave.textSize = 10f
+            btnSave.textSize = 11f
             btnSave.setTextColor(Color.WHITE)
             btnSave.setBackgroundColor(0xFF227733.toInt())
-            btnSave.setPadding(4, 0, 4, 0)
-            btnSave.minWidth = 26
+            btnSave.setPadding(6, 2, 6, 2)
+            btnSave.minWidth = 30
             btnSave.setOnClickListener {
                 val newPos = etPos.text.toString().toIntOrNull()
                 val newSz = etSz.text.toString().toIntOrNull()
@@ -309,17 +317,17 @@ class MainActivity : AppCompatActivity() {
             return card
         }
 
-        // ✅ 2 HANAY: 4 SA KALIWA, 4 SA KANAN
+        // ✅ 4 SA KALIWA • 4 SA KANAN — MAS MALAPAD NA!
         val colLeft = LinearLayout(this)
         colLeft.orientation = LinearLayout.VERTICAL
         colLeft.gravity = Gravity.CENTER
-        colLeft.setPadding(4, 0, 4, 0)
+        colLeft.setPadding(6, 0, 6, 0)
         sortedFx.take(4).forEach { colLeft.addView(makeEffectCard(it)) }
 
         val colRight = LinearLayout(this)
         colRight.orientation = LinearLayout.VERTICAL
         colRight.gravity = Gravity.CENTER
-        colRight.setPadding(4, 0, 4, 0)
+        colRight.setPadding(6, 0, 6, 0)
         sortedFx.drop(4).forEach { colRight.addView(makeEffectCard(it)) }
 
         val twoCols = LinearLayout(this)
@@ -331,18 +339,18 @@ class MainActivity : AppCompatActivity() {
 
         val statusText = TextView(this)
         statusText.text = "🔴 NAKA-OFF — Isaksak ang iRig bago mag-ON"
-        statusText.textSize = 10f
+        statusText.textSize = 11f
         statusText.setTextColor(0xFFFF6666.toInt())
         statusText.gravity = Gravity.CENTER
-        statusText.setPadding(0, 4, 0, 4)
+        statusText.setPadding(0, 6, 0, 6)
         root.addView(statusText)
 
         val btn = Button(this)
         btn.text = "🔘  POWER"
-        btn.textSize = 15f
+        btn.textSize = 16f
         btn.setBackgroundColor(0xFF228833.toInt())
         btn.setTextColor(Color.WHITE)
-        btn.setPadding(40, 6, 40, 6)
+        btn.setPadding(50, 8, 50, 8)
         btn.setOnClickListener {
             if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
