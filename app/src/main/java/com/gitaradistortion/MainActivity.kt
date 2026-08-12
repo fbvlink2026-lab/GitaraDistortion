@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     companion object {
+        fun setMasterEnabledGlobal(enabled: Boolean) { AudioMixer.setMasterEnabled(enabled) }
         fun setNoiseGateEnabledGlobal(enabled: Boolean) { AudioMixer.updateNoiseGateEnabled(enabled) }
         fun setNoiseGateLevelGlobal(level: Float) { AudioMixer.updateNoiseGateThreshold(level) }
         fun setVolumeEnabledGlobal(enabled: Boolean) { AudioMixer.updateVolumeEnabled(enabled) }
