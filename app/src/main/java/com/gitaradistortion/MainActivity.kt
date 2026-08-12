@@ -16,6 +16,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.viewpager2.widget.ViewPager2
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import kotlin.math.*
 
 // 🎛️ BILOG NA PIHITAN
@@ -107,9 +111,216 @@ class KnobView(context: android.content.Context) : View(context) {
     }
 }
 
-class MainActivity : AppCompatActivity() {
-    private var isOn = false
+// 📦 IMPORMASYON NG BAWAT EPEKTO
+data class FxDef(
+    val id: String,
+    val icon: String,
+    val name: String,
+    val color: Int,
+    val defValue: Float,
+    val defaultPos: Int,
+    val defaultSizePercent: Int,
+    val setLevel: (Float) -> Unit,
+    val setEnabled: (Boolean) -> Unit
+)
+
+// 📄 PANEL — BAWAT PANEL MAY 4 NA EPEKTO
+class FxPanelFragment : Fragment() {
+    private var panelNumber = 1
+    private lateinit var fxList: List<FxDef>
     private lateinit var prefs: SharedPreferences
+
+    companion object {
+        fun newInstance(panel: Int, effects: ArrayList<FxDef>): FxPanelFragment {
+            val f = FxPanelFragment()
+            f.panelNumber = panel
+            f.fxList = effects
+            return f
+        }
+    }
+
+    override fun onCreateView(
+        inflater: android.view.LayoutInflater,
+        container: android.view.ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        prefs = requireContext().getSharedPreferences("FxSettings", Context.MODE_PRIVATE)
+
+        val root = LinearLayout(requireContext())
+        root.orientation = LinearLayout.VERTICAL
+        root.setBackgroundColor(0xFF121212.toInt())
+        root.gravity = Gravity.CENTER_HORIZONTAL
+        root.setPadding(12, 8, 12, 8)
+
+        // 📌 PAMAGAT NG PANEL
+        val title = TextView(requireContext())
+        title.text = if (panelNumber == 1) "🎛️ PANEL 1 — MGA PANGUNAHIN" else "🎛️ PANEL 2 — MGA EPEKTO"
+        title.textSize = 18f
+        title.setTextColor(0xFFFF9922.toInt())
+        title.gravity = Gravity.CENTER
+        title.setPadding(0, 4, 0, 8)
+        root.addView(title)
+
+        val hint = TextView(requireContext())
+        hint.text = "👆 HILAHIN PAKALIWA/PAKANAN ← → ILIPAT ANG PANEL"
+        hint.textSize = 10f
+        hint.setTextColor(0xFF888888.toInt())
+        hint.gravity = Gravity.CENTER
+        hint.setPadding(0, 0, 0, 8)
+        root.addView(hint)
+
+        val sortedFx = fxList.sortedBy { getPos(it) }
+
+        // ✅ BAWAT EPEKTO — MALAPAD AT KASYA SA SCREEN!
+        fun makeEffectCard(fx: FxDef): LinearLayout {
+            val card = LinearLayout(requireContext())
+            card.orientation = LinearLayout.VERTICAL
+            card.gravity = Gravity.CENTER
+            card.setPadding(12, 10, 12, 10)
+            card.setBackgroundColor(0xFF1E1E1E.toInt())
+            card.setCardBackgroundColor(0xFF1E1E1E.toInt())
+            card.elevation = 2f
+            card.minimumWidth = 165
+
+            val szPercent = getSizePercent(fx)
+            val knobSize = (80 * szPercent / 100).coerceIn(70, 100)
+
+            val btnSwitch = Button(requireContext())
+            btnSwitch.text = "⚪ OFF"
+            btnSwitch.setTextColor(Color.WHITE)
+            btnSwitch.setBackgroundColor(Color.parseColor("#444444"))
+            btnSwitch.textSize = 10f
+            btnSwitch.setPadding(8, 2, 8, 2)
+            btnSwitch.minWidth = 75
+            var isEffectOn = false
+            btnSwitch.setOnClickListener {
+                isEffectOn = !isEffectOn
+                btnSwitch.text = if (isEffectOn) "🟢 ON" else "⚪ OFF"
+                btnSwitch.setBackgroundColor(if (isEffectOn) fx.color else Color.parseColor("#444444"))
+                fx.setEnabled(isEffectOn)
+            }
+            card.addView(btnSwitch)
+
+            val knob = KnobView(requireContext())
+            knob.baseColor = fx.color
+            knob.value = fx.defValue
+
+            val txtVal = TextView(requireContext())
+            txtVal.text = "${(fx.defValue * 100).toInt()}%"
+            txtVal.setTextColor(fx.color)
+            txtVal.textSize = 12f
+            txtVal.gravity = Gravity.CENTER
+
+            knob.onValueChange = { v ->
+                txtVal.text = "${(v * 100).toInt()}%"
+                fx.setLevel(v)
+            }
+
+            card.addView(knob, LinearLayout.LayoutParams(knobSize, knobSize))
+            card.addView(txtVal)
+
+            val txtLabel = TextView(requireContext())
+            txtLabel.text = "${fx.icon} ${fx.name}"
+            txtLabel.setTextColor(Color.WHITE)
+            txtLabel.textSize = 11f
+            txtLabel.gravity = Gravity.CENTER
+            txtLabel.setPadding(0, 4, 0, 1)
+            card.addView(txtLabel)
+
+            val txtSize = TextView(requireContext())
+            txtSize.text = "Laki: $szPercent%"
+            txtSize.setTextColor(0xFF888888.toInt())
+            txtSize.textSize = 9f
+            txtSize.gravity = Gravity.CENTER
+            txtSize.setPadding(0, 0, 0, 4)
+            card.addView(txtSize)
+
+            val rowInput = LinearLayout(requireContext())
+            rowInput.orientation = LinearLayout.HORIZONTAL
+            rowInput.gravity = Gravity.CENTER
+            rowInput.setPadding(4, 3, 4, 3)
+            rowInput.setBackgroundColor(0xFF2A2A2A.toInt())
+
+            val etPos = EditText(requireContext())
+            etPos.hint = "#"
+            etPos.setText("${getPos(fx)}")
+            etPos.textSize = 10f
+            etPos.setTextColor(Color.WHITE)
+            etPos.setHintTextColor(0xFF666666.toInt())
+            etPos.setBackgroundColor(0xFF383838.toInt())
+            etPos.setPadding(4, 2, 4, 2)
+            etPos.minWidth = 32
+            etPos.maxWidth = 32
+            etPos.gravity = Gravity.CENTER
+            rowInput.addView(etPos)
+
+            val sp1 = TextView(requireContext()); sp1.minWidth = 4; rowInput.addView(sp1)
+
+            val etSz = EditText(requireContext())
+            etSz.hint = "%"
+            etSz.setText("$szPercent")
+            etSz.textSize = 10f
+            etSz.setTextColor(Color.WHITE)
+            etSz.setHintTextColor(0xFF666666.toInt())
+            etSz.setBackgroundColor(0xFF383838.toInt())
+            etSz.setPadding(4, 2, 4, 2)
+            etSz.minWidth = 32
+            etSz.maxWidth = 32
+            etSz.gravity = Gravity.CENTER
+            rowInput.addView(etSz)
+
+            val sp2 = TextView(requireContext()); sp2.minWidth = 4; rowInput.addView(sp2)
+
+            val btnSave = Button(requireContext())
+            btnSave.text = "✓"
+            btnSave.textSize = 10f
+            btnSave.setTextColor(Color.WHITE)
+            btnSave.setBackgroundColor(0xFF227733.toInt())
+            btnSave.setPadding(6, 2, 6, 2)
+            btnSave.minWidth = 30
+            btnSave.setOnClickListener {
+                val newPos = etPos.text.toString().toIntOrNull()
+                val newSz = etSz.text.toString().toIntOrNull()
+                if (newPos != null && newPos in 1..8 && newSz != null && newSz in 80..120) {
+                    savePos(fx.id, newPos)
+                    saveSize(fx.id, newSz)
+                    Toast.makeText(requireContext(), "✅ NAI-SAVE! I-RESTART ANG APP!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "⚠️ Puwesto:1-8 | Laki:80-120", Toast.LENGTH_SHORT).show()
+                }
+            }
+            rowInput.addView(btnSave)
+            card.addView(rowInput)
+            return card
+        }
+
+        // ✅ DALAWANG HANAY SA LOOB NG PANEL — 2 SA TAAS, 2 SA IBABA
+        val row1 = LinearLayout(requireContext())
+        row1.orientation = LinearLayout.HORIZONTAL
+        row1.gravity = Gravity.CENTER
+        row1.setPadding(0, 0, 0, 8)
+        sortedFx.take(2).forEach { row1.addView(makeEffectCard(it)) }
+        root.addView(row1)
+
+        val row2 = LinearLayout(requireContext())
+        row2.orientation = LinearLayout.HORIZONTAL
+        row2.gravity = Gravity.CENTER
+        row2.setPadding(0, 0, 0, 4)
+        sortedFx.drop(2).take(2).forEach { row2.addView(makeEffectCard(it)) }
+        root.addView(row2)
+
+        return root
+    }
+
+    private fun getPos(fx: FxDef): Int = prefs.getInt("POS_${fx.id}", fx.defaultPos)
+    private fun getSizePercent(fx: FxDef): Int = prefs.getInt("SZ_${fx.id}", fx.defaultSizePercent)
+    private fun savePos(fxId: String, pos: Int) = prefs.edit().putInt("POS_$fxId", pos).apply()
+    private fun saveSize(fxId: String, percent: Int) = prefs.edit().putInt("SZ_$fxId", percent).apply()
+}
+
+// 🎯 PANGUNAHING SCREEN — MAY HILAHIN NA PANEL
+class MainActivity : FragmentActivity() {
+    private var isOn = false
 
     private external fun startAudioEngine(): Unit
     private external fun stopAudioEngine(): Unit
@@ -131,221 +342,74 @@ class MainActivity : AppCompatActivity() {
     private external fun setPhaserLevel(v: Float): Unit
     private external fun setPhaserEnabled(e: Boolean): Unit
 
-    data class FxDef(
-        val id: String,
-        val icon: String,
-        val name: String,
-        val color: Int,
-        val defValue: Float,
-        val defaultPos: Int,
-        val defaultSizePercent: Int,
-        val setLevel: (Float) -> Unit,
-        val setEnabled: (Boolean) -> Unit
-    )
-
-    private val allFx = listOf(
-        FxDef("VOL", "🔊", "VOLUME", 0xFFFF8822.toInt(), 0.75f, 1, 100, { setVolumeLevel(it) }, { setVolumeEnabled(it) }),
-        FxDef("TON", "🎵", "TONE", 0xFF44DD88.toInt(), 0.50f, 2, 100, { setToneLevel(it) }, { setToneEnabled(it) }),
-        FxDef("REV", "🌊", "REVERB", 0xFFAA66FF.toInt(), 0.25f, 3, 90, { setReverbLevel(it) }, { setReverbEnabled(it) }),
-        FxDef("NOI", "🚧", "NOISE GATE", 0xFF66DDDD.toInt(), 0.04f, 4, 90, { setNoiseGateLevel(it * 0.15f) }, { setNoiseGateEnabled(it) }),
-        FxDef("GAI", "⚡", "GAIN", 0xFFFFFF00.toInt(), 0.50f, 5, 100, { setGainLevel(it * 2f) }, { setGainEnabled(it) }),
-        FxDef("OVE", "🔥", "OVERDRIVE", 0xFFFFAA00.toInt(), 0.00f, 6, 100, { setOverdriveLevel(it) }, { setOverdriveEnabled(it) }),
-        FxDef("DIS", "💥", "DISTORTION", 0xFFFF4444.toInt(), 0.00f, 7, 110, { setDistortionLevel(it) }, { setDistortionEnabled(it) }),
-        FxDef("PHA", "🫧", "PHASER", 0xFF44AAFF.toInt(), 0.00f, 8, 90, { setPhaserLevel(it) }, { setPhaserEnabled(it) })
-    )
-
-    private fun getPos(fx: FxDef): Int = prefs.getInt("POS_${fx.id}", fx.defaultPos)
-    private fun getSizePercent(fx: FxDef): Int = prefs.getInt("SZ_${fx.id}", fx.defaultSizePercent)
-    private fun savePos(fxId: String, pos: Int) = prefs.edit().putInt("POS_$fxId", pos).apply()
-    private fun saveSize(fxId: String, percent: Int) = prefs.edit().putInt("SZ_$fxId", percent).apply()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         System.loadLibrary("gitaradistortion")
-        prefs = getSharedPreferences("FxSettings", Context.MODE_PRIVATE)
-        rebuildUI()
-    }
 
-    private fun rebuildUI() {
+        // ✅ LAHAT NG EPEKTO — HATI SA DALAWANG PANEL
+        val panel1Effects = arrayListOf(
+            FxDef("VOL", "🔊", "VOLUME", 0xFFFF8822.toInt(), 0.75f, 1, 100, { setVolumeLevel(it) }, { setVolumeEnabled(it) }),
+            FxDef("TON", "🎵", "TONE", 0xFF44DD88.toInt(), 0.50f, 2, 100, { setToneLevel(it) }, { setToneEnabled(it) }),
+            FxDef("REV", "🌊", "REVERB", 0xFFAA66FF.toInt(), 0.25f, 3, 90, { setReverbLevel(it) }, { setReverbEnabled(it) }),
+            FxDef("NOI", "🚧", "NOISE GATE", 0xFF66DDDD.toInt(), 0.04f, 4, 90, { setNoiseGateLevel(it * 0.15f) }, { setNoiseGateEnabled(it) })
+        )
+
+        val panel2Effects = arrayListOf(
+            FxDef("GAI", "⚡", "GAIN", 0xFFFFFF00.toInt(), 0.50f, 5, 100, { setGainLevel(it * 2f) }, { setGainEnabled(it) }),
+            FxDef("OVE", "🔥", "OVERDRIVE", 0xFFFFAA00.toInt(), 0.00f, 6, 100, { setOverdriveLevel(it) }, { setOverdriveEnabled(it) }),
+            FxDef("DIS", "💥", "DISTORTION", 0xFFFF4444.toInt(), 0.00f, 7, 110, { setDistortionLevel(it) }, { setDistortionEnabled(it) }),
+            FxDef("PHA", "🫧", "PHASER", 0xFF44AAFF.toInt(), 0.00f, 8, 90, { setPhaserLevel(it) }, { setPhaserEnabled(it) })
+        )
+
+        // ✅ PANGUNAHING LAYOUT
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
-        root.gravity = Gravity.CENTER_HORIZONTAL
-        root.setPadding(4, 2, 4, 2)  // ✅ PINAKAMALIIT NA PUWANG
 
-        val title = TextView(this)
-        title.text = "🎸 GUITAR EFFECTS 🎸"
-        title.textSize = 16f
-        title.setTextColor(0xFFFF9922.toInt())
-        title.gravity = Gravity.CENTER
-        title.setPadding(0, 2, 0, 2)
-        root.addView(title)
-
-        val hint = TextView(this)
-        hint.text = "Puwesto:1-8 | Laki:80-120 → I-SAVE → I-RESTART"
-        hint.textSize = 9f
-        hint.setTextColor(0xFFAAAAAA.toInt())
-        hint.gravity = Gravity.CENTER
-        hint.setPadding(0, 0, 0, 2)
-        root.addView(hint)
-
-        val sortedFx = allFx.sortedBy { getPos(it) }
-
-        fun makeEffectCard(fx: FxDef): LinearLayout {
-            val card = LinearLayout(this)
-            card.orientation = LinearLayout.VERTICAL
-            card.gravity = Gravity.CENTER
-            card.setPadding(6, 4, 6, 4)  // ✅ MAIKLI ANG TAAS, MALAPAD
-            card.setBackgroundColor(0xFF1E1E1E.toInt())
-            card.minimumWidth = 160  // ✅ MALAPAD!
-
-            val szPercent = getSizePercent(fx)
-            val knobSize = (65 * szPercent / 100).coerceIn(55, 80)  // ✅ HINDI MASYADONG MALAKI
-
-            val btnSwitch = Button(this)
-            btnSwitch.text = "⚪"
-            btnSwitch.setTextColor(Color.WHITE)
-            btnSwitch.setBackgroundColor(Color.parseColor("#444444"))
-            btnSwitch.textSize = 9f
-            btnSwitch.setPadding(2, 0, 2, 0)
-            btnSwitch.minWidth = 32
-            btnSwitch.minHeight = 32
-            var isEffectOn = false
-            btnSwitch.setOnClickListener {
-                isEffectOn = !isEffectOn
-                btnSwitch.text = if (isEffectOn) "🟢" else "⚪"
-                btnSwitch.setBackgroundColor(if (isEffectOn) fx.color else Color.parseColor("#444444"))
-                fx.setEnabled(isEffectOn)
+        // ✅ VIEWPAGER — MAHILAHIN PAKALIWA/PAKANAN!
+        val viewPager = ViewPager2(this)
+        viewPager.offscreenPageLimit = 1
+        viewPager.adapter = object : FragmentStateAdapter(this) {
+            override fun getItemCount(): Int = 2
+            override fun createFragment(position: Int): Fragment {
+                return if (position == 0) FxPanelFragment.newInstance(1, panel1Effects)
+                else FxPanelFragment.newInstance(2, panel2Effects)
             }
-
-            val knob = KnobView(this)
-            knob.baseColor = fx.color
-            knob.value = fx.defValue
-
-            val txtVal = TextView(this)
-            txtVal.text = "${(fx.defValue * 100).toInt()}%"
-            txtVal.setTextColor(fx.color)
-            txtVal.textSize = 9f
-            txtVal.gravity = Gravity.CENTER
-
-            knob.onValueChange = { v ->
-                txtVal.text = "${(v * 100).toInt()}%"
-                fx.setLevel(v)
-            }
-
-            val txtLabel = TextView(this)
-            txtLabel.text = "${fx.icon} ${fx.name}"
-            txtLabel.setTextColor(Color.WHITE)
-            txtLabel.textSize = 9f
-            txtLabel.gravity = Gravity.CENTER
-            txtLabel.setPadding(0, 1, 0, 0)
-
-            val rowTop = LinearLayout(this)
-            rowTop.orientation = LinearLayout.HORIZONTAL
-            rowTop.gravity = Gravity.CENTER_VERTICAL
-            rowTop.setPadding(0, 0, 0, 2)
-            rowTop.addView(btnSwitch)
-            val sp1 = TextView(this); sp1.minWidth = 3; rowTop.addView(sp1)
-            rowTop.addView(knob, LinearLayout.LayoutParams(knobSize, knobSize))
-            val sp2 = TextView(this); sp2.minWidth = 4; rowTop.addView(sp2)
-            rowTop.addView(txtLabel)
-            card.addView(rowTop)
-            card.addView(txtVal)
-
-            val rowInput = LinearLayout(this)
-            rowInput.orientation = LinearLayout.HORIZONTAL
-            rowInput.gravity = Gravity.CENTER
-            rowInput.setPadding(2, 1, 2, 1)
-            rowInput.setBackgroundColor(0xFF2A2A2A.toInt())
-
-            val etPos = EditText(this)
-            etPos.hint = "#"
-            etPos.setText("${getPos(fx)}")
-            etPos.textSize = 9f
-            etPos.setTextColor(Color.WHITE)
-            etPos.setHintTextColor(0xFF666666.toInt())
-            etPos.setBackgroundColor(0xFF383838.toInt())
-            etPos.setPadding(2, 0, 2, 0)
-            etPos.minWidth = 26
-            etPos.maxWidth = 26
-            etPos.gravity = Gravity.CENTER
-            rowInput.addView(etPos)
-
-            val sp3 = TextView(this); sp3.minWidth = 2; rowInput.addView(sp3)
-
-            val etSz = EditText(this)
-            etSz.hint = "%"
-            etSz.setText("$szPercent")
-            etSz.textSize = 9f
-            etSz.setTextColor(Color.WHITE)
-            etSz.setHintTextColor(0xFF666666.toInt())
-            etSz.setBackgroundColor(0xFF383838.toInt())
-            etSz.setPadding(2, 0, 2, 0)
-            etSz.minWidth = 26
-            etSz.maxWidth = 26
-            etSz.gravity = Gravity.CENTER
-            rowInput.addView(etSz)
-
-            val sp4 = TextView(this); sp4.minWidth = 2; rowInput.addView(sp4)
-
-            val btnSave = Button(this)
-            btnSave.text = "✓"
-            btnSave.textSize = 9f
-            btnSave.setTextColor(Color.WHITE)
-            btnSave.setBackgroundColor(0xFF227733.toInt())
-            btnSave.setPadding(3, 0, 3, 0)
-            btnSave.minWidth = 24
-            btnSave.minHeight = 30
-            btnSave.setOnClickListener {
-                val newPos = etPos.text.toString().toIntOrNull()
-                val newSz = etSz.text.toString().toIntOrNull()
-                if (newPos != null && newPos in 1..8 && newSz != null && newSz in 80..120) {
-                    savePos(fx.id, newPos)
-                    saveSize(fx.id, newSz)
-                    Toast.makeText(this, "✅ NAI-SAVE! I-RESTART!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "⚠️ Puwesto:1-8 | Laki:80-120", Toast.LENGTH_SHORT).show()
-                }
-            }
-            rowInput.addView(btnSave)
-            card.addView(rowInput)
-            return card
         }
+        root.addView(viewPager, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+        ))
 
-        // ✅ 4 SA KALIWA • 4 SA KANAN — MALAPAD AT MAIKLI ANG TAAS!
-        val colLeft = LinearLayout(this)
-        colLeft.orientation = LinearLayout.VERTICAL
-        colLeft.gravity = Gravity.CENTER
-        colLeft.setPadding(4, 0, 4, 0)
-        sortedFx.take(4).forEach { colLeft.addView(makeEffectCard(it)) }
+        // ✅ TAGAPAGPAKITA NG PANEL NUMERO
+        val panelIndicator = TextView(this)
+        panelIndicator.text = "◀  PANEL 1 / 2  ▶"
+        panelIndicator.textSize = 13f
+        panelIndicator.setTextColor(0xFFAAAAAA.toInt())
+        panelIndicator.gravity = Gravity.CENTER
+        panelIndicator.setPadding(0, 4, 0, 4)
+        root.addView(panelIndicator)
 
-        val colRight = LinearLayout(this)
-        colRight.orientation = LinearLayout.VERTICAL
-        colRight.gravity = Gravity.CENTER
-        colRight.setPadding(4, 0, 4, 0)
-        sortedFx.drop(4).forEach { colRight.addView(makeEffectCard(it)) }
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                panelIndicator.text = if (position == 0) "◀  PANEL 1 / 2  ▶" else "◀  PANEL 2 / 2  ▶"
+            }
+        })
 
-        val twoCols = LinearLayout(this)
-        twoCols.orientation = LinearLayout.HORIZONTAL
-        twoCols.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-        twoCols.addView(colLeft)
-        twoCols.addView(colRight)
-        root.addView(twoCols)
-
+        // ✅ STATUS AT POWER BUTTON — LAGING NASA ILALIM!
         val statusText = TextView(this)
         statusText.text = "🔴 NAKA-OFF — Isaksak ang iRig bago mag-ON"
-        statusText.textSize = 9f
+        statusText.textSize = 11f
         statusText.setTextColor(0xFFFF6666.toInt())
         statusText.gravity = Gravity.CENTER
-        statusText.setPadding(0, 2, 0, 2)
+        statusText.setPadding(0, 2, 0, 4)
         root.addView(statusText)
 
         val btn = Button(this)
-        btn.text = "🔘 POWER"
-        btn.textSize = 14f
+        btn.text = "🔘  POWER"
+        btn.textSize = 16f
         btn.setBackgroundColor(0xFF228833.toInt())
         btn.setTextColor(Color.WHITE)
-        btn.setPadding(40, 4, 40, 4)
+        btn.setPadding(50, 8, 50, 8)
         btn.setOnClickListener {
             if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -355,13 +419,13 @@ class MainActivity : AppCompatActivity() {
             isOn = !isOn
             if (isOn) {
                 startAudioEngine()
-                btn.text = "🔴 OFF"
+                btn.text = "🔴  POWER OFF"
                 btn.setBackgroundColor(0xFFFF4444.toInt())
                 statusText.text = "🟢 GUMAGANA — Isaksak ang gitara sa iRig!"
                 statusText.setTextColor(0xFF44FF44.toInt())
             } else {
                 stopAudioEngine()
-                btn.text = "🔘 POWER"
+                btn.text = "🔘  POWER"
                 btn.setBackgroundColor(0xFF228833.toInt())
                 statusText.text = "🔴 NAKA-OFF — Handa na ang iyong mga ayos"
                 statusText.setTextColor(0xFFFF6666.toInt())
