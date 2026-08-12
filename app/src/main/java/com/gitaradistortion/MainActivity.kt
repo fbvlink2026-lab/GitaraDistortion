@@ -3,9 +3,10 @@ package com.gitaradistortion
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -19,19 +20,41 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // ✅ PAALALA SA ITAAS
-        findViewById<TextView>(R.id.iRigHint)?.text = "🔌 Isaksak ang iRig → Pahintulutan ang Mikropono → I-ON"
+        // ✅ HUMINGI NG PAHINTULOT — KAILANGAN PARA MAKABASA NG GITARA!
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                123
+            )
+        } else {
+            // ✅ MAY PAHINTULOT NA — BUKASAN AGAD ANG AUDIO!
+            AudioEngine.start(this)
+        }
 
-        // ✅ ILABAS ANG PEDAL BOARD — LUMANG PARAAN NA SIGURADONG GUMAGANA!
         if (savedInstanceState == null) {
             val ft = supportFragmentManager.beginTransaction()
             ft.replace(R.id.fragmentContainer, PedalBoardFragment())
-            ft.commit() // ✅ LUMANG PARAAN — WALANG BRACE! SIGURADONG GUMAGANA!
+            ft.commit()
         }
+    }
 
-        // ✅ HUMINGI NG PAHINTULOT SA MIKROPOno
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
+    // ✅ KAPAG PINAHINTULUTAN NA — BUKASAN ANG AUDIO!
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 123 && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "✅ Pinahintulutan na! Binubuksan ang Audio...", Toast.LENGTH_LONG).show()
+            AudioEngine.start(this)
+        } else {
+            Toast.makeText(this, "❌ Kailangan ng pahintulot sa Mikropono!", Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        AudioEngine.stop()
     }
 }
