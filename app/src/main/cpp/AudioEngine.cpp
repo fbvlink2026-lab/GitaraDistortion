@@ -18,8 +18,8 @@ static float gPhaserLevel    = 0.00f;
 
 // ✅ ON/OFF — KAPAG NAKA-OFF = WALANG DUMADAAN!
 static bool gEnableVolume    = true;
-static bool gEnableTone      = false;  // ✅ NAKA-OFF MUNA
-static bool gEnableReverb    = false;  // ✅ NAKA-OFF MUNA
+static bool gEnableTone      = false;
+static bool gEnableReverb    = false;
 static bool gEnableNoiseGate = true;
 static bool gEnableGain      = false;
 static bool gEnableOverdrive = false;
@@ -59,7 +59,6 @@ public:
     }
 };
 
-// ✅ TAMANG DALUYAN — KAPAG NAKA-OFF = WALANG DUMADAAN!
 class OutputCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
@@ -143,7 +142,6 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
     if (inputStream || outputStream) return;
 
-    // ✅ I-LOCK SA USB/AUDIO INTERFACE — KUNG MAY NAKAKONEKTA (iRig)
     oboe::AudioStreamBuilder builder;
     builder.setDirection(oboe::Direction::Input)
            ->setSampleRate(48000)
@@ -183,16 +181,17 @@ Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
     hasNewData = false;
 }
 
-// ✅ ITAKDA ANG ANTAS
+// ✅ ITAKDA ANG ANTAS — LAHAT AWTOMATIK GINAGAWA!
 #define SET_LEVEL(NAME) \
 extern "C" JNIEXPORT void JNICALL \
 Java_com_gitaradistortion_MainActivity_set##NAME##Level(JNIEnv*, jobject, jfloat v) { g##NAME##Level = v; }
 
-// ✅ ITUKA ANG ON/OFF
+// ✅ ITUKA ANG ON/OFF — LAHAT AWTOMATIK GINAGAWA!
 #define SET_SWITCH(NAME) \
 extern "C" JNIEXPORT void JNICALL \
 Java_com_gitaradistortion_MainActivity_set##NAME##Enabled(JNIEnv*, jobject, jboolean e) { gEnable##NAME = (e != JNI_FALSE); }
 
+// ✅ LAHAT NG PEDAL — MAY KATUMBAS NA TAWAG! WALANG DOBLE! WALANG KULANG!
 SET_LEVEL(Volume)
 SET_LEVEL(Tone)
 SET_LEVEL(Reverb)
