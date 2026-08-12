@@ -22,7 +22,7 @@ class PedalBoardFragment : Fragment() {
         root.setPadding(6, 8, 6, 6)
 
         // ==========================================
-        // ✅ TAAS: 🔴 MASTER ON/OFF — PAMATAY NG LAHAT!
+        // ✅ TAAS: 🔴 MASTER ON/OFF
         // ==========================================
         val masterBar = LinearLayout(ctx)
         masterBar.orientation = LinearLayout.HORIZONTAL
@@ -61,7 +61,7 @@ class PedalBoardFragment : Fragment() {
         root.addView(masterBar)
 
         // ==========================================
-        // ✅ ITAAS: TITLE
+        // ✅ TITLE
         // ==========================================
         val title = TextView(ctx)
         title.text = "🎛️ PEDAL BOARD"
@@ -72,7 +72,7 @@ class PedalBoardFragment : Fragment() {
         root.addView(title)
 
         // ==========================================
-        // ✅ GITNA: AKTIBONG PEDAL + CABINET SA KANAN!
+        // ✅ GITNA: AKTIBONG PEDAL + CABINET SA KANAN
         // ==========================================
         val mainRow = LinearLayout(ctx)
         mainRow.orientation = LinearLayout.HORIZONTAL
@@ -81,7 +81,8 @@ class PedalBoardFragment : Fragment() {
         // ✅ KALIWA — AKTIBONG PEDAL
         val activeArea = LinearLayout(ctx)
         activeArea.orientation = LinearLayout.VERTICAL
-        activeArea.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2.5f)
+        val activeLP = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 2.5f)
+        activeArea.layoutParams = activeLP
         activeArea.setPadding(2, 2, 6, 2)
         activeArea.setBackgroundColor(0xFF1A1A1A.toInt())
 
@@ -100,25 +101,26 @@ class PedalBoardFragment : Fragment() {
         val noiseGate = NoiseGatePedal()
         noiseGate.onEnabledChanged = { MainActivity.setNoiseGateEnabledGlobal(it) }
         noiseGate.onThresholdChanged = { v -> MainActivity.setNoiseGateLevelGlobal(v) }
-        pedalsRow.addView(noiseGate.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        pedalsRow.addView(noiseGate.makeView(ctx), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
         val volume = VolumePedal()
         volume.onEnabledChanged = { MainActivity.setVolumeEnabledGlobal(it) }
         volume.onLevelChanged = { v -> MainActivity.setVolumeLevelGlobal(v) }
-        pedalsRow.addView(volume.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        pedalsRow.addView(volume.makeView(ctx), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
         val gain = GainPedal()
         gain.onEnabledChanged = { MainActivity.setGainEnabledGlobal(it) }
         gain.onLevelChanged = { v -> MainActivity.setGainLevelGlobal(v) }
-        pedalsRow.addView(gain.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        pedalsRow.addView(gain.makeView(ctx), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
         activeArea.addView(pedalsRow)
         mainRow.addView(activeArea)
 
-        // ✅ KANAN — 📦 CABINET! HILAHIN MO PAPUNTA KALIWA!
+        // ✅ KANAN — CABINET
         val cabinet = LinearLayout(ctx)
         cabinet.orientation = LinearLayout.VERTICAL
-        cabinet.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+        val cabLP = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+        cabinet.layoutParams = cabLP
         cabinet.setBackgroundColor(0xFF2A2A2A.toInt())
         cabinet.setPadding(6, 6, 6, 6)
 
@@ -131,14 +133,14 @@ class PedalBoardFragment : Fragment() {
         cabinet.addView(cabTitle)
 
         val cabHint = TextView(ctx)
-        cabHint.text = "Hilahin pa-kaliwa"
+        cabHint.text = "Ilalabas pa-later"
         cabHint.textSize = 9f
         cabHint.setTextColor(0xFF777777.toInt())
         cabHint.gravity = Gravity.CENTER
         cabHint.setPadding(0, 0, 0, 6)
         cabinet.addView(cabHint)
 
-        // ✅ MGA PEDAL NA NASA LOOB NG CABINET
+        // ✅ MGA PEDAL SA CABINET
         val cabItem1 = TextView(ctx)
         cabItem1.text = "🟠 OVERDRIVE"
         cabItem1.setTextColor(0xFFFFAA22.toInt())
@@ -146,7 +148,6 @@ class PedalBoardFragment : Fragment() {
         cabItem1.setPadding(8, 10, 8, 10)
         cabItem1.textSize = 12f
         cabItem1.gravity = Gravity.CENTER
-        cabItem1.setMargins(0, 0, 0, 4)
         cabinet.addView(cabItem1)
 
         val cabItem2 = TextView(ctx)
@@ -156,7 +157,6 @@ class PedalBoardFragment : Fragment() {
         cabItem2.setPadding(8, 10, 8, 10)
         cabItem2.textSize = 12f
         cabItem2.gravity = Gravity.CENTER
-        cabItem2.setMargins(0, 0, 0, 4)
         cabinet.addView(cabItem2)
 
         val cabItem3 = TextView(ctx)
@@ -166,18 +166,10 @@ class PedalBoardFragment : Fragment() {
         cabItem3.setPadding(8, 10, 8, 10)
         cabItem3.textSize = 12f
         cabItem3.gravity = Gravity.CENTER
-        cabItem3.setMargins(0, 0, 0, 4)
         cabinet.addView(cabItem3)
 
         mainRow.addView(cabinet)
         root.addView(mainRow)
         return root
     }
-}
-
-// ✅ Tulong para maglagay ng espasyo
-fun TextView.setMargins(l:Int=0, t:Int=0, r:Int=0, b:Int=0) {
-    val lp = layoutParams as ViewGroup.MarginLayoutParams
-    lp.setMargins(l,t,r,b)
-    layoutParams = lp
 }
