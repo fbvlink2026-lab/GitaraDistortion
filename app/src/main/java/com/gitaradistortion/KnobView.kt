@@ -13,35 +13,40 @@ class KnobView(context: Context) : View(context) {
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
 
     var onValueChange: ((Float) -> Unit)? = null
-
     var baseColor = 0xFFFF6622.toInt()
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     override fun onDraw(canvas: Canvas) {
-        val w = width.toFloat()
-        val h = height.toFloat()
-        val cx = w / 2
-        val cy = h / 2
-        val r = minOf(cx, cy) - 4f
-        val angleRad = Math.toRadians((-135 + value * 270).toDouble())
+        try {
+            val w = width.toFloat()
+            val h = height.toFloat()
+            val cx = w / 2
+            val cy = h / 2
+            val r = minOf(cx, cy) - 4f
+            val angleRad = Math.toRadians((-135 + value * 270).toDouble())
 
-        paint.color = Color.DKGRAY
-        canvas.drawCircle(cx, cy, r + 4f, paint)
+            paint.color = Color.parseColor("#2A2A2A")
+            canvas.drawCircle(cx, cy, r + 5f, paint)
 
-        paint.color = baseColor
-        canvas.drawCircle(cx, cy, r, paint)
+            val brightness = 0.5f + value * 0.5f
+            val red = (Color.red(baseColor) * brightness).toInt()
+            val green = (Color.green(baseColor) * brightness).toInt()
+            val blue = (Color.blue(baseColor) * brightness).toInt()
+            paint.color = Color.rgb(red, green, blue)
+            canvas.drawCircle(cx, cy, r, paint)
 
-        paint.color = Color.WHITE
-        paint.strokeWidth = 4f
-        paint.strokeCap = Paint.Cap.ROUND
-        val len = r * 0.75f
-        canvas.drawLine(
-            cx, cy,
-            cx + (cos(angleRad) * len).toFloat(),
-            cy + (sin(angleRad) * len).toFloat(),
-            paint
-        )
+            paint.color = Color.WHITE
+            paint.strokeWidth = 4f
+            paint.strokeCap = Paint.Cap.ROUND
+            val len = r * 0.7f
+            canvas.drawLine(
+                cx, cy,
+                cx + (cos(angleRad) * len).toFloat(),
+                cy + (sin(angleRad) * len).toFloat(),
+                paint
+            )
+        } catch (_: Exception) {}
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -57,12 +62,7 @@ class KnobView(context: Context) : View(context) {
 
                 if (abs(newValue - value) > 0.001f) {
                     value = newValue
-                    // ✅ LIGTAS NA PAGTUMANGGAP — WALANG CRASH!
-                    onValueChange?.let { callback ->
-                        try {
-                            callback(newValue)
-                        } catch (_: Exception) {}
-                    }
+                    onValueChange?.invoke(newValue)
                 }
                 return true
             }
