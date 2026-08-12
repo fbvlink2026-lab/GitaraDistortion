@@ -11,9 +11,8 @@ import com.gitaradistortion.KnobView
 class NoiseGatePedal {
     var isEnabled = false
     var threshold = 0.04f
-
-    external fun setNoiseGateEnabled(e: Boolean)
-    external fun setNoiseGateLevel(v: Float)
+    var onEnabledChanged: ((Boolean) -> Unit)? = null
+    var onLevelChanged: ((Float) -> Unit)? = null
 
     fun makeView(ctx: Context): LinearLayout {
         val card = LinearLayout(ctx)
@@ -41,14 +40,14 @@ class NoiseGatePedal {
             isEnabled = !isEnabled
             btn.text = if (isEnabled) "🟢 ON" else "⚪ OFF"
             btn.setBackgroundColor(if (isEnabled) 0xFF228866.toInt() else 0xFF444444.toInt())
-            setNoiseGateEnabled(isEnabled)
+            onEnabledChanged?.invoke(isEnabled)
         }
         card.addView(btn)
 
         val knob = KnobView(ctx)
         knob.baseColor = 0xFF66DDDD.toInt()
         knob.value = threshold
-        knob.onValueChange = { threshold = it; setNoiseGateLevel(it) }
+        knob.onValueChange = { threshold = it; onLevelChanged?.invoke(it) }
         val knobLayout = LinearLayout.LayoutParams(70, 70)
         knobLayout.setMargins(0, 10, 0, 4)
         card.addView(knob, knobLayout)
