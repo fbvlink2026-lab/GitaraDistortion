@@ -47,7 +47,7 @@ class VolumePedal {
         val knob = KnobView(ctx)
         knob.baseColor = 0xFFFF8822.toInt()
         knob.value = level
-        knob.onValueChange = { newValue ->
+        knob.onValueChange = { newValue: Float ->
             level = newValue
             onLevelChanged?.invoke(newValue)
         }

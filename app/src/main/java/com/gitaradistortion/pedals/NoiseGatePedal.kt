@@ -47,7 +47,7 @@ class NoiseGatePedal {
         val knob = KnobView(ctx)
         knob.baseColor = 0xFF66DDDD.toInt()
         knob.value = threshold
-        knob.onValueChange = { newValue ->
+        knob.onValueChange = { newValue: Float ->
             threshold = newValue
             onLevelChanged?.invoke(newValue)
         }
