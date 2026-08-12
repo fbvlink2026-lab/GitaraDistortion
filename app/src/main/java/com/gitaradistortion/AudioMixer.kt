@@ -6,7 +6,6 @@ import kotlin.math.exp
 object AudioMixer {
     private const val SAFE_LIMIT = 0.9f
 
-    // ✅ MGA HALAGA — may sariling set na awtomatik
     var noiseGateThreshold = 0.04f
     var volumeLevel = 0.75f
     var gainAmount = 0.5f
@@ -14,25 +13,25 @@ object AudioMixer {
     var toneAmount = 0.5f
     var masterLevel = 0.6f
 
-    var noiseGateOn = false
+    var noiseGateOn = true  // ✅ I-ON NA AGAD!
     var volumeOn = true
     var gainOn = false
     var distortionOn = false
     var toneOn = false
 
-    // ✅ IBA ANG PANGALAN — WALANG PAGBANGGA!
     fun updateNoiseGateEnabled(enabled: Boolean) { noiseGateOn = enabled }
     fun updateNoiseGateThreshold(value: Float) { noiseGateThreshold = value }
     fun updateVolumeEnabled(enabled: Boolean) { volumeOn = enabled }
     fun updateVolumeLevel(value: Float) { volumeLevel = value }
+    fun updateGainEnabled(enabled: Boolean) { gainOn = enabled }
+    fun updateGainLevel(value: Float) { gainAmount = value }
 
     fun process(input: Float): Float {
         try {
             var signal = input
 
-            if (noiseGateOn && abs(signal) < noiseGateThreshold) {
-                signal = 0f
-            }
+            // ✅ NOISE GATE — MAWALA ANG UGONG!
+            if (noiseGateOn && abs(signal) < noiseGateThreshold) signal = 0f
 
             if (volumeOn) signal *= volumeLevel
             if (gainOn) signal *= (1f + gainAmount * 0.6f)
@@ -47,11 +46,8 @@ object AudioMixer {
 
             signal *= masterLevel
             signal = signal.coerceIn(-SAFE_LIMIT, SAFE_LIMIT)
-
             return signal
-        } catch (_: Exception) {
-            return 0f
-        }
+        } catch (_: Exception) { return 0f }
     }
 
     private fun tanh(x: Float): Float {

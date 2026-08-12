@@ -8,10 +8,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 class NoiseGatePedal {
-    var isEnabled = false
+    var isEnabled = true // ✅ I-ON NA AGAD!
     var threshold = 0.04f
     var decay = 0.3f
-    // ✅ MAY MGA TAWAG NA!
     var onEnabledChanged: ((Boolean) -> Unit)? = null
     var onThresholdChanged: ((Float) -> Unit)? = null
     var onDecayChanged: ((Float) -> Unit)? = null
@@ -32,9 +31,9 @@ class NoiseGatePedal {
         card.addView(title)
 
         val btn = Button(ctx)
-        btn.text = "⚪ OFF"
+        btn.text = "🟢 ON" // ✅ I-ON NA AGAD!
         btn.setTextColor(Color.WHITE)
-        btn.setBackgroundColor(0xFF444444.toInt())
+        btn.setBackgroundColor(0xFF228866.toInt()) // ✅ BERDE = I-ON
         btn.textSize = 12f
         btn.setPadding(12, 4, 12, 4)
         btn.minWidth = 100
