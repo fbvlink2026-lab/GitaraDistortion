@@ -9,6 +9,8 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 object AudioEngine {
     private var recorder: AudioRecord? = null
@@ -35,7 +37,7 @@ object AudioEngine {
                 bufferSize * 4
             )
 
-            // ✅ AUDIO OUTPUT — MODE_STREAM NA! SIGURADONG KILALA!
+            // ✅ AUDIO OUTPUT — SIGURADONG GUMAGANA!
             track = AudioTrack.Builder()
                 .setAudioAttributes(
                     AudioAttributes.Builder()
@@ -51,7 +53,7 @@ object AudioEngine {
                         .build()
                 )
                 .setBufferSizeInBytes(bufferSize * 4)
-                .setTransferMode(AudioTrack.MODE_STREAM) // ✅ TAMA NA!
+                .setTransferMode(AudioTrack.MODE_STREAM)
                 .build()
 
             recorder?.startRecording()
@@ -73,7 +75,7 @@ object AudioEngine {
 
     private fun processLoop() {
         val inputBuffer = FloatArray(bufferSize)
-        val outputBuffer = FloatArray(bufferSize)
+        val byteBuffer = ByteBuffer.allocateDirect(bufferSize * 4).order(ByteOrder.nativeOrder())
 
         while (isRunning) {
             // ✅ BASAHIN ANG TUNOG NG GITARA
@@ -83,13 +85,16 @@ object AudioEngine {
                 continue
             }
 
-            // ✅ IPROSESO → IPASA SA MIXER → PALABAS!
+            // ✅ IPROSESO → I-CONVERT SA BYTES → IPALABAS!
+            byteBuffer.clear()
             for (i in 0 until read) {
-                outputBuffer[i] = AudioMixer.process(inputBuffer[i])
+                val processed = AudioMixer.process(inputBuffer[i])
+                byteBuffer.putFloat(processed.coerceIn(-0.9f, 0.9f))
             }
+            byteBuffer.flip()
 
-            // ✅ IPALABAS SA SPEAKER!
-            track?.write(outputBuffer, 0, read)
+            // ✅ ISULAT SA SPEAKER — ByteBuffer NA! SIGURADONG GUMAGANA!
+            track?.write(byteBuffer, byteBuffer.remaining(), AudioTrack.WRITE_BLOCKING)
         }
     }
 
