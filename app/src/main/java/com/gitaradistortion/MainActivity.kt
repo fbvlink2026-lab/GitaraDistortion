@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlin.math.*
 
-// 🎛️ BILOG NA PIHITAN — PARANG TUNAY NA AMP
+// 🎛️ MAS MALAKING PIHITAN — PARANG TUNAY NA AMP
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
@@ -38,36 +38,36 @@ class KnobView(context: android.content.Context) : View(context) {
         val h = height.toFloat()
         val cx = w / 2
         val cy = h / 2
-        val r = minOf(w, h) / 2 - 4f
+        val r = minOf(w, h) / 2 - 6f
         val glow = getGlowColor()
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 3f
+        paint.strokeWidth = 4f
         paint.color = 0xFF555555.toInt()
         canvas.drawCircle(cx, cy, r, paint)
 
         paint.style = android.graphics.Paint.Style.FILL
         paint.color = 0xFF1A1A1A.toInt()
-        canvas.drawCircle(cx, cy, r - 2f, paint)
+        canvas.drawCircle(cx, cy, r - 3f, paint)
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 4.5f + value * 5f
+        paint.strokeWidth = 5f + value * 5f
         paint.color = glow
-        canvas.drawCircle(cx, cy, r - 5f, paint)
+        canvas.drawCircle(cx, cy, r - 6f, paint)
 
-        val capR = r * 0.68f
+        val capR = r * 0.65f
         paint.style = android.graphics.Paint.Style.FILL
-        paint.color = 0xFFE0E0E0.toInt()
+        paint.color = 0xFFE8E8E8.toInt()
         canvas.drawCircle(cx, cy, capR, paint)
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 2f
+        paint.strokeWidth = 2.5f
         paint.color = 0xFFBBBBBB.toInt()
-        canvas.drawCircle(cx, cy, capR - 1f, paint)
+        canvas.drawCircle(cx, cy, capR - 1.5f, paint)
 
         val angle = -135f + (270f) * value
         val rad = Math.toRadians(angle.toDouble())
-        paint.strokeWidth = 5f + value * 3f
+        paint.strokeWidth = 6f + value * 3f
         paint.color = glow
         val len = capR * 0.75f
         val endX = cx + len * sin(rad).toFloat()
@@ -76,7 +76,7 @@ class KnobView(context: android.content.Context) : View(context) {
 
         paint.style = android.graphics.Paint.Style.FILL
         paint.color = glow
-        canvas.drawCircle(cx, cy, 7f + value * 3f, paint)
+        canvas.drawCircle(cx, cy, 10f + value * 4f, paint)
     }
 
     private var startAngle = 0.0
@@ -104,7 +104,7 @@ class KnobView(context: android.content.Context) : View(context) {
 class MainActivity : AppCompatActivity() {
     private var isOn = false
 
-    // ✅ LAHAT NG 8 NA EPEKTO
+    // ✅ LAHAT NG EPEKTO
     private external fun startAudioEngine(): Unit
     private external fun stopAudioEngine(): Unit
 
@@ -129,38 +129,35 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         System.loadLibrary("gitaradistortion")
 
-        // ✅ PANGUNAHING LIKOD — PARANG TONEBRIDGE
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
         root.gravity = Gravity.CENTER_HORIZONTAL
-        root.setPadding(16, 20, 16, 16)
+        root.setPadding(12, 16, 12, 12)
 
-        // ✅ PAMAGAT SA TAAS
         val title = TextView(this)
         title.text = "🎸  GUITAR EFFECTS  🎸"
-        title.textSize = 24f
+        title.textSize = 22f
         title.setTextColor(0xFFFF9922.toInt())
         title.gravity = Gravity.CENTER
-        title.setPadding(0, 8, 0, 16)
+        title.setPadding(0, 4, 0, 12)
         root.addView(title)
 
-        // ✅ GUMAWA NG BAWAT EPEKTO: ON/OFF → PIHITAN → PAMAGAT → HALAGA
+        // ✅ BAWAT EPEKTO: BUTTON SA TAAS → MALAKING PIHITAN → PAMAGAT → HALAGA
         fun makeEffectView(label: String, color: Int, defaultValue: Float,
                             onValue: (Float) -> Unit,
                             onSwitch: (Boolean) -> Unit): LinearLayout {
             val col = LinearLayout(this)
             col.orientation = LinearLayout.VERTICAL
             col.gravity = Gravity.CENTER
+            col.setPadding(4, 0, 4, 8)
 
-            // ✅ ON/OFF BUTTON — NASA TAAS NG PIHITAN! KATULAD NG TONEBRIDGE!
             val btnSwitch = Button(this)
             btnSwitch.text = "⚪ OFF"
             btnSwitch.setTextColor(Color.WHITE)
             btnSwitch.setBackgroundColor(Color.parseColor("#333333"))
-            btnSwitch.textSize = 10f
-            btnSwitch.setPadding(8, 2, 8, 2)
-            btnSwitch.minWidth = 70
+            btnSwitch.textSize = 11f
+            btnSwitch.setPadding(4, 2, 4, 2)
             var isEffectOn = false
             btnSwitch.setOnClickListener {
                 isEffectOn = !isEffectOn
@@ -170,45 +167,37 @@ class MainActivity : AppCompatActivity() {
             }
             col.addView(btnSwitch)
 
-            // ✅ PIHITAN — NASA ILALIM NG BUTTON
             val knob = KnobView(this)
             knob.baseColor = color
             knob.value = defaultValue
             val txtVal = TextView(this)
             txtVal.text = "${(defaultValue * 100).toInt()}%"
             txtVal.setTextColor(color)
-            txtVal.textSize = 11f
+            txtVal.textSize = 12f
             txtVal.gravity = Gravity.CENTER
             knob.onValueChange = { v ->
                 txtVal.text = "${(v * 100).toInt()}%"
                 onValue(v)
             }
-            col.addView(knob, LinearLayout.LayoutParams(90, 90))
+            col.addView(knob, LinearLayout.LayoutParams(110, 110))
 
-            // ✅ PAMAGAT
             val txtLabel = TextView(this)
             txtLabel.text = label
             txtLabel.setTextColor(Color.WHITE)
-            txtLabel.textSize = 12f
+            txtLabel.textSize = 13f
             txtLabel.gravity = Gravity.CENTER
-            txtLabel.setPadding(0, 4, 0, 2)
+            txtLabel.setPadding(0, 6, 0, 2)
             col.addView(txtLabel)
-
-            // ✅ HALAGA
             col.addView(txtVal)
 
             return col
         }
 
-        // ==========================================
-        // ✅ DALAWANG HANAY LANG — KALIWA AT KANAN!
-        // ==========================================
-
-        // ✅ HANAY 1 — KALIWA: VOLUME, TONE, REVERB, NOISE GATE
+        // ✅ HANAY 1 — KALIWA → KANAN: VOLUME, TONE, REVERB, GATE
         val row1 = LinearLayout(this)
         row1.orientation = LinearLayout.HORIZONTAL
         row1.gravity = Gravity.CENTER
-        row1.setPadding(0, 0, 0, 16)
+        row1.setPadding(0, 0, 0, 8)
         row1.addView(makeEffectView("🔊 VOLUME", 0xFFFF8822.toInt(), 0.75f,
             { setVolumeLevel(it) }, { setVolumeEnabled(it) }))
         row1.addView(makeEffectView("🎵 TONE", 0xFF44DD88.toInt(), 0.50f,
@@ -219,11 +208,11 @@ class MainActivity : AppCompatActivity() {
             { setNoiseGateLevel(it * 0.15f) }, { setNoiseGateEnabled(it) }))
         root.addView(row1)
 
-        // ✅ HANAY 2 — KANAN: GAIN, OVERDRIVE, DIST, PHASER
+        // ✅ HANAY 2 — KALIWA → KANAN: GAIN, OVERDRIVE, DIST, PHASER
         val row2 = LinearLayout(this)
         row2.orientation = LinearLayout.HORIZONTAL
         row2.gravity = Gravity.CENTER
-        row2.setPadding(0, 8, 0, 8)
+        row2.setPadding(0, 4, 0, 4)
         row2.addView(makeEffectView("⚡ GAIN", 0xFFFFFF00.toInt(), 0.50f,
             { setGainLevel(it * 2f) }, { setGainEnabled(it) }))
         row2.addView(makeEffectView("🔥 OVERDRIVE", 0xFFFFAA00.toInt(), 0.00f,
@@ -234,16 +223,14 @@ class MainActivity : AppCompatActivity() {
             { setPhaserLevel(it) }, { setPhaserEnabled(it) }))
         root.addView(row2)
 
-        // ✅ STATUS TEXT
         val statusText = TextView(this)
-        statusText.text = "🔴 NAKA-OFF — Pindutin POWER sa ibaba"
+        statusText.text = "🔴 NAKA-OFF — Isaksak ang iRig bago mag-ON"
         statusText.textSize = 13f
         statusText.setTextColor(0xFFFF6666.toInt())
         statusText.gravity = Gravity.CENTER
-        statusText.setPadding(0, 12, 0, 8)
+        statusText.setPadding(0, 8, 0, 8)
         root.addView(statusText)
 
-        // ✅ PANGUNAHING POWER BUTTON
         val btn = Button(this)
         btn.text = "🔘  POWER"
         btn.textSize = 18f
@@ -262,7 +249,7 @@ class MainActivity : AppCompatActivity() {
                 startAudioEngine()
                 btn.text = "🔴  POWER OFF"
                 btn.setBackgroundColor(0xFFFF4444.toInt())
-                statusText.text = "🟢 GUMAGAMIT NG MIKROFONO — Isaksak ang gitara!"
+                statusText.text = "🟢 GUMAGANA — Isaksak ang gitara sa iRig!"
                 statusText.setTextColor(0xFF44FF44.toInt())
             } else {
                 stopAudioEngine()
@@ -284,7 +271,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 123 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "✅ Pahintulot nakuha! Pindutin muli ang POWER!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "✅ Pahintulot nakuha! Isaksak ang iRig → Pindutin muli ang POWER!", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(this, "⚠️ Kailangan ng pahintulot sa Mikropono!", Toast.LENGTH_LONG).show()
         }
