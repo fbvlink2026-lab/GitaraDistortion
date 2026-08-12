@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.fragment.app.commit
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -23,11 +22,11 @@ class MainActivity : AppCompatActivity() {
         // ✅ PAALALA SA ITAAS
         findViewById<TextView>(R.id.iRigHint)?.text = "🔌 Isaksak ang iRig → Pahintulutan ang Mikropono → I-ON"
 
-        // ✅ ILABAS ANG PEDAL BOARD SA SCREEN!
+        // ✅ ILABAS ANG PEDAL BOARD — LUMANG PARAAN NA SIGURADONG GUMAGANA!
         if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace(R.id.fragmentContainer, PedalBoardFragment())
-            }
+            val ft = supportFragmentManager.beginTransaction()
+            ft.replace(R.id.fragmentContainer, PedalBoardFragment())
+            ft.commit() // ✅ LUMANG PARAAN — WALANG BRACE! SIGURADONG GUMAGANA!
         }
 
         // ✅ HUMINGI NG PAHINTULOT SA MIKROPOno
