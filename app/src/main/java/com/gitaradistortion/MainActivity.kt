@@ -22,7 +22,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import kotlin.math.*
 
-// 🎛️ BILOG NA PIHITAN
+// 🎛️ BILOG NA PIHITAN — HINDI NA LILIPAT ANG PANEL KAPAG PINIPIHIT!
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
         set(v) { 
@@ -33,8 +33,11 @@ class KnobView(context: android.content.Context) : View(context) {
     
     var onValueChange: ((Float) -> Unit)? = null
     var baseColor = 0xFFFF8822.toInt()
+    var pager: ViewPager2? = null  // ✅ KONEKTAHAN SA PANEL
 
     private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    private var startAngle = 0.0
+    private var isDragging = false  // ✅ TANDAAN KUNG PINIPIHIT
 
     private fun getGlowColor(): Int {
         val f = 0.35f + value * 0.65f
@@ -53,18 +56,18 @@ class KnobView(context: android.content.Context) : View(context) {
         val glow = getGlowColor()
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 3f
+        paint.strokeWidth = 4f
         paint.color = 0xFF555555.toInt()
         canvas.drawCircle(cx, cy, r, paint)
 
         paint.style = android.graphics.Paint.Style.FILL
         paint.color = 0xFF1A1A1A.toInt()
-        canvas.drawCircle(cx, cy, r - 2f, paint)
+        canvas.drawCircle(cx, cy, r - 3f, paint)
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 4f + value * 4f
+        paint.strokeWidth = 5f + value * 5f
         paint.color = glow
-        canvas.drawCircle(cx, cy, r - 4f, paint)
+        canvas.drawCircle(cx, cy, r - 5f, paint)
 
         val capR = r * 0.65f
         paint.style = android.graphics.Paint.Style.FILL
@@ -72,13 +75,13 @@ class KnobView(context: android.content.Context) : View(context) {
         canvas.drawCircle(cx, cy, capR, paint)
 
         paint.style = android.graphics.Paint.Style.STROKE
-        paint.strokeWidth = 2f
+        paint.strokeWidth = 3f
         paint.color = 0xFFBBBBBB.toInt()
-        canvas.drawCircle(cx, cy, capR - 1f, paint)
+        canvas.drawCircle(cx, cy, capR - 1.5f, paint)
 
         val angle = -135f + (270f) * value
         val rad = Math.toRadians(angle.toDouble())
-        paint.strokeWidth = 5f + value * 2f
+        paint.strokeWidth = 6f + value * 3f
         paint.color = glow
         val len = capR * 0.75f
         val endX = cx + len * sin(rad).toFloat()
@@ -87,10 +90,8 @@ class KnobView(context: android.content.Context) : View(context) {
 
         paint.style = android.graphics.Paint.Style.FILL
         paint.color = glow
-        canvas.drawCircle(cx, cy, 8f + value * 3f, paint)
+        canvas.drawCircle(cx, cy, 10f + value * 4f, paint)
     }
-
-    private var startAngle = 0.0
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val cx = width / 2f
@@ -98,13 +99,22 @@ class KnobView(context: android.content.Context) : View(context) {
         val angle = Math.toDegrees(atan2(event.x - cx, cy - event.y).toDouble())
 
         when (event.action) {
-            MotionEvent.ACTION_DOWN -> startAngle = angle
+            MotionEvent.ACTION_DOWN -> {
+                startAngle = angle
+                isDragging = true
+                pager?.isUserInputEnabled = false  // ✅ HARANGIN ANG PANEL — HINDI LILIPAT!
+            }
             MotionEvent.ACTION_MOVE -> {
+                if (!isDragging) return true
                 var delta = angle - startAngle
                 if (delta > 180) delta -= 360.0
                 if (delta < -180) delta += 360.0
                 value += (delta / 270.0).toFloat()
                 startAngle = angle
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                isDragging = false
+                pager?.isUserInputEnabled = true   // ✅ BABALIK NA ANG PANEL KAPAG BINITAWAN
             }
         }
         return true
@@ -129,6 +139,7 @@ class FxPanelFragment : Fragment() {
     private var panelNumber = 1
     private lateinit var fxList: List<FxDef>
     private lateinit var prefs: SharedPreferences
+    var parentPager: ViewPager2? = null  // ✅ KONEKTAHAN SA PANEL
 
     companion object {
         fun newInstance(panel: Int, effects: ArrayList<FxDef>): FxPanelFragment {
@@ -150,46 +161,44 @@ class FxPanelFragment : Fragment() {
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
         root.gravity = Gravity.CENTER_HORIZONTAL
-        root.setPadding(12, 8, 12, 8)
+        root.setPadding(10, 6, 10, 6)
 
-        // 📌 PAMAGAT NG PANEL
         val title = TextView(requireContext())
         title.text = if (panelNumber == 1) "🎛️ PANEL 1 — MGA PANGUNAHIN" else "🎛️ PANEL 2 — MGA EPEKTO"
-        title.textSize = 18f
+        title.textSize = 17f
         title.setTextColor(0xFFFF9922.toInt())
         title.gravity = Gravity.CENTER
-        title.setPadding(0, 4, 0, 8)
+        title.setPadding(0, 4, 0, 6)
         root.addView(title)
 
         val hint = TextView(requireContext())
-        hint.text = "👆 HILAHIN PAKALIWA/PAKANAN ← → ILIPAT ANG PANEL"
+        hint.text = "👆 HILAHIN SA IBABA/ITAAS ANG PUWANG — ILIPAT ANG PANEL ← →"
         hint.textSize = 10f
         hint.setTextColor(0xFF888888.toInt())
         hint.gravity = Gravity.CENTER
-        hint.setPadding(0, 0, 0, 8)
+        hint.setPadding(0, 0, 0, 6)
         root.addView(hint)
 
         val sortedFx = fxList.sortedBy { getPos(it) }
 
-        // ✅ BAWAT EPEKTO — MALAPAD AT KASYA SA SCREEN!
         fun makeEffectCard(fx: FxDef): LinearLayout {
             val card = LinearLayout(requireContext())
             card.orientation = LinearLayout.VERTICAL
             card.gravity = Gravity.CENTER
-            card.setPadding(12, 10, 12, 10)
-            card.setBackgroundColor(0xFF1E1E1E.toInt())  // ✅ INAYOS KO! WALANG setCardBackgroundColor!
-            card.minimumWidth = 165
+            card.setPadding(10, 8, 10, 8)
+            card.setBackgroundColor(0xFF1E1E1E.toInt())
+            card.minimumWidth = 170
 
             val szPercent = getSizePercent(fx)
-            val knobSize = (80 * szPercent / 100).coerceIn(70, 100)
+            val knobSize = (95 * szPercent / 100).coerceIn(85, 120)
 
             val btnSwitch = Button(requireContext())
             btnSwitch.text = "⚪ OFF"
             btnSwitch.setTextColor(Color.WHITE)
             btnSwitch.setBackgroundColor(Color.parseColor("#444444"))
             btnSwitch.textSize = 10f
-            btnSwitch.setPadding(8, 2, 8, 2)
-            btnSwitch.minWidth = 75
+            btnSwitch.setPadding(6, 2, 6, 2)
+            btnSwitch.minWidth = 70
             var isEffectOn = false
             btnSwitch.setOnClickListener {
                 isEffectOn = !isEffectOn
@@ -202,11 +211,12 @@ class FxPanelFragment : Fragment() {
             val knob = KnobView(requireContext())
             knob.baseColor = fx.color
             knob.value = fx.defValue
+            knob.pager = parentPager  // ✅ IKONEKTA — HINDI NA LILIPAT ANG PANEL KAPAG PINIPIHIT!
 
             val txtVal = TextView(requireContext())
             txtVal.text = "${(fx.defValue * 100).toInt()}%"
             txtVal.setTextColor(fx.color)
-            txtVal.textSize = 12f
+            txtVal.textSize = 14f
             txtVal.gravity = Gravity.CENTER
 
             knob.onValueChange = { v ->
@@ -220,7 +230,7 @@ class FxPanelFragment : Fragment() {
             val txtLabel = TextView(requireContext())
             txtLabel.text = "${fx.icon} ${fx.name}"
             txtLabel.setTextColor(Color.WHITE)
-            txtLabel.textSize = 11f
+            txtLabel.textSize = 12f
             txtLabel.gravity = Gravity.CENTER
             txtLabel.setPadding(0, 4, 0, 1)
             card.addView(txtLabel)
@@ -228,7 +238,7 @@ class FxPanelFragment : Fragment() {
             val txtSize = TextView(requireContext())
             txtSize.text = "Laki: $szPercent%"
             txtSize.setTextColor(0xFF888888.toInt())
-            txtSize.textSize = 9f
+            txtSize.textSize = 10f
             txtSize.gravity = Gravity.CENTER
             txtSize.setPadding(0, 0, 0, 4)
             card.addView(txtSize)
@@ -236,38 +246,38 @@ class FxPanelFragment : Fragment() {
             val rowInput = LinearLayout(requireContext())
             rowInput.orientation = LinearLayout.HORIZONTAL
             rowInput.gravity = Gravity.CENTER
-            rowInput.setPadding(4, 3, 4, 3)
+            rowInput.setPadding(6, 4, 6, 4)
             rowInput.setBackgroundColor(0xFF2A2A2A.toInt())
 
             val etPos = EditText(requireContext())
             etPos.hint = "#"
             etPos.setText("${getPos(fx)}")
-            etPos.textSize = 10f
+            etPos.textSize = 13f
             etPos.setTextColor(Color.WHITE)
             etPos.setHintTextColor(0xFF666666.toInt())
             etPos.setBackgroundColor(0xFF383838.toInt())
-            etPos.setPadding(4, 2, 4, 2)
-            etPos.minWidth = 32
-            etPos.maxWidth = 32
+            etPos.setPadding(6, 4, 6, 4)
+            etPos.minWidth = 45
+            etPos.maxWidth = 45
             etPos.gravity = Gravity.CENTER
             rowInput.addView(etPos)
 
-            val sp1 = TextView(requireContext()); sp1.minWidth = 4; rowInput.addView(sp1)
+            val sp1 = TextView(requireContext()); sp1.minWidth = 6; rowInput.addView(sp1)
 
             val etSz = EditText(requireContext())
             etSz.hint = "%"
             etSz.setText("$szPercent")
-            etSz.textSize = 10f
+            etSz.textSize = 13f
             etSz.setTextColor(Color.WHITE)
             etSz.setHintTextColor(0xFF666666.toInt())
             etSz.setBackgroundColor(0xFF383838.toInt())
-            etSz.setPadding(4, 2, 4, 2)
-            etSz.minWidth = 32
-            etSz.maxWidth = 32
+            etSz.setPadding(6, 4, 6, 4)
+            etSz.minWidth = 45
+            etSz.maxWidth = 45
             etSz.gravity = Gravity.CENTER
             rowInput.addView(etSz)
 
-            val sp2 = TextView(requireContext()); sp2.minWidth = 4; rowInput.addView(sp2)
+            val sp2 = TextView(requireContext()); sp2.minWidth = 6; rowInput.addView(sp2)
 
             val btnSave = Button(requireContext())
             btnSave.text = "✓"
@@ -292,11 +302,10 @@ class FxPanelFragment : Fragment() {
             return card
         }
 
-        // ✅ DALAWANG HANAY SA LOOB NG PANEL — 2 SA TAAS, 2 SA IBABA
         val row1 = LinearLayout(requireContext())
         row1.orientation = LinearLayout.HORIZONTAL
         row1.gravity = Gravity.CENTER
-        row1.setPadding(0, 0, 0, 8)
+        row1.setPadding(0, 0, 0, 6)
         sortedFx.take(2).forEach { row1.addView(makeEffectCard(it)) }
         root.addView(row1)
 
@@ -316,7 +325,6 @@ class FxPanelFragment : Fragment() {
     private fun saveSize(fxId: String, percent: Int) = prefs.edit().putInt("SZ_$fxId", percent).apply()
 }
 
-// 🎯 PANGUNAHING SCREEN — MAY HILAHIN NA PANEL
 class MainActivity : FragmentActivity() {
     private var isOn = false
 
@@ -344,7 +352,6 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         System.loadLibrary("gitaradistortion")
 
-        // ✅ LAHAT NG EPEKTO — HATI SA DALAWANG PANEL
         val panel1Effects = arrayListOf(
             FxDef("VOL", "🔊", "VOLUME", 0xFFFF8822.toInt(), 0.75f, 1, 100, { setVolumeLevel(it) }, { setVolumeEnabled(it) }),
             FxDef("TON", "🎵", "TONE", 0xFF44DD88.toInt(), 0.50f, 2, 100, { setToneLevel(it) }, { setToneEnabled(it) }),
@@ -359,26 +366,25 @@ class MainActivity : FragmentActivity() {
             FxDef("PHA", "🫧", "PHASER", 0xFF44AAFF.toInt(), 0.00f, 8, 90, { setPhaserLevel(it) }, { setPhaserEnabled(it) })
         )
 
-        // ✅ PANGUNAHING LAYOUT
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
 
-        // ✅ VIEWPAGER — MAHILAHIN PAKALIWA/PAKANAN!
         val viewPager = ViewPager2(this)
         viewPager.offscreenPageLimit = 1
         viewPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount(): Int = 2
             override fun createFragment(position: Int): Fragment {
-                return if (position == 0) FxPanelFragment.newInstance(1, panel1Effects)
-                else FxPanelFragment.newInstance(2, panel2Effects)
+                val frag = if (position == 0) FxPanelFragment.newInstance(1, panel1Effects)
+                           else FxPanelFragment.newInstance(2, panel2Effects)
+                frag.parentPager = viewPager  // ✅ IKONEKTA ANG PANEL SA PIHITAN
+                return frag
             }
         }
         root.addView(viewPager, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
         ))
 
-        // ✅ TAGAPAGPAKITA NG PANEL NUMERO
         val panelIndicator = TextView(this)
         panelIndicator.text = "◀  PANEL 1 / 2  ▶"
         panelIndicator.textSize = 13f
@@ -393,7 +399,6 @@ class MainActivity : FragmentActivity() {
             }
         })
 
-        // ✅ STATUS AT POWER BUTTON — LAGING NASA ILALIM!
         val statusText = TextView(this)
         statusText.text = "🔴 NAKA-OFF — Isaksak ang iRig bago mag-ON"
         statusText.textSize = 11f
