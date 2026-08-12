@@ -3,7 +3,6 @@ package com.gitaradistortion
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
@@ -36,7 +35,7 @@ object AudioEngine {
                 bufferSize * 4
             )
 
-            // ✅ AUDIO OUTPUT — PALABAS SA SPEAKER! KULANG ITO KANINA!
+            // ✅ AUDIO OUTPUT — MODE_STREAM NA! SIGURADONG KILALA!
             track = AudioTrack.Builder()
                 .setAudioAttributes(
                     AudioAttributes.Builder()
@@ -52,7 +51,7 @@ object AudioEngine {
                         .build()
                 )
                 .setBufferSizeInBytes(bufferSize * 4)
-                .setTransferMode(AudioTrack.MODE_BLOCKING)
+                .setTransferMode(AudioTrack.MODE_STREAM) // ✅ TAMA NA!
                 .build()
 
             recorder?.startRecording()
@@ -89,8 +88,8 @@ object AudioEngine {
                 outputBuffer[i] = AudioMixer.process(inputBuffer[i])
             }
 
-            // ✅ IPALABAS SA SPEAKER! KULANG ITO KANINA!
-            track?.write(outputBuffer, 0, read, AudioTrack.WRITE_BLOCKING)
+            // ✅ IPALABAS SA SPEAKER!
+            track?.write(outputBuffer, 0, read)
         }
     }
 
