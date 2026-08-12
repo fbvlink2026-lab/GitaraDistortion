@@ -46,10 +46,12 @@ class NoiseGatePedal {
         val knob = KnobView(ctx)
         knob.baseColor = 0xFF66DDDD.toInt()
         knob.value = threshold
-        // ✅ TAMA NA ANG PAGTANGGAP NG HALAGA!
-        knob.onValueChange = { newValue ->
-            threshold = newValue
-            onLevelChanged?.invoke(newValue)
+        // ✅ LIGTAS NA PAGTANGGAP — WALANG CRASH!
+        knob.onValueChange = { v ->
+            threshold = v
+            try {
+                onLevelChanged?.invoke(v)
+            } catch (_: Exception) {}
         }
         val knobLayout = LinearLayout.LayoutParams(70, 70)
         knobLayout.setMargins(0, 10, 0, 4)

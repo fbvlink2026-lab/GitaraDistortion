@@ -46,10 +46,12 @@ class VolumePedal {
         val knob = KnobView(ctx)
         knob.baseColor = 0xFFFF8822.toInt()
         knob.value = level
-        // ✅ TAMA NA ANG PAGTANGGAP NG HALAGA!
-        knob.onValueChange = { newValue ->
-            level = newValue
-            onLevelChanged?.invoke(newValue)
+        // ✅ LIGTAS NA PAGTANGGAP — WALANG CRASH!
+        knob.onValueChange = { v ->
+            level = v
+            try {
+                onLevelChanged?.invoke(v)
+            } catch (_: Exception) {}
         }
         val knobLayout = LinearLayout.LayoutParams(70, 70)
         knobLayout.setMargins(0, 10, 0, 4)
