@@ -6,26 +6,25 @@
 #define LOG_TAG "GITARA"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-// ✅ MGA ANTAS — HINDI NAGBABAGO KAHIT NAKA-OFF!
+// ✅ LAHAT NG ANTAS — HINDI NAGBABAGO KAHIT NAKA-OFF
 static float gVolumeLevel    = 0.75f;
 static float gToneLevel      = 0.50f;
 static float gReverbLevel    = 0.25f;
+static float gNoiseGateLevel = 0.04f;
+static float gGainLevel      = 1.00f;
 static float gOverdriveLevel = 0.00f;
 static float gDistortionLevel= 0.00f;
-static float gGainLevel      = 1.00f;
 static float gPhaserLevel    = 0.00f;
 
-// ✅ ON/OFF — HIIWALAY SA ANTAS!
+// ✅ ON/OFF — HIIWALAY SA ANTAS
 static bool gEnableVolume    = true;
 static bool gEnableTone      = true;
 static bool gEnableReverb    = true;
+static bool gEnableNoiseGate = true;
+static bool gEnableGain      = false;
 static bool gEnableOverdrive = false;
 static bool gEnableDistortion= false;
-static bool gEnableGain      = false;
 static bool gEnablePhaser    = false;
-
-// ✅ PALAGING NAKA-ON — HINDI NABABAGO
-static const float gNoiseGate = 0.04f;
 
 // ✅ MGA BUFFER
 static float prevLpf = 0.0f;
@@ -60,7 +59,7 @@ public:
     }
 };
 
-// ✅ TAMANG DALUYAN — KAPAG NAKA-ON LANG TUMATALAB!
+// ✅ TAMANG PAGKAKASUNOD: GATE → GAIN → OVERDRIVE → DIST → TONE → PHASER → REVERB → VOLUME
 class OutputCallback : public oboe::AudioStreamCallback {
 public:
     oboe::DataCallbackResult onAudioReady(
@@ -76,27 +75,27 @@ public:
             float input = 0.0f;
             if (hasNewData && i < 2048) input = sharedBuffer[i];
 
-            // 🚧 1. NOISE GATE — PALAGING NAKA-ON
-            if (std::fabs(input) < gNoiseGate) input = 0.0f;
+            // 🚧 1. NOISE GATE — PATAYIN ANG INGAY UNA!
+            if (gEnableNoiseGate && std::fabs(input) < gNoiseGateLevel) input = 0.0f;
 
             float proc = input;
 
-            // ⚡ 2. GAIN — KAPAG NAKA-ON LANG
+            // ⚡ 2. GAIN — DAGDAG-LAKAS
             if (gEnableGain) proc *= gGainLevel;
 
-            // 🔥 3. OVERDRIVE — KAPAG NAKA-ON LANG
+            // 🔥 3. OVERDRIVE — MALAMBOT AT MAINIT NA PALITAD
             if (gEnableOverdrive && gOverdriveLevel > 0.01f) {
                 float drive = 1.0f + gOverdriveLevel * 3.0f;
                 proc = std::sin(proc * drive) * (1.0f - gOverdriveLevel * 0.3f) + proc * gOverdriveLevel * 0.3f;
             }
 
-            // 💥 4. DISTORTION — KAPAG NAKA-ON LANG
+            // 💥 4. DISTORTION — MATALAS AT PUMUTOK NA PALITAD
             if (gEnableDistortion && gDistortionLevel > 0.01f) {
                 float drive = 1.0f + gDistortionLevel * 4.0f;
                 proc = std::tanh(proc * drive);
             }
 
-            // 🎵 5. TONE — KAPAG NAKA-ON LANG
+            // 🎵 5. TONE — AYUSIN ANG KULAY
             if (gEnableTone) {
                 float lpf = alpha * prevLpf + (1.0f - alpha) * proc;
                 float hpf = proc - lpf;
@@ -104,7 +103,7 @@ public:
                 prevLpf = lpf;
             }
 
-            // 🫧 6. PHASER — KAPAG NAKA-ON LANG
+            // 🫧 6. PHASER — GALAW NA TUNOG
             if (gEnablePhaser && gPhaserLevel > 0.01f) {
                 float lfo = (std::sin(phaserLfo) + 1.0f) * 0.4f + 0.1f;
                 float wet = proc;
@@ -119,7 +118,7 @@ public:
                 proc = proc * (1.0f - gPhaserLevel) + wet * gPhaserLevel;
             }
 
-            // 🌊 7. REVERB — KAPAG NAKA-ON LANG
+            // 🌊 7. REVERB — DAGDAG NA LALIM
             if (gEnableReverb) {
                 float reverbOut = reverbBuffer[reverbIndex];
                 reverbBuffer[reverbIndex] = proc + reverbOut * REVERB_DECAY;
@@ -127,7 +126,7 @@ public:
                 proc = proc * (1.0f - gReverbLevel) + reverbOut * gReverbLevel * 0.5f;
             }
 
-            // 🔊 8. VOLUME — KAPAG NAKA-ON LANG
+            // 🔊 8. VOLUME — HULING AYUS NG LAKAS
             if (gEnableVolume) proc *= gVolumeLevel * 0.95f;
 
             out[i] = proc;
@@ -161,7 +160,7 @@ Java_com_gitaradistortion_MainActivity_startAudioEngine(JNIEnv*, jobject) {
 
     inputStream->requestStart();
     outputStream->requestStart();
-    LOGI("✅ MAY ON/OFF NA BAWAT EPEKTO!");
+    LOGI("✅ LAHAT NAKABUO — MAY NOISE GATE NA!");
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -177,12 +176,12 @@ Java_com_gitaradistortion_MainActivity_stopAudioEngine(JNIEnv*, jobject) {
     hasNewData = false;
 }
 
-// ✅ ITAKDA ANG ANTAS — HINDI NAIIBANG KAHIT NAKA-OFF!
+// ✅ ITAKDA ANG ANTAS
 #define SET_LEVEL(NAME) \
 extern "C" JNIEXPORT void JNICALL \
 Java_com_gitaradistortion_MainActivity_set##NAME##Level(JNIEnv*, jobject, jfloat v) { g##NAME##Level = v; }
 
-// ✅ ITUKA ANG ON/OFF — HIIWALAY SA ANTAS!
+// ✅ ITUKA ANG ON/OFF
 #define SET_SWITCH(NAME) \
 extern "C" JNIEXPORT void JNICALL \
 Java_com_gitaradistortion_MainActivity_set##NAME##Enabled(JNIEnv*, jobject, jboolean e) { gEnable##NAME = (e != JNI_FALSE); }
@@ -190,15 +189,17 @@ Java_com_gitaradistortion_MainActivity_set##NAME##Enabled(JNIEnv*, jobject, jboo
 SET_LEVEL(Volume)
 SET_LEVEL(Tone)
 SET_LEVEL(Reverb)
+SET_LEVEL(NoiseGate)
+SET_LEVEL(Gain)
 SET_LEVEL(Overdrive)
 SET_LEVEL(Distortion)
-SET_LEVEL(Gain)
 SET_LEVEL(Phaser)
 
 SET_SWITCH(Volume)
 SET_SWITCH(Tone)
 SET_SWITCH(Reverb)
+SET_SWITCH(NoiseGate)
+SET_SWITCH(Gain)
 SET_SWITCH(Overdrive)
 SET_SWITCH(Distortion)
-SET_SWITCH(Gain)
 SET_SWITCH(Phaser)
