@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlin.math.*
 
-// 🎛️ MAS MALAKING PIHITAN — PARANG TUNAY NA AMP
+// 🎛️ MALAKING PIHITAN — MAY PUWANG SA PANGALAN
 class KnobView(context: android.content.Context) : View(context) {
     var value = 0.5f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
         root.gravity = Gravity.CENTER_HORIZONTAL
-        root.setPadding(12, 16, 12, 12)
+        root.setPadding(8, 12, 8, 8)
 
         val title = TextView(this)
         title.text = "🎸  GUITAR EFFECTS  🎸"
@@ -143,21 +143,23 @@ class MainActivity : AppCompatActivity() {
         title.setPadding(0, 4, 0, 12)
         root.addView(title)
 
-        // ✅ BAWAT EPEKTO: BUTTON SA TAAS → MALAKING PIHITAN → PAMAGAT → HALAGA
-        fun makeEffectView(label: String, color: Int, defaultValue: Float,
+        // ✅ BAWAT EPEKTO: BUTTON SA TAAS → PIHITAN → BUONG PANGALAN → HALAGA
+        fun makeEffectView(fullName: String, color: Int, defaultValue: Float,
                             onValue: (Float) -> Unit,
                             onSwitch: (Boolean) -> Unit): LinearLayout {
             val col = LinearLayout(this)
             col.orientation = LinearLayout.VERTICAL
             col.gravity = Gravity.CENTER
-            col.setPadding(4, 0, 4, 8)
+            col.setPadding(2, 0, 2, 6)
 
+            // ✅ ON/OFF BUTTON SA TAAS
             val btnSwitch = Button(this)
             btnSwitch.text = "⚪ OFF"
             btnSwitch.setTextColor(Color.WHITE)
             btnSwitch.setBackgroundColor(Color.parseColor("#333333"))
-            btnSwitch.textSize = 11f
-            btnSwitch.setPadding(4, 2, 4, 2)
+            btnSwitch.textSize = 10f
+            btnSwitch.setPadding(2, 1, 2, 1)
+            btnSwitch.minWidth = 60
             var isEffectOn = false
             btnSwitch.setOnClickListener {
                 isEffectOn = !isEffectOn
@@ -167,59 +169,65 @@ class MainActivity : AppCompatActivity() {
             }
             col.addView(btnSwitch)
 
+            // ✅ PIHITAN
             val knob = KnobView(this)
             knob.baseColor = color
             knob.value = defaultValue
             val txtVal = TextView(this)
             txtVal.text = "${(defaultValue * 100).toInt()}%"
             txtVal.setTextColor(color)
-            txtVal.textSize = 12f
+            txtVal.textSize = 11f
             txtVal.gravity = Gravity.CENTER
             knob.onValueChange = { v ->
                 txtVal.text = "${(v * 100).toInt()}%"
                 onValue(v)
             }
-            col.addView(knob, LinearLayout.LayoutParams(110, 110))
+            col.addView(knob, LinearLayout.LayoutParams(100, 100))
 
+            // ✅ BUONG PANGALAN — HINDI LANG ICON
             val txtLabel = TextView(this)
-            txtLabel.text = label
+            txtLabel.text = fullName
             txtLabel.setTextColor(Color.WHITE)
-            txtLabel.textSize = 13f
+            txtLabel.textSize = 11f
             txtLabel.gravity = Gravity.CENTER
-            txtLabel.setPadding(0, 6, 0, 2)
+            txtLabel.setPadding(0, 2, 0, 1)
             col.addView(txtLabel)
             col.addView(txtVal)
 
             return col
         }
 
-        // ✅ HANAY 1 — KALIWA → KANAN: VOLUME, TONE, REVERB, GATE
+        // ==========================================
+        // ✅ HANAY 1 — ITAAS: VOLUME, TONE, REVERB, NOISE GATE
+        // ==========================================
         val row1 = LinearLayout(this)
         row1.orientation = LinearLayout.HORIZONTAL
         row1.gravity = Gravity.CENTER
-        row1.setPadding(0, 0, 0, 8)
-        row1.addView(makeEffectView("🔊 VOLUME", 0xFFFF8822.toInt(), 0.75f,
+        row1.setPadding(0, 0, 0, 4)
+        row1.addView(makeEffectView("VOLUME", 0xFFFF8822.toInt(), 0.75f,
             { setVolumeLevel(it) }, { setVolumeEnabled(it) }))
-        row1.addView(makeEffectView("🎵 TONE", 0xFF44DD88.toInt(), 0.50f,
+        row1.addView(makeEffectView("TONE", 0xFF44DD88.toInt(), 0.50f,
             { setToneLevel(it) }, { setToneEnabled(it) }))
-        row1.addView(makeEffectView("🌊 REVERB", 0xFFAA66FF.toInt(), 0.25f,
+        row1.addView(makeEffectView("REVERB", 0xFFAA66FF.toInt(), 0.25f,
             { setReverbLevel(it) }, { setReverbEnabled(it) }))
-        row1.addView(makeEffectView("🚧 GATE", 0xFF66DDDD.toInt(), 0.04f,
+        row1.addView(makeEffectView("NOISE GATE", 0xFF66DDDD.toInt(), 0.04f,
             { setNoiseGateLevel(it * 0.15f) }, { setNoiseGateEnabled(it) }))
         root.addView(row1)
 
-        // ✅ HANAY 2 — KALIWA → KANAN: GAIN, OVERDRIVE, DIST, PHASER
+        // ==========================================
+        // ✅ HANAY 2 — IBABA: GAIN, OVERDRIVE, DISTORTION, PHASER
+        // ==========================================
         val row2 = LinearLayout(this)
         row2.orientation = LinearLayout.HORIZONTAL
         row2.gravity = Gravity.CENTER
         row2.setPadding(0, 4, 0, 4)
-        row2.addView(makeEffectView("⚡ GAIN", 0xFFFFFF00.toInt(), 0.50f,
+        row2.addView(makeEffectView("GAIN", 0xFFFFFF00.toInt(), 0.50f,
             { setGainLevel(it * 2f) }, { setGainEnabled(it) }))
-        row2.addView(makeEffectView("🔥 OVERDRIVE", 0xFFFFAA00.toInt(), 0.00f,
+        row2.addView(makeEffectView("OVERDRIVE", 0xFFFFAA00.toInt(), 0.00f,
             { setOverdriveLevel(it) }, { setOverdriveEnabled(it) }))
-        row2.addView(makeEffectView("💥 DIST", 0xFFFF4444.toInt(), 0.00f,
+        row2.addView(makeEffectView("DISTORTION", 0xFFFF4444.toInt(), 0.00f,
             { setDistortionLevel(it) }, { setDistortionEnabled(it) }))
-        row2.addView(makeEffectView("🫧 PHASER", 0xFF44AAFF.toInt(), 0.00f,
+        row2.addView(makeEffectView("PHASER", 0xFF44AAFF.toInt(), 0.00f,
             { setPhaserLevel(it) }, { setPhaserEnabled(it) }))
         root.addView(row2)
 
@@ -228,7 +236,7 @@ class MainActivity : AppCompatActivity() {
         statusText.textSize = 13f
         statusText.setTextColor(0xFFFF6666.toInt())
         statusText.gravity = Gravity.CENTER
-        statusText.setPadding(0, 8, 0, 8)
+        statusText.setPadding(0, 6, 0, 6)
         root.addView(statusText)
 
         val btn = Button(this)
