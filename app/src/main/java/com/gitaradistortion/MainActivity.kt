@@ -177,9 +177,7 @@ class FxPanelFragment : Fragment() {
             card.orientation = LinearLayout.VERTICAL
             card.gravity = Gravity.CENTER
             card.setPadding(12, 10, 12, 10)
-            card.setBackgroundColor(0xFF1E1E1E.toInt())
-            card.setCardBackgroundColor(0xFF1E1E1E.toInt())
-            card.elevation = 2f
+            card.setBackgroundColor(0xFF1E1E1E.toInt())  // ✅ INAYOS KO! WALANG setCardBackgroundColor!
             card.minimumWidth = 165
 
             val szPercent = getSizePercent(fx)
