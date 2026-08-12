@@ -37,16 +37,19 @@ class PedalBoardFragment : Fragment() {
         hint.setPadding(0, 0, 0, 20)
         root.addView(hint)
 
-        // ✅ UNANG DALAWANG PEDAL — NASA BOARD NA!
         val row = LinearLayout(ctx)
         row.orientation = LinearLayout.HORIZONTAL
         row.gravity = Gravity.CENTER
         row.setPadding(8, 8, 8, 8)
 
         val noiseGate = NoiseGatePedal()
+        noiseGate.onEnabledChanged = { MainActivity.setNoiseGateEnabledGlobal(it) }
+        noiseGate.onLevelChanged = { MainActivity.setNoiseGateLevelGlobal(it) }
         row.addView(noiseGate.makeView(ctx))
 
         val volume = VolumePedal()
+        volume.onEnabledChanged = { MainActivity.setVolumeEnabledGlobal(it) }
+        volume.onLevelChanged = { MainActivity.setVolumeLevelGlobal(it) }
         row.addView(volume.makeView(ctx))
 
         root.addView(row)
