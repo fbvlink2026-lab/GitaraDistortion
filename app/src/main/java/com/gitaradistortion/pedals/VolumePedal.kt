@@ -11,9 +11,8 @@ import com.gitaradistortion.KnobView
 class VolumePedal {
     var isEnabled = true
     var level = 0.75f
-
-    external fun setVolumeEnabled(e: Boolean)
-    external fun setVolumeLevel(v: Float)
+    var onEnabledChanged: ((Boolean) -> Unit)? = null
+    var onLevelChanged: ((Float) -> Unit)? = null
 
     fun makeView(ctx: Context): LinearLayout {
         val card = LinearLayout(ctx)
@@ -41,14 +40,14 @@ class VolumePedal {
             isEnabled = !isEnabled
             btn.text = if (isEnabled) "🟢 ON" else "⚪ OFF"
             btn.setBackgroundColor(if (isEnabled) 0xFF228833.toInt() else 0xFF444444.toInt())
-            setVolumeEnabled(isEnabled)
+            onEnabledChanged?.invoke(isEnabled)
         }
         card.addView(btn)
 
         val knob = KnobView(ctx)
         knob.baseColor = 0xFFFF8822.toInt()
         knob.value = level
-        knob.onValueChange = { level = it; setVolumeLevel(it) }
+        knob.onValueChange = { level = it; onLevelChanged?.invoke(it) }
         val knobLayout = LinearLayout.LayoutParams(70, 70)
         knobLayout.setMargins(0, 10, 0, 4)
         card.addView(knob, knobLayout)
