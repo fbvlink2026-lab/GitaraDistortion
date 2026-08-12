@@ -1,6 +1,5 @@
 package com.gitaradistortion
 
-import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -37,37 +36,27 @@ class CabinetFragment : Fragment() {
         hint.setPadding(0, 0, 0, 10)
         root.addView(hint)
 
-        val inCab = PedalDef.inCabinet()
-
+        val inCab = listOf("GAIN", "OVERDRIVE", "DISTORTION", "PHASER", "DELAY", "WAH-WAH")
         val list = LinearLayout(ctx)
         list.orientation = LinearLayout.VERTICAL
         list.setPadding(4, 4, 4, 4)
 
-        inCab.forEach { pedal ->
+        inCab.forEach { name ->
             val item = LinearLayout(ctx)
             item.orientation = LinearLayout.HORIZONTAL
             item.gravity = Gravity.CENTER_VERTICAL
             item.setPadding(12, 10, 12, 10)
             item.setBackgroundColor(0xFF2A2A2A.toInt())
 
-            val name = TextView(ctx)
-            name.text = "${pedal.icon}   ${pedal.displayName}"
-            name.setTextColor(Color.WHITE)
-            name.textSize = 14f
-            name.gravity = Gravity.START
-            name.setPadding(8, 0, 0, 0)
-            item.addView(name)
-
-            val info = TextView(ctx)
-            info.text = "(${pedal.knobLabels.size} na pihitan)"
-            info.setTextColor(0xFF888888.toInt())
-            info.textSize = 11f
-            info.setPadding(8, 0, 0, 0)
-            item.addView(info)
-
+            val nameTv = TextView(ctx)
+            nameTv.text = "🎛️   $name"
+            nameTv.setTextColor(Color.WHITE)
+            nameTv.textSize = 14f
+            nameTv.gravity = Gravity.START
+            nameTv.setPadding(8, 0, 0, 0)
+            item.addView(nameTv)
             list.addView(item)
         }
-
         root.addView(list)
         return root
     }
