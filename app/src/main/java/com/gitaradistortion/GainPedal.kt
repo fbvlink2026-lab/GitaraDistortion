@@ -7,9 +7,9 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 
-class VolumePedal {
-    var isEnabled = true
-    var level = 0.75f
+class GainPedal {
+    var isEnabled = false
+    var level = 0.5f
     var onEnabledChanged: ((Boolean) -> Unit)? = null
     var onLevelChanged: ((Float) -> Unit)? = null
 
@@ -18,27 +18,27 @@ class VolumePedal {
         card.orientation = LinearLayout.VERTICAL
         card.gravity = Gravity.CENTER
         card.setPadding(12, 12, 12, 12)
-        card.setBackgroundColor(0xFF3A2A1A.toInt())
+        card.setBackgroundColor(0xFF2A1A3A.toInt())
         card.minimumWidth = 180
 
         val title = TextView(ctx)
-        title.text = "🔊 VOLUME"
-        title.setTextColor(0xFFFF8822.toInt())
+        title.text = "⚡ GAIN"
+        title.setTextColor(0xFFAA66FF.toInt())
         title.textSize = 14f
         title.setPadding(0, 0, 0, 6)
         card.addView(title)
 
         val btn = Button(ctx)
-        btn.text = "🟢 ON"
+        btn.text = "⚪ OFF"
         btn.setTextColor(Color.WHITE)
-        btn.setBackgroundColor(0xFF228833.toInt())
+        btn.setBackgroundColor(0xFF444444.toInt())
         btn.textSize = 11f
         btn.setPadding(8, 2, 8, 2)
         btn.minWidth = 90
         btn.setOnClickListener {
             isEnabled = !isEnabled
             btn.text = if (isEnabled) "🟢 ON" else "⚪ OFF"
-            btn.setBackgroundColor(if (isEnabled) 0xFF228833.toInt() else 0xFF444444.toInt())
+            btn.setBackgroundColor(if (isEnabled) 0xFF6644AA.toInt() else 0xFF444444.toInt())
             onEnabledChanged?.invoke(isEnabled)
         }
         card.addView(btn)
@@ -52,11 +52,11 @@ class VolumePedal {
         knobCol.orientation = LinearLayout.VERTICAL
         knobCol.gravity = Gravity.CENTER
         val levelKnob = KnobView(ctx)
-        levelKnob.baseColor = 0xFFFF8822.toInt()
+        levelKnob.baseColor = 0xFFAA66FF.toInt()
         levelKnob.value = level
         val levelPct = TextView(ctx)
-        levelPct.text = "75%"
-        levelPct.setTextColor(0xFFCC9955.toInt())
+        levelPct.text = "50%"
+        levelPct.setTextColor(0xFFAA88CC.toInt())
         levelPct.textSize = 10f
         levelKnob.onValueChange = { v ->
             level = v
@@ -67,7 +67,7 @@ class VolumePedal {
         knobCol.addView(levelPct)
         val lbl = TextView(ctx)
         lbl.text = "LEVEL"
-        lbl.setTextColor(0xFFCC9955.toInt())
+        lbl.setTextColor(0xFFAA88CC.toInt())
         lbl.textSize = 9f
         knobCol.addView(lbl)
         knobsRow.addView(knobCol)

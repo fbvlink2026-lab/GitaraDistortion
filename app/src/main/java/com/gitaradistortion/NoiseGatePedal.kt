@@ -8,7 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 class NoiseGatePedal {
-    var isEnabled = true // ✅ I-ON NA AGAD!
+    var isEnabled = true
     var threshold = 0.04f
     var decay = 0.3f
     var onEnabledChanged: ((Boolean) -> Unit)? = null
@@ -19,24 +19,24 @@ class NoiseGatePedal {
         val card = LinearLayout(ctx)
         card.orientation = LinearLayout.VERTICAL
         card.gravity = Gravity.CENTER
-        card.setPadding(20, 16, 20, 16)
+        card.setPadding(12, 12, 12, 12)
         card.setBackgroundColor(0xFF1E3A3A.toInt())
-        card.minimumWidth = 200
+        card.minimumWidth = 180
 
         val title = TextView(ctx)
         title.text = "🚧 NOISE GATE"
         title.setTextColor(0xFF44DDDD.toInt())
-        title.textSize = 15f
-        title.setPadding(0, 0, 0, 10)
+        title.textSize = 14f
+        title.setPadding(0, 0, 0, 6)
         card.addView(title)
 
         val btn = Button(ctx)
-        btn.text = "🟢 ON" // ✅ I-ON NA AGAD!
+        btn.text = "🟢 ON"
         btn.setTextColor(Color.WHITE)
-        btn.setBackgroundColor(0xFF228866.toInt()) // ✅ BERDE = I-ON
-        btn.textSize = 12f
-        btn.setPadding(12, 4, 12, 4)
-        btn.minWidth = 100
+        btn.setBackgroundColor(0xFF228866.toInt())
+        btn.textSize = 11f
+        btn.setPadding(8, 2, 8, 2)
+        btn.minWidth = 90
         btn.setOnClickListener {
             isEnabled = !isEnabled
             btn.text = if (isEnabled) "🟢 ON" else "⚪ OFF"
@@ -48,43 +48,57 @@ class NoiseGatePedal {
         val knobsRow = LinearLayout(ctx)
         knobsRow.orientation = LinearLayout.HORIZONTAL
         knobsRow.gravity = Gravity.CENTER
-        knobsRow.setPadding(0, 12, 0, 4)
+        knobsRow.setPadding(4, 8, 4, 4)
 
-        val knob1 = LinearLayout(ctx)
-        knob1.orientation = LinearLayout.VERTICAL
-        knob1.gravity = Gravity.CENTER
+        // ✅ THRESHOLD — MALAKI ANG PIHITAN + MAY %!
+        val knob1Col = LinearLayout(ctx)
+        knob1Col.orientation = LinearLayout.VERTICAL
+        knob1Col.gravity = Gravity.CENTER
         val thresholdKnob = KnobView(ctx)
         thresholdKnob.baseColor = 0xFF44DDDD.toInt()
         thresholdKnob.value = threshold
+        val thresholdPct = TextView(ctx)
+        thresholdPct.text = "4%"
+        thresholdPct.setTextColor(0xFF88AAAA.toInt())
+        thresholdPct.textSize = 10f
         thresholdKnob.onValueChange = { v ->
             threshold = v
+            thresholdPct.text = "${(v * 100).toInt()}%"
             onThresholdChanged?.invoke(v)
         }
-        knob1.addView(thresholdKnob, LinearLayout.LayoutParams(60, 60))
+        knob1Col.addView(thresholdKnob, LinearLayout.LayoutParams(90, 90)) // ✅ MALAKI!
+        knob1Col.addView(thresholdPct)
         val lbl1 = TextView(ctx)
         lbl1.text = "THRESHOLD"
         lbl1.setTextColor(0xFF88AAAA.toInt())
         lbl1.textSize = 9f
-        knob1.addView(lbl1)
-        knobsRow.addView(knob1)
+        knob1Col.addView(lbl1)
+        knobsRow.addView(knob1Col)
 
-        val knob2 = LinearLayout(ctx)
-        knob2.orientation = LinearLayout.VERTICAL
-        knob2.gravity = Gravity.CENTER
+        // ✅ DECAY — MALAKI ANG PIHITAN + MAY %!
+        val knob2Col = LinearLayout(ctx)
+        knob2Col.orientation = LinearLayout.VERTICAL
+        knob2Col.gravity = Gravity.CENTER
         val decayKnob = KnobView(ctx)
         decayKnob.baseColor = 0xFF44DDDD.toInt()
         decayKnob.value = decay
+        val decayPct = TextView(ctx)
+        decayPct.text = "30%"
+        decayPct.setTextColor(0xFF88AAAA.toInt())
+        decayPct.textSize = 10f
         decayKnob.onValueChange = { v ->
             decay = v
+            decayPct.text = "${(v * 100).toInt()}%"
             onDecayChanged?.invoke(v)
         }
-        knob2.addView(decayKnob, LinearLayout.LayoutParams(60, 60))
+        knob2Col.addView(decayKnob, LinearLayout.LayoutParams(90, 90)) // ✅ MALAKI!
+        knob2Col.addView(decayPct)
         val lbl2 = TextView(ctx)
         lbl2.text = "DECAY"
         lbl2.setTextColor(0xFF88AAAA.toInt())
         lbl2.textSize = 9f
-        knob2.addView(lbl2)
-        knobsRow.addView(knob2)
+        knob2Col.addView(lbl2)
+        knobsRow.addView(knob2Col)
 
         card.addView(knobsRow)
         return card

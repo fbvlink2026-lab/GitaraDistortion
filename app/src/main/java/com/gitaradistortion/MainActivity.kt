@@ -14,22 +14,18 @@ class MainActivity : AppCompatActivity() {
         fun setNoiseGateLevelGlobal(level: Float) { AudioMixer.updateNoiseGateThreshold(level) }
         fun setVolumeEnabledGlobal(enabled: Boolean) { AudioMixer.updateVolumeEnabled(enabled) }
         fun setVolumeLevelGlobal(level: Float) { AudioMixer.updateVolumeLevel(level) }
+        fun setGainEnabledGlobal(enabled: Boolean) { AudioMixer.updateGainEnabled(enabled) }
+        fun setGainLevelGlobal(level: Float) { AudioMixer.updateGainLevel(level) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // ✅ HUMINGI NG PAHINTULOT — KAILANGAN PARA MAKABASA NG GITARA!
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                123
-            )
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
         } else {
-            // ✅ MAY PAHINTULOT NA — BUKASAN AGAD ANG AUDIO!
             AudioEngine.start(this)
         }
 
@@ -40,13 +36,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ KAPAG PINAHINTULUTAN NA — BUKASAN ANG AUDIO!
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 123 && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "✅ Pinahintulutan na! Binubuksan ang Audio...", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "✅ Pinahintulutan na!", Toast.LENGTH_SHORT).show()
             AudioEngine.start(this)
         } else {
             Toast.makeText(this, "❌ Kailangan ng pahintulot sa Mikropono!", Toast.LENGTH_LONG).show()

@@ -4,11 +4,17 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
+import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.sqrt
 
-class KnobView(context: Context) : View(context) {
+class KnobView @JvmOverloads constructor(
+    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+) : View(context, attrs, defStyleAttr) {
+
     var value = 0.5f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
 
@@ -16,57 +22,70 @@ class KnobView(context: Context) : View(context) {
     var baseColor = 0xFFFF6622.toInt()
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var centerX = 0f
+    private var centerY = 0f
+    private var radius = 0f
+    private var lastAngle = 0f
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        centerX = w / 2f
+        centerY = h / 2f
+        radius = minOf(w, h) / 2f - 8f
+    }
 
     override fun onDraw(canvas: Canvas) {
-        try {
-            val w = width.toFloat()
-            val h = height.toFloat()
-            val cx = w / 2
-            val cy = h / 2
-            val r = minOf(cx, cy) - 4f
-            val angleRad = Math.toRadians((-135 + value * 270).toDouble())
+        super.onDraw(canvas)
 
-            paint.color = Color.parseColor("#2A2A2A")
-            canvas.drawCircle(cx, cy, r + 5f, paint)
+        // ✅ Bilog na gilid
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 6f
+        paint.color = 0xFF333333.toInt()
+        canvas.drawCircle(centerX, centerY, radius, paint)
 
-            val brightness = 0.5f + value * 0.5f
-            val red = (Color.red(baseColor) * brightness).toInt()
-            val green = (Color.green(baseColor) * brightness).toInt()
-            val blue = (Color.blue(baseColor) * brightness).toInt()
-            paint.color = Color.rgb(red, green, blue)
-            canvas.drawCircle(cx, cy, r, paint)
+        // ✅ Napihit na bahagi
+        val sweep = value * 300f
+        paint.color = baseColor
+        paint.strokeCap = Paint.Cap.ROUND
+        canvas.drawArc(RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius),
+            120f, sweep, false, paint)
 
-            paint.color = Color.WHITE
-            paint.strokeWidth = 4f
-            paint.strokeCap = Paint.Cap.ROUND
-            val len = r * 0.7f
-            canvas.drawLine(
-                cx, cy,
-                cx + (cos(angleRad) * len).toFloat(),
-                cy + (sin(angleRad) * len).toFloat(),
-                paint
-            )
-        } catch (_: Exception) {}
+        // ✅ Loob ng bilog
+        paint.style = Paint.Style.FILL
+        paint.color = 0xFF222222.toInt()
+        canvas.drawCircle(centerX, centerY, radius - 6f, paint)
+
+        // ✅ Tuldok na palaso
+        val angleRad = Math.toRadians((120f + sweep).toDouble())
+        val indicatorRadius = radius * 0.7f
+        val x = centerX + Math.cos(angleRad).toFloat() * indicatorRadius
+        val y = centerY + Math.sin(angleRad).toFloat() * indicatorRadius
+        paint.color = Color.WHITE
+        canvas.drawCircle(x, y, 8f, paint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        try {
-            if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
-                val cx = width / 2f
-                val cy = height / 2f
-                val dx = event.x - cx
-                val dy = event.y - cy
-                var angleDeg = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
-                if (angleDeg < 0) angleDeg += 360f
-                var newValue = ((angleDeg - 225f) / 270f).coerceIn(0f, 1f)
+        val x = event.x - centerX
+        val y = event.y - centerY
+        val distance = sqrt(x*x + y*y)
 
-                if (abs(newValue - value) > 0.001f) {
-                    value = newValue
-                    onValueChange?.invoke(newValue)
-                }
-                return true
+        if (distance < radius * 0.4f) return true
+
+        val angle = Math.toDegrees(Math.atan2(y.toDouble(), x.toDouble())).toFloat()
+        var normalized = if (angle < -90f) angle + 450f else angle + 90f
+        normalized = normalized.coerceIn(0f, 360f)
+
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> lastAngle = normalized
+            MotionEvent.ACTION_MOVE -> {
+                var delta = normalized - lastAngle
+                if (abs(delta) > 180f) delta = if (delta > 0) delta - 360f else delta + 360f
+                value += delta / 300f
+                value = value.coerceIn(0f, 1f)
+                lastAngle = normalized
+                onValueChange?.invoke(value)
             }
-        } catch (_: Exception) {}
-        return super.onTouchEvent(event)
+        }
+        return true
     }
 }

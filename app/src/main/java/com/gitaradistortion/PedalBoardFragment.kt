@@ -17,66 +17,39 @@ class PedalBoardFragment : Fragment() {
         val root = LinearLayout(ctx)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
-        root.setPadding(12, 8, 12, 8)
+        root.setPadding(8, 16, 8, 8)
 
-        // ==========================================
-        // ✅ AKTIBONG PEDAL — NAKALABAS SA BOARD
-        // ==========================================
-        val activeTitle = TextView(ctx)
-        activeTitle.text = "🎛️ AKTIBONG PEDAL"
-        activeTitle.textSize = 18f
-        activeTitle.setTextColor(0xFFFFCC00.toInt())
-        activeTitle.gravity = Gravity.CENTER
-        activeTitle.setPadding(0, 4, 0, 6)
-        root.addView(activeTitle)
+        val title = TextView(ctx)
+        title.text = "🎛️ PEDAL BOARD"
+        title.textSize = 20f
+        title.setTextColor(0xFFFFCC00.toInt())
+        title.gravity = Gravity.CENTER
+        title.setPadding(0, 4, 0, 12)
+        root.addView(title)
 
-        val activeRow = LinearLayout(ctx)
-        activeRow.orientation = LinearLayout.HORIZONTAL
-        activeRow.gravity = Gravity.CENTER
-        activeRow.setPadding(4, 4, 4, 8)
+        // ✅ UNANG HANAY — LAHAT NAKALABAS NA!
+        val row = LinearLayout(ctx)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER
+        row.setPadding(2, 2, 2, 2)
 
-        // ✅ NOISE GATE — NAKALABAS NA
         val noiseGate = NoiseGatePedal()
         noiseGate.onEnabledChanged = { MainActivity.setNoiseGateEnabledGlobal(it) }
         noiseGate.onThresholdChanged = { v -> MainActivity.setNoiseGateLevelGlobal(v) }
-        activeRow.addView(noiseGate.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        row.addView(noiseGate.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
-        // ✅ VOLUME — NAKALABAS NA
         val volume = VolumePedal()
         volume.onEnabledChanged = { MainActivity.setVolumeEnabledGlobal(it) }
         volume.onLevelChanged = { v -> MainActivity.setVolumeLevelGlobal(v) }
-        activeRow.addView(volume.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        row.addView(volume.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
-        root.addView(activeRow)
+        // ✅ ILABAS NA ANG GAIN! MULA SA CABINET!
+        val gain = GainPedal()
+        gain.onEnabledChanged = { MainActivity.setGainEnabledGlobal(it) }
+        gain.onLevelChanged = { v -> MainActivity.setGainLevelGlobal(v) }
+        row.addView(gain.makeView(ctx), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
 
-        // ==========================================
-        // ✅ 📦 CABINET — LAGAYAN NG MGA PEDAL!
-        // ==========================================
-        val cabinetTitle = TextView(ctx)
-        cabinetTitle.text = "📦 CABINET — Pindutin para ilabas"
-        cabinetTitle.textSize = 14f
-        cabinetTitle.setTextColor(0xFF888888.toInt())
-        cabinetTitle.gravity = Gravity.CENTER
-        cabinetTitle.setPadding(0, 12, 0, 6)
-        root.addView(cabinetTitle)
-
-        val cabinet = LinearLayout(ctx)
-        cabinet.orientation = LinearLayout.HORIZONTAL
-        cabinet.gravity = Gravity.CENTER
-        cabinet.setBackgroundColor(0xFF222222.toInt())
-        cabinet.setPadding(8, 12, 8, 12)
-
-        // ✅ GAIN — NASA CABINET PA! HUGUTIN MO LATER!
-        val gainLabel = TextView(ctx)
-        gainLabel.text = "⚡ GAIN"
-        gainLabel.setTextColor(0xFFAA66FF.toInt())
-        gainLabel.setBackgroundColor(0xFF333333.toInt())
-        gainLabel.setPadding(16, 10, 16, 10)
-        gainLabel.textSize = 13f
-        gainLabel.gravity = Gravity.CENTER
-        cabinet.addView(gainLabel)
-
-        root.addView(cabinet)
+        root.addView(row)
         return root
     }
 }
