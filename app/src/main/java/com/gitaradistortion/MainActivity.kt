@@ -19,17 +19,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.json.JSONArray
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
-    private var currentPage = 0
+    private var currentPage = 0 // 0=Main Mixer, 1+=Cabinet Page
     private var cabinetPageIndex = 0
     private var startX = 0f
+    private var isSwiping = false // ✅ PARA HINDI MAULIT-ULIT ANG SWIPE
     private lateinit var mainPage: LinearLayout
     private lateinit var pageContainer: LinearLayout
     private lateinit var savePresetName: EditText
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
 
+    // ✅ LAHAT NG FX
     private val fxList = listOf(
         Triple("🚧 NOISE GATE", -0x3BBB78, { AudioMixer.noiseGate }),
         Triple("🎵 TONE", -0x0033BC, { AudioMixer.tone }),
@@ -159,17 +162,28 @@ class MainActivity : AppCompatActivity() {
 
         root.addView(pageContainer)
 
+        // ✅ SWIPE — AYUS NA! HINDI NA TATALON!
         pageContainer.setOnTouchListener { _, e ->
             when(e.action) {
-                MotionEvent.ACTION_DOWN -> startX = e.rawX
-                MotionEvent.ACTION_MOVE -> {
-                    val d = startX - e.rawX
-                    if(d > 120) {
-                        if(currentPage == 0) goToCabinetPage()
-                        else goNextCabinetPage()
-                    }
-                    if(d < -120) {
-                        if(currentPage > 0) goPrevCabinetPage()
+                MotionEvent.ACTION_DOWN -> {
+                    startX = e.rawX
+                    isSwiping = false // ✅ RESET
+                }
+                MotionEvent.ACTION_UP -> {
+                    val distance = startX - e.rawX
+                    val w = resources.displayMetrics.widthPixels
+                    val MIN_SWIPE = w * 0.25f // ✅ KAILANGAN HIGIT SA 1/4 NG SCREEN!
+
+                    if(!isSwiping && abs(distance) > MIN_SWIPE) {
+                        isSwiping = true // ✅ ISA LANG BAWAT SWIPE!
+                        if(distance > 0) {
+                            // ✅ SWIPE PAKALIWA → LIPAT SUSUNOD NA PAGE LANG!
+                            if(currentPage == 0) goToCabinetPage()
+                            else goNextCabinetPage()
+                        } else {
+                            // ✅ SWIPE PAKANAN → BALIK NA PAGE LANG!
+                            goPrevCabinetPage()
+                        }
                     }
                 }
             }
@@ -191,7 +205,7 @@ class MainActivity : AppCompatActivity() {
         mainPage.addView(t)
 
         val h = TextView(this)
-        h.text = "👉 SWIPE PAKALIWA → PRESETS CABINET"
+        h.text = "👉 SWIPE PAKALIWA (malaki) → CABINET"
         h.textSize = 12f; h.setTextColor(-0x777778)
         h.gravity = Gravity.CENTER; h.setPadding(0,0,0,8)
         mainPage.addView(h)
@@ -300,25 +314,26 @@ class MainActivity : AppCompatActivity() {
             topBar.setPadding(4,4,4,8)
 
             val backBtn = Button(this)
-            backBtn.text = "⬅️"
-            backBtn.textSize = 22f
+            backBtn.text = "⬅️ BALIK"
+            backBtn.textSize = 14f
             backBtn.setTextColor(Color.WHITE)
-            backBtn.setBackgroundColor(-0xDDDDDE)
-            backBtn.setPadding(14, 6, 14, 6)
+            backBtn.setBackgroundColor(-0xDD3333)
+            backBtn.setPadding(16, 8, 16, 8)
             backBtn.setOnClickListener { goToMainPage() }
             topBar.addView(backBtn)
 
             val pageNum = (pageIdx / perPage) + 1
+            val totalPages = ((allPresets.size + perPage - 1) / perPage)
             val title = TextView(this)
-            title.text = "📦 CABINET — PAGE $pageNum"
-            title.textSize = 18f
+            title.text = "📦 PAGE $pageNum / $totalPages"
+            title.textSize = 16f
             title.setTextColor(-0x0033BC)
             title.setPadding(16,0,0,0)
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
 
             val hint = TextView(this)
-            hint.text = "👆 SWIPE ←→ LIPAT PAGE | ⬅️ = BALIK MAIN"
+            hint.text = "👆 SWIPE MALAKI ←→ LIPAT PAGE | O PINDUTIN ⬅️"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -370,11 +385,22 @@ class MainActivity : AppCompatActivity() {
     private fun goNextCabinetPage() {
         val w = resources.displayMetrics.widthPixels
         val maxPage = pageContainer.childCount - 1
-        if(cabinetPageIndex + 1 < maxPage) { cabinetPageIndex++; pageContainer.scrollTo(w*(1+cabinetPageIndex),0) }
+        if(cabinetPageIndex + 1 < maxPage) {
+            cabinetPageIndex++
+            pageContainer.scrollTo(w*(1+cabinetPageIndex),0)
+        } else {
+            Toast.makeText(this,"✅ HULING PAGE NA!",Toast.LENGTH_SHORT).show()
+        }
     }
     private fun goPrevCabinetPage() {
-        if(cabinetPageIndex > 0) { cabinetPageIndex--; pageContainer.scrollTo(resources.displayMetrics.widthPixels*(1+cabinetPageIndex),0) }
-        else if(currentPage > 0) goToMainPage()
+        if(cabinetPageIndex > 0) {
+            cabinetPageIndex--
+            pageContainer.scrollTo(resources.displayMetrics.widthPixels*(1+cabinetPageIndex),0)
+        } else if(currentPage > 0) {
+            goToMainPage()
+        } else {
+            Toast.makeText(this,"✅ UNAANG PAGE NA!",Toast.LENGTH_SHORT).show()
+        }
     }
     private fun goToMainPage() { currentPage=0; cabinetPageIndex=0; pageContainer.scrollTo(0,0) }
 
