@@ -197,17 +197,19 @@ class MainActivity : AppCompatActivity() {
         return getAllPresets().count { it.isOn }
     }
 
-    // ✅ AWTOMATIK I-UPDATE ANG MAIN — KAPAG LAHAT PRESET OFF NA
+    // ✅ AWTOMATIK I-UPDATE ANG MAIN — KAPAG WALA NA TALAGANG NAKA-ON!
     private fun updateMainIfAllPresetsOff() {
-        if(countPresetsOn() == 0 && mainManualState) {
-            // ✅ LAHAT PRESET OFF NA → AWTOMATIK I-OFF ANG MAIN
+        val onCount = countPresetsOn()
+        if(onCount == 0 && mainManualState) {
+            // ✅ WALA NA TALAGAANG NAKA-ON → AWTOMATIK I-OFF ANG MAIN
             mainManualState = false
             AudioMixer.setAllOn(false)
             if(AudioEngine.isRunning()) AudioEngine.stop()
             mainPowerBtn.text = "🔴 OFF"
             mainPowerBtn.setBackgroundColor(-0xDD7733)
-            Toast.makeText(this,"🔴 LAHAT PRESET OFF → MAIN PATAY NA RIN!",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,"🔴 Wala nang naka-ON na Preset → MAIN PATAY NA RIN!",Toast.LENGTH_SHORT).show()
         }
+        // ✅ KUNG MAY KAHIT ISA PANG NAKA-ON → WALANG BABAGO SA MAIN!
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -418,7 +420,7 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
             val hint = TextView(this)
-            hint.text = "🎛️ Preset = HINDI apektado ang Main | ✅ LAHAT OFF = Main awtomatik OFF"
+            hint.text = "✅ MAY NAKA-ON PA = MAIN MANANATILING ON | ✅ WALA NA = MAIN AWTOMATIK OFF"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -458,9 +460,9 @@ class MainActivity : AppCompatActivity() {
                 if(mainManualState) {
                     AudioMixer.setAllOn(true)
                 }
-                Toast.makeText(this,"✅ ${preset.name} — NAKA-ON! Hindi apektado ang Main!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"✅ ${preset.name} — NAKA-ON! Main hindi apektado!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ PATAYIN PRESET → I-SAVE → TIGNAN KUNG LAHAT OFF NA
+                // ✅ PATAYIN PRESET → I-SAVE → TIGNAN KUNG WALA NA TALAGA
                 val idx = allPresets.indexOfFirst { it.name == preset.name }
                 if(idx >= defaultCount) {
                     val userPresets = loadUserPresets()
@@ -471,7 +473,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!",Toast.LENGTH_SHORT).show()
-                // ✅ KUNG LAHAT PRESET OFF NA → AWTOMATIK I-OFF ANG MAIN
+                // ✅ TIGNAN: WALA NA TALAGAANG NAKA-ON? KUNG OO LANG → I-OFF ANG MAIN!
                 updateMainIfAllPresetsOff()
             }
         }
