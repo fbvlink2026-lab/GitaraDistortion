@@ -17,7 +17,6 @@ object AudioEngine {
     fun start(ctx: Context): Boolean {
         if(running.get()) return true
         
-        // ✅ SURIIN ANG PAHINTULOT
         if(androidx.core.content.ContextCompat.checkSelfPermission(
             ctx, android.Manifest.permission.RECORD_AUDIO
         ) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -27,7 +26,6 @@ object AudioEngine {
 
         running.set(true)
         
-        // ✅ SUBUKAN BUKASIN — KUNG BIGO, HUWAG MAG-CRASH
         try {
             val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT)
             if(minBuf <= 0) {

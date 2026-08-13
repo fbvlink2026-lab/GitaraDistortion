@@ -49,8 +49,8 @@ class MainActivity : AppCompatActivity() {
         AudioMixer.init(this)
         setupViewPager()
         
-        // ✅ HINDI AGAD MAGBUKAS NG MIKROPONO! HIHINTAYIN ANG PINDUTAN!
-        askPermission()
+        // ✅ HUWAG HINGIN ANG PAHINTULOT DITO! MAGSISARA ANG APP!
+        // ✅ HINGIN LANG KAPAG PININDOT NA ANG PINDUTAN!
     }
 
     private fun setupViewPager() {
@@ -166,19 +166,29 @@ class MainActivity : AppCompatActivity() {
             btn.setBackgroundColor(0xFF228833.toInt())
             Toast.makeText(this, "🔴 NAPATAY ANG TUNOG", Toast.LENGTH_SHORT).show()
         } else {
-            // ✅ HINGI MUNA NG PAHINTULOT
+            // ✅ DITO LANG HINGIN ANG PAHINTULOT — HINDI SA SIMULA!
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "⚠️ Hingi muna ng pahintulot sa Mikropono", Toast.LENGTH_SHORT).show()
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
+                Toast.makeText(this, "⚠️ PILIIN: PAYAG ✅", Toast.LENGTH_LONG).show()
                 return
             }
-            // ✅ SUBUKAN BUKASIN — HINDI MAG-CRASH KUNG BIGO
             val ok = AudioEngine.start(this)
             if (ok) {
                 AudioMixer.setAllOn(true)
                 btn.text = "🔴 PATAYIN ANG TUNOG"
                 btn.setBackgroundColor(0xFF882222.toInt())
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(r: Int, p: Array<out String>, g: IntArray) {
+        super.onRequestPermissionsResult(r, p, g)
+        if (r == 123) {
+            if (g.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "✅ SALAMAT! PINDUTIN ULIT: 🟢 BUKSAN ANG TUNOG", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "❌ KAILANGAN NG MIKROPONO PARA SA TUNOG!", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -267,26 +277,6 @@ class MainActivity : AppCompatActivity() {
             val (knob, pct) = knobBindings[i]
             knob.value = vals[i]
             pct.text = "${(vals[i] * 100).toInt()}%"
-        }
-    }
-
-    private fun askPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "✅ Handa na! Pindutin \"BUKSAN ANG TUNOG\"", Toast.LENGTH_LONG).show()
-        } else {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
-        }
-    }
-
-    override fun onRequestPermissionsResult(r: Int, p: Array<out String>, g: IntArray) {
-        super.onRequestPermissionsResult(r, p, g)
-        if (r == 123) {
-            if (g.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "✅ Pahintulot natanggap! Pindutin \"BUKSAN ANG TUNOG\"", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "⚠️ Kailangan ng pahintulot sa Mikropono para marinig ang tunog!", Toast.LENGTH_LONG).show()
-            }
         }
     }
 
