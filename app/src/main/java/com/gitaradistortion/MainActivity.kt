@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.MotionEvent
@@ -31,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainPage: LinearLayout
     private lateinit var pageContainer: LinearLayout
     private lateinit var savePresetName: EditText
+    private lateinit var mainPowerBtn: Button // ✅ REFERENCE SA MAIN POWER BUTTON
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
 
@@ -57,9 +57,6 @@ class MainActivity : AppCompatActivity() {
         Triple("🎚️ MASTER", -0x000001, { AudioMixer.masterVolume })
     )
 
-    // ==========================================
-    // ✅ BUILT-IN PRESETS
-    // ==========================================
     private fun getBuiltInPresets(): MutableList<PedalPreset> {
         return mutableListOf(
             PedalPreset("Clean", -0x3399BB, isOn = false, vol = 0.7f, fx = 0.2f, ng = 0.1f),
@@ -69,9 +66,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    // ==========================================
-    // ✅ LOAD USER PRESETS MULA SA STORAGE
-    // ==========================================
     private fun loadUserPresets(): MutableList<PedalPreset> {
         val list = mutableListOf<PedalPreset>()
         try {
@@ -92,26 +86,15 @@ class MainActivity : AppCompatActivity() {
         return list
     }
 
-    // ==========================================
-    // ✅ SAVE ALL PRESETS — AWTOMATIK TUWING MAY BINAGO
-    // ==========================================
     private fun saveAllPresets(allPresets: List<PedalPreset>) {
         val arr = JSONArray()
         allPresets.forEach { arr.put(it.toJson()) }
         prefs.edit().putString("user_pedal_presets", arr.toString()).apply()
     }
 
-    // ==========================================
-    // ✅ APPLY PRESET → MAIN MIXER
-    // ==========================================
     private fun applyPresetToMainMixer(preset: PedalPreset) {
-        // 🎚️ VOLUME → MASTER VOLUME LANG
         AudioMixer.masterVolume = preset.vol
-
-        // 🚧 NOISE GATE → NOISE GATE LANG
         AudioMixer.noiseGate = preset.ng
-
-        // 🎛️ EFFECT → LAHAT NG HINDI-ZERO NA FX — SABAY-SABAY BABAGO
         val fxStrength = preset.fx
         if(AudioMixer.overdrive > 0f || fxStrength > 0.05f) AudioMixer.overdrive = fxStrength
         if(AudioMixer.distortion > 0f || fxStrength > 0.05f) AudioMixer.distortion = fxStrength
@@ -123,13 +106,9 @@ class MainActivity : AppCompatActivity() {
         if(AudioMixer.reverb > 0f || fxStrength > 0.05f) AudioMixer.reverb = fxStrength * 0.5f
         if(AudioMixer.delay > 0f || fxStrength > 0.05f) AudioMixer.delay = fxStrength * 0.5f
         if(AudioMixer.wah > 0f || fxStrength > 0.05f) AudioMixer.wah = fxStrength * 0.7f
-
         updateKnobsFromPreset()
     }
 
-    // ==========================================
-    // ✅ I-UPDATE ANG MGA PIHITAN SA MAIN MIXER
-    // ==========================================
     private fun updateKnobsFromPreset() {
         val vals = floatArrayOf(
             AudioMixer.noiseGate, AudioMixer.tone, AudioMixer.gain,
@@ -167,7 +146,6 @@ class MainActivity : AppCompatActivity() {
 
         root.addView(pageContainer)
 
-        // ✅ SWIPE — HINDI NA TATALON!
         pageContainer.setOnTouchListener { _, e ->
             when(e.action) {
                 MotionEvent.ACTION_DOWN -> { startX = e.rawX; isSwiping = false }
@@ -186,9 +164,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ==========================================
-    // ✅ MAIN MIXER PAGE — WALANG BINAGO!
-    // ==========================================
     private fun buildMainPage() {
         val w = resources.displayMetrics.widthPixels
         mainPage = LinearLayout(this)
@@ -249,23 +224,23 @@ class MainActivity : AppCompatActivity() {
         scroll.addView(grid)
         mainPage.addView(scroll)
 
-        // ✅ POWER BUTTON + SAVE — MANANATILI! WALANG BINAGO!
+        // ✅ MAIN POWER BUTTON — I-SAVE ANG REFERENCE!
         val bar = LinearLayout(this)
         bar.orientation = LinearLayout.HORIZONTAL
         bar.gravity = Gravity.CENTER
         bar.setBackgroundColor(-0xDDDDFF)
         bar.setPadding(8,8,8,8)
 
-        val masterBtn = Button(this)
-        masterBtn.text="🟢 ON"; masterBtn.setTextColor(Color.WHITE)
-        masterBtn.setBackgroundColor(-0xDD7733); masterBtn.textSize=13f
-        masterBtn.setOnClickListener {
+        mainPowerBtn = Button(this) // ✅ I-SAVE ANG REFERENCE
+        mainPowerBtn.text="🟢 ON"; mainPowerBtn.setTextColor(Color.WHITE)
+        mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize=13f
+        mainPowerBtn.setOnClickListener {
             val isOn = AudioMixer.isAllOn()
             AudioMixer.setAllOn(!isOn)
-            if(isOn) { masterBtn.text="🔴 OFF"; masterBtn.setBackgroundColor(-0xDD3333) }
-            else { masterBtn.text="🟢 ON"; masterBtn.setBackgroundColor(-0x33DD33); AudioEngine.start(this) }
+            if(isOn) { mainPowerBtn.text="🔴 OFF"; mainPowerBtn.setBackgroundColor(-0xDD3333) }
+            else { mainPowerBtn.text="🟢 ON"; mainPowerBtn.setBackgroundColor(-0x33DD33); AudioEngine.start(this) }
         }
-        bar.addView(masterBtn)
+        bar.addView(mainPowerBtn)
 
         savePresetName = EditText(this)
         savePresetName.hint="Pangalan Preset"
@@ -300,12 +275,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // ✅ BAGONG CABINET — TUNAY NA GUITAR PEDALS!
+    // ✅ CABINET — 2 PEDALS LANG BAWAT PAGE! BUONG SCREEN!
     // ==========================================
     private fun buildCabinetPages() {
         val allPresets = getBuiltInPresets() + loadUserPresets()
         val w = resources.displayMetrics.widthPixels
-        val PER_PAGE = 10 // ✅ 10 BAWAT PAGE — 5 ITAAS, 5 IBABA
+        val h = resources.displayMetrics.heightPixels
+        val PER_PAGE = 2 // ✅ 2 PEDALS LANG — BUONG SCREEN!
 
         for(pageIdx in 0 until allPresets.size step PER_PAGE) {
             val pagePresets = allPresets.subList(pageIdx, minOf(pageIdx+PER_PAGE, allPresets.size))
@@ -313,20 +289,19 @@ class MainActivity : AppCompatActivity() {
             cabPage.orientation = LinearLayout.VERTICAL
             cabPage.layoutParams = LinearLayout.LayoutParams(w, -1)
             cabPage.setBackgroundColor(-0xE5E5E6)
-            cabPage.setPadding(6,6,6,6)
+            cabPage.setPadding(12,8,12,8)
 
-            // ✅ TOP BAR
             val topBar = LinearLayout(this)
             topBar.orientation = LinearLayout.HORIZONTAL
             topBar.gravity = Gravity.CENTER_VERTICAL
-            topBar.setPadding(4,4,4,4)
+            topBar.setPadding(4,4,4,8)
 
             val backBtn = Button(this)
             backBtn.text = "⬅️ MAIN"
-            backBtn.textSize = 13f
+            backBtn.textSize = 14f
             backBtn.setTextColor(Color.WHITE)
             backBtn.setBackgroundColor(-0xDD3333)
-            backBtn.setPadding(12, 6, 12, 6)
+            backBtn.setPadding(16, 8, 16, 8)
             backBtn.setOnClickListener { goToMainPage() }
             topBar.addView(backBtn)
 
@@ -334,40 +309,23 @@ class MainActivity : AppCompatActivity() {
             val totalPages = ((allPresets.size + PER_PAGE - 1) / PER_PAGE)
             val title = TextView(this)
             title.text = "📦 PEDAL CABINET — PAGE $pageNum / $totalPages"
-            title.textSize = 15f
+            title.textSize = 16f
             title.setTextColor(-0x0033BC)
-            title.setPadding(12,0,0,0)
+            title.setPadding(16,0,0,0)
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
 
             val hint = TextView(this)
-            hint.text = "👆 SWIPE ←→ | Pindutin ⬅️ para bumalik"
-            hint.textSize = 10f
+            hint.text = "👆 SWIPE ←→ | 2 PEDALS LANG — LAKI AT KITANG-KITA!"
+            hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
-            hint.setPadding(0,2,0,4)
+            hint.setPadding(0,4,0,8)
             cabPage.addView(hint)
 
-            // ✅ HANAY 1 — 5 PEDALS SA TAAS
-            val row1 = LinearLayout(this)
-            row1.orientation = LinearLayout.HORIZONTAL
-            row1.gravity = Gravity.CENTER
-            row1.setPadding(2,2,2,2)
-            for(i in 0 until minOf(5, pagePresets.size)) {
-                row1.addView(buildPedalView(pagePresets[i], allPresets))
-            }
-            cabPage.addView(row1)
-
-            // ✅ HANAY 2 — 5 PEDALS SA IBABA
-            if(pagePresets.size > 5) {
-                val row2 = LinearLayout(this)
-                row2.orientation = LinearLayout.HORIZONTAL
-                row2.gravity = Gravity.CENTER
-                row2.setPadding(2,2,2,2)
-                for(i in 5 until minOf(10, pagePresets.size)) {
-                    row2.addView(buildPedalView(pagePresets[i], allPresets))
-                }
-                cabPage.addView(row2)
+            // ✅ 2 PEDALS — PATAYO SA ISA'T ISA, BUONG SCREEN SAKOP!
+            pagePresets.forEach { preset ->
+                cabPage.addView(buildBigPedalView(preset, allPresets))
             }
 
             pageContainer.addView(cabPage)
@@ -375,67 +333,83 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // ✅ GUITAR PEDAL VIEW — MAY POWER + 3 PIHITAN!
+    // ✅ MALAKING PEDAL VIEW — SAKOP BUONG SCREEN!
     // ==========================================
-    private fun buildPedalView(preset: PedalPreset, allPresets: List<PedalPreset>): LinearLayout {
+    private fun buildBigPedalView(preset: PedalPreset, allPresets: List<PedalPreset>): LinearLayout {
+        val w = resources.displayMetrics.widthPixels
         val pedal = LinearLayout(this)
         pedal.orientation = LinearLayout.VERTICAL
         pedal.setBackgroundColor(preset.color)
-        pedal.setPadding(6,6,6,6)
+        pedal.setPadding(16,12,16,12)
         pedal.gravity = Gravity.CENTER
+        pedal.layoutParams = LinearLayout.LayoutParams(w - 48, 0, 1f) // ✅ MALAKI!
 
-        // ✅ 💡 POWER BUTTON — UMILLAW ON / PATAY OFF
+        // ✅ 💡 POWER BUTTON — SABAY SA MAIN POWER!
         val powerBtn = Button(this)
-        powerBtn.text = if(preset.isOn) "💡 ON" else "⚫ OFF"
-        powerBtn.textSize = 10f
+        powerBtn.text = if(preset.isOn) "💡 NAKA-ON" else "⚫ NAKA-OFF"
+        powerBtn.textSize = 16f
         powerBtn.setTextColor(Color.WHITE)
-        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF33DD33.toInt() else 0xFF444444.toInt())
-        powerBtn.setPadding(8, 2, 8, 2)
+        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF333333.toInt())
+        powerBtn.setPadding(24, 8, 24, 8)
         powerBtn.setOnClickListener {
             preset.isOn = !preset.isOn
-            powerBtn.text = if(preset.isOn) "💡 ON" else "⚫ OFF"
-            powerBtn.setBackgroundColor(if(preset.isOn) 0xFF33DD33.toInt() else 0xFF444444.toInt())
+            powerBtn.text = if(preset.isOn) "💡 NAKA-ON" else "⚫ NAKA-OFF"
+            powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF333333.toInt())
+
+            // ✅ SABAY ANG MAIN POWER BUTTON!
             if(preset.isOn) {
+                AudioMixer.setAllOn(true)
+                mainPowerBtn.text = "🟢 ON"
+                mainPowerBtn.setBackgroundColor(-0x33DD33)
                 applyPresetToMainMixer(preset)
                 Toast.makeText(this,"✅ ${preset.name} — NAKA-ON!",Toast.LENGTH_SHORT).show()
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
+            } else {
+                AudioMixer.setAllOn(false)
+                mainPowerBtn.text = "🔴 OFF"
+                mainPowerBtn.setBackgroundColor(-0xDD7733)
+                Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!",Toast.LENGTH_SHORT).show()
             }
-            saveAllPresets(allPresets) // ✅ AWTOMATIK NAI-SAVE!
+
+            saveAllPresets(allPresets)
         }
         pedal.addView(powerBtn)
 
-        // ✅ PANGALAN NG PEDAL
+        // ✅ PANGALAN NG PEDAL — MALAKI
         val name = TextView(this)
         name.text = preset.name
-        name.textSize = 11f
+        name.textSize = 22f
         name.setTextColor(Color.WHITE)
         name.gravity = Gravity.CENTER
-        name.setPadding(0,2,0,2)
+        name.setPadding(0,8,0,8)
         pedal.addView(name)
 
-        // ✅ 🎚️ VOLUME KNOB → MASTER VOLUME LANG
+        // ✅ 🎚️ VOLUME KNOB — MALAKI
         val volRow = LinearLayout(this)
         volRow.orientation = LinearLayout.HORIZONTAL
-        volRow.gravity = Gravity.CENTER
-        val volLabel = TextView(this); volLabel.text="🎚️"; volLabel.textSize=9f; volLabel.setTextColor(Color.WHITE)
+        volRow.gravity = Gravity.CENTER_VERTICAL
+        val volLabel = TextView(this); volLabel.text="🎚️ VOLUME"; volLabel.textSize=14f; volLabel.setTextColor(Color.WHITE); volLabel.setPadding(0,0,12,0)
         val volKnob = KnobView(this); volKnob.baseColor = 0xFFFFCC00.toInt(); volKnob.value = preset.vol
-        val volPct = TextView(this); volPct.text="${(preset.vol*100).toInt()}%"; volPct.textSize=8f; volPct.setTextColor(Color.WHITE)
+        volKnob.layoutParams = LinearLayout.LayoutParams(64,64)
+        val volPct = TextView(this); volPct.text="${(preset.vol*100).toInt()}%"; volPct.textSize=14f; volPct.setTextColor(Color.WHITE); volPct.setPadding(12,0,0,0)
         volKnob.onChange = { v ->
             preset.vol = v
             volPct.text = "${(v*100).toInt()}%"
             if(preset.isOn) { AudioMixer.masterVolume = v; updateKnobsFromPreset() }
-            saveAllPresets(allPresets) // ✅ AWTOMATIK SAVE!
+            saveAllPresets(allPresets)
         }
-        volRow.addView(volLabel); volRow.addView(volKnob, LinearLayout.LayoutParams(36,36)); volRow.addView(volPct)
+        volRow.addView(volLabel); volRow.addView(volKnob); volRow.addView(volPct)
+        volRow.setPadding(0,8,0,8)
         pedal.addView(volRow)
 
-        // ✅ 🎛️ EFFECT KNOB → LAHAT NG FX HINDI-ZERO
+        // ✅ 🎛️ EFFECT KNOB — MALAKI
         val fxRow = LinearLayout(this)
         fxRow.orientation = LinearLayout.HORIZONTAL
-        fxRow.gravity = Gravity.CENTER
-        val fxLabel = TextView(this); fxLabel.text="🎛️"; fxLabel.textSize=9f; fxLabel.setTextColor(Color.WHITE)
+        fxRow.gravity = Gravity.CENTER_VERTICAL
+        val fxLabel = TextView(this); fxLabel.text="🎛️ EFFECT"; fxLabel.textSize=14f; fxLabel.setTextColor(Color.WHITE); fxLabel.setPadding(0,0,12,0)
         val fxKnob = KnobView(this); fxKnob.baseColor = 0xFFFF4422.toInt(); fxKnob.value = preset.fx
-        val fxPct = TextView(this); fxPct.text="${(preset.fx*100).toInt()}%"; fxPct.textSize=8f; fxPct.setTextColor(Color.WHITE)
+        fxKnob.layoutParams = LinearLayout.LayoutParams(64,64)
+        val fxPct = TextView(this); fxPct.text="${(preset.fx*100).toInt()}%"; fxPct.textSize=14f; fxPct.setTextColor(Color.WHITE); fxPct.setPadding(12,0,0,0)
         fxKnob.onChange = { v ->
             preset.fx = v
             fxPct.text = "${(v*100).toInt()}%"
@@ -450,33 +424,33 @@ class MainActivity : AppCompatActivity() {
                 if(AudioMixer.reverb > 0f || v > 0.05f) AudioMixer.reverb = fxStrength * 0.5f
                 updateKnobsFromPreset()
             }
-            saveAllPresets(allPresets) // ✅ AWTOMATIK SAVE!
+            saveAllPresets(allPresets)
         }
-        fxRow.addView(fxLabel); fxRow.addView(fxKnob, LinearLayout.LayoutParams(36,36)); fxRow.addView(fxPct)
+        fxRow.addView(fxLabel); fxRow.addView(fxKnob); fxRow.addView(fxPct)
+        fxRow.setPadding(0,8,0,8)
         pedal.addView(fxRow)
 
-        // ✅ 🚧 NOISE GATE KNOB → NOISE GATE LANG
+        // ✅ 🚧 NOISE GATE KNOB — MALAKI
         val ngRow = LinearLayout(this)
         ngRow.orientation = LinearLayout.HORIZONTAL
-        ngRow.gravity = Gravity.CENTER
-        val ngLabel = TextView(this); ngLabel.text="🚧"; ngLabel.textSize=9f; ngLabel.setTextColor(Color.WHITE)
+        ngRow.gravity = Gravity.CENTER_VERTICAL
+        val ngLabel = TextView(this); ngLabel.text="🚧 NOISE GATE"; ngLabel.textSize=14f; ngLabel.setTextColor(Color.WHITE); ngLabel.setPadding(0,0,12,0)
         val ngKnob = KnobView(this); ngKnob.baseColor = 0xFF44DD88.toInt(); ngKnob.value = preset.ng
-        val ngPct = TextView(this); ngPct.text="${(preset.ng*100).toInt()}%"; ngPct.textSize=8f; ngPct.setTextColor(Color.WHITE)
+        ngKnob.layoutParams = LinearLayout.LayoutParams(64,64)
+        val ngPct = TextView(this); ngPct.text="${(preset.ng*100).toInt()}%"; ngPct.textSize=14f; ngPct.setTextColor(Color.WHITE); ngPct.setPadding(12,0,0,0)
         ngKnob.onChange = { v ->
             preset.ng = v
             ngPct.text = "${(v*100).toInt()}%"
             if(preset.isOn) { AudioMixer.noiseGate = v; updateKnobsFromPreset() }
-            saveAllPresets(allPresets) // ✅ AWTOMATIK SAVE!
+            saveAllPresets(allPresets)
         }
-        ngRow.addView(ngLabel); ngRow.addView(ngKnob, LinearLayout.LayoutParams(36,36)); ngRow.addView(ngPct)
+        ngRow.addView(ngLabel); ngRow.addView(ngKnob); ngRow.addView(ngPct)
+        ngRow.setPadding(0,8,0,8)
         pedal.addView(ngRow)
 
         return pedal
     }
 
-    // ==========================================
-    // ✅ NAVIGATION — HINDI NA TATALON!
-    // ==========================================
     private fun goToCabinetPage() { currentPage=1; cabinetPageIndex=0; pageContainer.scrollTo(resources.displayMetrics.widthPixels,0) }
     private fun goNextCabinetPage() {
         val w = resources.displayMetrics.widthPixels
@@ -508,13 +482,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }
 
-// ==========================================
-// ✅ PEDAL PRESET DATA CLASS
-// ==========================================
 class PedalPreset(
     val name: String,
     val color: Int,
-    var isOn: Boolean = false, // ✅ DEFAULT = OFF
+    var isOn: Boolean = false,
     var vol: Float = 0.5f,
     var fx: Float = 0.5f,
     var ng: Float = 0.5f
