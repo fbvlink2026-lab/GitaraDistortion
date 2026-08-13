@@ -10,24 +10,40 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     companion object {
-        fun setMasterEnabledGlobal(enabled: Boolean) { AudioMixer.setMasterEnabled(enabled) }
+        fun setMasterEnabledGlobal(enabled: Boolean) { 
+            AudioMixer.setMasterEnabled(enabled) 
+        }
+        private var audioStarted = false
+        
+        fun startAudioSafe(ctx: android.content.Context) {
+            if(!audioStarted) {
+                AudioEngine.start(ctx)
+                audioStarted = true
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
-        } else {
-            AudioEngine.start(this)
-        }
-
+        // ✅ LAGAY ANG FRAGMENT — WALANG AUDIO MUNA!
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, PedalBoardFragment())
                 .commit()
+        }
+
+        // ✅ HINTAYIN ANG PAHINTULOT — HUWAG AGAD SIMULAN ANG AUDIO!
+        checkPermission()
+    }
+
+    private fun checkPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "✅ Handa na! Pumili ng pedal → I-ON!", Toast.LENGTH_LONG).show()
+        } else {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
         }
     }
 
@@ -36,8 +52,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 123 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "✅ Pinahintulutan na!", Toast.LENGTH_SHORT).show()
-            AudioEngine.start(this)
+            Toast.makeText(this, "✅ Pahintulot natanggap! Piliin at I-ON ang pedal!", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(this, "❌ Kailangan ng pahintulot sa Mikropono!", Toast.LENGTH_LONG).show()
         }

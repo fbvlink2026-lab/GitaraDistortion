@@ -278,32 +278,122 @@ class PedalBoardFragment : Fragment() {
     }
 
     private fun updatePedalConnections() {
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         activePedals.forEach { pid ->
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
             when(pid) {
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "noisegate" -> AudioMixer.setNoiseGate(true, AudioMixer.noiseGateThreshold, AudioMixer.noiseGateRelease)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "volume" -> AudioMixer.setVolume(true, AudioMixer.volumeLevel)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "gain" -> AudioMixer.setGain(true, AudioMixer.gainAmount)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "overdrive" -> AudioMixer.setOverdrive(true, AudioMixer.overdriveDrive, AudioMixer.overdriveLevel)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "distortion" -> AudioMixer.setDistortion(true, AudioMixer.distortionGain, AudioMixer.distortionTone)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "chorus" -> AudioMixer.setChorus(true, AudioMixer.chorusSpeed, AudioMixer.chorusDepth)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "delay" -> AudioMixer.setDelay(AudioMixer.delayTime, AudioMixer.delayFeedback)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "wah" -> AudioMixer.setWah(true, AudioMixer.wahPosition, AudioMixer.wahResonance, AudioMixer.wahLevel)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "reverb" -> AudioMixer.setReverb(true, AudioMixer.reverbMix, AudioMixer.reverbDecay)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
                 "amp" -> AudioMixer.setAmp(true, AudioMixer.ampGain, AudioMixer.ampResponse)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
             }
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
+        }
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
         }
     }
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
 
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
     private fun showCabinet() {
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         cabinetVisible = true
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         activeArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         cabinetArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         cabinetArea.visibility = View.VISIBLE
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
     }
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
     private fun hideCabinet() {
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         cabinetVisible = false
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         activeArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 3f)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         cabinetArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 0f)
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
         cabinetArea.visibility = View.GONE
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
     }
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
 }
+        if(activePedals.isNotEmpty()) {
+            MainActivity.startAudioSafe(requireContext())
+        }
