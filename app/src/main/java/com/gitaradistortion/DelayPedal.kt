@@ -7,25 +7,25 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 
-class DistortionPedal {
+class DelayPedal {
     var isEnabled = false
-    var gain = 0.6f
-    var tone = 0.5f
+    var time = 0.4f
+    var feedback = 0.3f
     var onEnabledChanged: ((Boolean) -> Unit)? = null
-    var onGainChanged: ((Float) -> Unit)? = null
-    var onToneChanged: ((Float) -> Unit)? = null
+    var onTimeChanged: ((Float) -> Unit)? = null
+    var onFeedbackChanged: ((Float) -> Unit)? = null
 
     fun makeView(ctx: Context): LinearLayout {
         val card = LinearLayout(ctx)
         card.orientation = LinearLayout.VERTICAL
         card.gravity = Gravity.CENTER
         card.setPadding(8,8,8,8)
-        card.setBackgroundColor(0xFF3A1010.toInt())
+        card.setBackgroundColor(0xFF201040.toInt())
         card.minimumWidth = 170
 
         val title = TextView(ctx)
-        title.text = "🔴 DISTORTION"
-        title.setTextColor(0xFFFF4422.toInt())
+        title.text = "⏱️ DELAY"
+        title.setTextColor(0xFFAA88FF.toInt())
         title.textSize = 13f
         title.setPadding(0,0,0,4)
         card.addView(title)
@@ -38,14 +38,14 @@ class DistortionPedal {
         btn.setOnClickListener {
             isEnabled=!isEnabled
             btn.text=if(isEnabled)"🟢 ON" else "⚪ OFF"
-            btn.setBackgroundColor(if(isEnabled)0xFFCC3322.toInt() else 0xFF444444.toInt())
+            btn.setBackgroundColor(if(isEnabled)0xFF6644DD.toInt() else 0xFF444444.toInt())
             onEnabledChanged?.invoke(isEnabled)
         }
         card.addView(btn)
 
         val row = LinearLayout(ctx); row.orientation=LinearLayout.HORIZONTAL; row.gravity=Gravity.CENTER; row.setPadding(4,6,4,4)
-        val k1 = makeKnob(ctx,"GAIN",gain,0xFFFF4422.toInt()){gain=it;onGainChanged?.invoke(it)}
-        val k2 = makeKnob(ctx,"TONE",tone,0xFFFF8866.toInt()){tone=it;onToneChanged?.invoke(it)}
+        val k1 = makeKnob(ctx,"TIME",time,0xFFAA88FF.toInt()){time=it;onTimeChanged?.invoke(it)}
+        val k2 = makeKnob(ctx,"ECHO",feedback,0xFFCCAADD.toInt()){feedback=it;onFeedbackChanged?.invoke(it)}
         row.addView(k1.view,LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f))
         row.addView(k2.view,LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f))
         card.addView(row)
