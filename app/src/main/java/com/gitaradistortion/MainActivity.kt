@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
     private val PEDALS_PER_PAGE = 20
 
-    // ✅ LAHAT NG FX — GETTER LAMANG
+    // ✅ LAHAT NG FX — FUNCTION NA NAGBABALIK NG HALAGA
     private val fxGetters = listOf(
         { AudioMixer.overdrive }, { AudioMixer.distortion }, { AudioMixer.fuzz },
         { AudioMixer.chorus }, { AudioMixer.flanger }, { AudioMixer.phaser },
@@ -41,7 +41,6 @@ class MainActivity : AppCompatActivity() {
         { AudioMixer.tone }, { AudioMixer.bass }, { AudioMixer.mid }, { AudioMixer.treble }
     )
 
-    // ✅ BUILT-IN PRESETS — TAMA ANG PANGALAN NG PARAMETER!
     private fun getBuiltInPresets() = listOf(
         PedalPreset("Clean", -0x3399BB, volume=0.75f, effect=0.20f, noiseGate=0.05f, isOn=true, desc="Malinaw"),
         PedalPreset("Blues", -0x99BB3D, volume=0.80f, effect=0.45f, noiseGate=0.08f, isOn=true, desc="Mainit"),
@@ -52,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadUserPresets(): MutableList<PedalPreset> {
         val list = mutableListOf<PedalPreset>()
         try {
-            val json = prefs.getString("user_presets_v4", "[]")
+            val json = prefs.getString("user_presets_v5", "[]")
             val arr = JSONArray(json)
             for(i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
@@ -83,7 +82,7 @@ class MainActivity : AppCompatActivity() {
                 put("desc", p.desc)
             })
         }
-        prefs.edit().putString("user_presets_v4", arr.toString()).apply()
+        prefs.edit().putString("user_presets_v5", arr.toString()).apply()
     }
 
     private fun saveNewPreset(name:String, vol:Float, fx:Float, ng:Float):Boolean {
@@ -104,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         AudioMixer.masterVolume = p.volume
         AudioMixer.noiseGate = p.noiseGate
         fxGetters.forEach { getFx ->
-            val current = getFx()
+            val current = getFx() // ✅ TAWAGIN ANG FUNCTION!
             if(current > 0.01f) setFxValue(getFx(), p.effect)
         }
         if(!AudioEngine.isRunning()) AudioEngine.start(this)
@@ -225,9 +224,14 @@ class MainActivity : AppCompatActivity() {
         fKnob.onChange = { fTxt.text="${(it*100).toInt()}%" }
         nKnob.onChange = { nTxt.text="${(it*100).toInt()}%" }
 
-        val labels = listOf("🔊 VOLUME" to vKnob to vTxt, "⚡ EFFECT" to fKnob to fTxt, "🚧 NOISE GATE" to nKnob to nTxt)
-        labels.forEach { pair ->
-            val (lbl, k, t) = pair
+        // ✅ TAMA NA: TRIPLE PARA HINDI MAGKAMALI SA DESTRUCTURING!
+        val labels = listOf(
+            Triple("🔊 VOLUME", vKnob, vTxt),
+            Triple("⚡ EFFECT", fKnob, fTxt),
+            Triple("🚧 NOISE GATE", nKnob, nTxt)
+        )
+        labels.forEach { triple ->
+            val (lbl, k, t) = triple
             val col = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
             col.addView(k, LinearLayout.LayoutParams(60,60))
             col.addView(t)
@@ -442,7 +446,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }
 
-// ✅ PEDAL DATA — TAMA ANG PANGALAN NG PARAMETER!
 class PedalPreset(
     val name:String,
     val color:Int,
