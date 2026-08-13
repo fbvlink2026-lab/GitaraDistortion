@@ -30,38 +30,33 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pageContainer: LinearLayout
     private lateinit var savePresetName: EditText
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
+
+    // ✅ BUILT-IN PRESETS
+    private fun getBuiltInPresets() = listOf(
+        PedalPreset("Clean", -0x3399BB, vol=0.75f, fx=0.20f, ng=0.05f, isOn=true, desc="Malinaw"),
+        PedalPreset("Blues", -0x99BB3D, vol=0.80f, fx=0.45f, ng=0.08f, isOn=true, desc="Mainit"),
+        PedalPreset("Rock", -0x66DDDD, vol=0.85f, fx=0.70f, ng=0.12f, isOn=true, desc="Matigas"),
+        PedalPreset("Metal", -0xDDDDDD, vol=0.90f, fx=0.95f, ng=0.20f, isOn=true, desc="Mabigat")
+    )
+
+    // ✅ 20 BAWAT PAGE — BAGONG PAGE KAPAG 21 NA!
     private val PEDALS_PER_PAGE = 20
 
-    // ✅ LAHAT NG FX — WALANG TINANGGAL!
-    private val fxGetters = listOf(
-        { AudioMixer.overdrive }, { AudioMixer.distortion }, { AudioMixer.fuzz },
-        { AudioMixer.chorus }, { AudioMixer.flanger }, { AudioMixer.phaser },
-        { AudioMixer.tremolo }, { AudioMixer.vibrato }, { AudioMixer.delay },
-        { AudioMixer.reverb }, { AudioMixer.wah }, { AudioMixer.gain },
-        { AudioMixer.tone }, { AudioMixer.bass }, { AudioMixer.mid }, { AudioMixer.treble }
-    )
-
-    private fun getBuiltInPresets() = listOf(
-        PedalPreset("Clean", -0x3399BB, volume=0.75f, effect=0.20f, noiseGate=0.05f, isOn=true, desc="Malinaw"),
-        PedalPreset("Blues", -0x99BB3D, volume=0.80f, effect=0.45f, noiseGate=0.08f, isOn=true, desc="Mainit"),
-        PedalPreset("Rock", -0x66DDDD, volume=0.85f, effect=0.70f, noiseGate=0.12f, isOn=true, desc="Matigas"),
-        PedalPreset("Metal", -0xDDDDDD, volume=0.90f, effect=0.95f, noiseGate=0.20f, isOn=true, desc="Mabigat")
-    )
-
+    // ✅ I-LOAD MULA SA SAVED
     private fun loadUserPresets(): MutableList<PedalPreset> {
         val list = mutableListOf<PedalPreset>()
         try {
-            val json = prefs.getString("user_presets_v7", "[]")
+            val json = prefs.getString("user_presets_v3", "[]")
             val arr = JSONArray(json)
             for(i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
                 list.add(PedalPreset(
                     name = o.getString("name"),
                     color = o.optInt("color", -0xBB7733),
-                    volume = o.optDouble("volume", 0.5).toFloat(),
-                    effect = o.optDouble("effect", 0.5).toFloat(),
-                    noiseGate = o.optDouble("noiseGate", 0.05).toFloat(),
-                    isOn = o.optBoolean("isOn", true),
+                    volume = o.optDouble("vol", 0.5).toFloat(),
+                    effect = o.optDouble("fx", 0.5).toFloat(),
+                    noiseGate = o.optDouble("ng", 0.05).toFloat(),
+                    isOn = o.optBoolean("on", true),
                     desc = o.optString("desc", "Aking Preset")
                 ))
             }
@@ -69,65 +64,60 @@ class MainActivity : AppCompatActivity() {
         return list
     }
 
-    private fun saveAllPresets(builtIn:List<PedalPreset>, user:List<PedalPreset>) {
+    // ✅ AUTO-SAVE — AGAD UPDATE SA PRESET!
+    private fun saveAllPresets(all: List<PedalPreset>) {
         val arr = JSONArray()
-        user.forEach { p ->
+        all.forEach { p ->
             arr.put(JSONObject().apply {
                 put("name", p.name)
                 put("color", p.color)
-                put("volume", p.volume.toDouble())
-                put("effect", p.effect.toDouble())
-                put("noiseGate", p.noiseGate.toDouble())
-                put("isOn", p.isOn)
+                put("vol", p.volume.toDouble())
+                put("fx", p.effect.toDouble())
+                put("ng", p.noiseGate.toDouble())
+                put("on", p.isOn)
                 put("desc", p.desc)
             })
         }
-        prefs.edit().putString("user_presets_v7", arr.toString()).apply()
+        prefs.edit().putString("user_presets_v3", arr.toString()).apply()
     }
 
+    // ✅ I-SAVE BAGONG PRESET — BAGONG PAGE KAPAG 21 NA!
     private fun saveNewPreset(name:String, vol:Float, fx:Float, ng:Float):Boolean {
         if(name.isBlank() || name in listOf("Clean","Blues","Rock","Metal")) return false
-        val user = loadUserPresets()
-        user.add(PedalPreset(name, pickColor(), vol, fx, ng, true, "Aking Preset"))
-        saveAllPresets(getBuiltInPresets(), user)
+        val all = loadUserPresets()
+        all.add(PedalPreset(name, pickColor(), vol, fx, ng, true, "Aking Preset"))
+        saveAllPresets(all)
         return true
     }
 
-    private fun applyPedalToMain(p:PedalPreset) {
-        if(!p.isOn) {
-            AudioMixer.masterVolume = 0.05f
-            AudioMixer.noiseGate = 0.01f
-            fxGetters.forEach { getFx -> if(getFx() > 0.01f) setFxValue(getFx, 0f) }
-            return
-        }
-        AudioMixer.masterVolume = p.volume
-        AudioMixer.noiseGate = p.noiseGate
-        fxGetters.forEach { getFx ->
-            val current = getFx()
-            if(current > 0.01f) setFxValue(getFx, p.effect)
-        }
-        if(!AudioEngine.isRunning()) AudioEngine.start(this)
-    }
+    // ✅ I-APLAY — KONEKTADO SA MAIN MIXER!
+    private fun applyPedal(p:PedalPreset) {
+        if(p.isOn) {
+            // 🔊 VOLUME → MASTER VOLUME LANG!
+            AudioMixer.masterVolume = p.volume
 
-    private fun setFxValue(get:()->Float, newValue:Float) {
-        val currentValue = get()
-        when {
-            currentValue === AudioMixer.overdrive -> AudioMixer.overdrive = newValue
-            currentValue === AudioMixer.distortion -> AudioMixer.distortion = newValue
-            currentValue === AudioMixer.fuzz -> AudioMixer.fuzz = newValue
-            currentValue === AudioMixer.chorus -> AudioMixer.chorus = newValue
-            currentValue === AudioMixer.flanger -> AudioMixer.flanger = newValue
-            currentValue === AudioMixer.phaser -> AudioMixer.phaser = newValue
-            currentValue === AudioMixer.tremolo -> AudioMixer.tremolo = newValue
-            currentValue === AudioMixer.vibrato -> AudioMixer.vibrato = newValue
-            currentValue === AudioMixer.delay -> AudioMixer.delay = newValue
-            currentValue === AudioMixer.reverb -> AudioMixer.reverb = newValue
-            currentValue === AudioMixer.wah -> AudioMixer.wah = newValue
-            currentValue === AudioMixer.gain -> AudioMixer.gain = newValue
-            currentValue === AudioMixer.tone -> AudioMixer.tone = newValue
-            currentValue === AudioMixer.bass -> AudioMixer.bass = newValue
-            currentValue === AudioMixer.mid -> AudioMixer.mid = newValue
-            currentValue === AudioMixer.treble -> AudioMixer.treble = newValue
+            // ⚡ EFFECT → LAHAT NG FX SUMASABAY! Kung hindi 0% → lahat apektado!
+            if(p.effect > 0.01f) {
+                AudioMixer.overdrive = p.effect
+                AudioMixer.distortion = p.effect
+                AudioMixer.fuzz = p.effect * 0.8f
+                AudioMixer.chorus = p.effect * 0.6f
+                AudioMixer.flanger = p.effect * 0.5f
+                AudioMixer.phaser = p.effect * 0.4f
+                AudioMixer.tremolo = p.effect * 0.3f
+                AudioMixer.vibrato = p.effect * 0.3f
+                AudioMixer.delay = p.effect * 0.5f
+                AudioMixer.reverb = p.effect * 0.4f
+            }
+
+            // 🚧 NOISE GATE → NOISE GATE LANG!
+            AudioMixer.noiseGate = p.noiseGate
+
+            if(!AudioEngine.isRunning()) AudioEngine.start(this)
+        } else {
+            AudioMixer.masterVolume = 0.05f
+            AudioMixer.overdrive = 0f
+            AudioMixer.noiseGate = 0.01f
         }
     }
 
@@ -155,6 +145,7 @@ class MainActivity : AppCompatActivity() {
 
         root.addView(pageContainer)
 
+        // ✅ SWIPE — HINDI NA TATALON!
         pageContainer.setOnTouchListener { _, e ->
             when(e.action) {
                 MotionEvent.ACTION_DOWN -> { startX = e.rawX; isSwiping = false }
@@ -173,6 +164,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ✅ MAIN PAGE — WALANG BINAGO! MAY SAVE BAGONG PEDAL!
     private fun buildMainPage() {
         val w = resources.displayMetrics.widthPixels
         val mainPage = LinearLayout(this)
@@ -187,11 +179,12 @@ class MainActivity : AppCompatActivity() {
         mainPage.addView(title)
 
         val hint = TextView(this)
-        hint.text = "👉 SWIPE PAKALIWA → CABINET (20 Max/Page)"
+        hint.text = "👉 SWIPE PAKALIWA → CABINET (20/Page • Bagong Page sa 21)"
         hint.textSize = 12f; hint.setTextColor(-0x777778)
         hint.gravity = Gravity.CENTER; hint.setPadding(0,0,0,8)
         mainPage.addView(hint)
 
+        // ✅ SAVE BAGONG PEDAL — 3 PIHITAN!
         val saveBox = LinearLayout(this)
         saveBox.orientation = LinearLayout.VERTICAL
         saveBox.setBackgroundColor(-0xE5E5E6)
@@ -211,10 +204,10 @@ class MainActivity : AppCompatActivity() {
         savePresetName.setPadding(10,6,10,6)
         saveBox.addView(savePresetName)
 
+        // ✅ 3 PIHITAN — VOLUME → MASTER • FX → LAHAT • NG → NG
         val saveKnobRow = LinearLayout(this)
         saveKnobRow.orientation = LinearLayout.HORIZONTAL
         saveKnobRow.gravity = Gravity.CENTER
-
         val vKnob = KnobView(this).apply { baseColor=-0x00BB55; value=0.75f }
         val fKnob = KnobView(this).apply { baseColor=-0xBB5500; value=0.50f }
         val nKnob = KnobView(this).apply { baseColor=-0x555555; value=0.05f }
@@ -224,14 +217,7 @@ class MainActivity : AppCompatActivity() {
         vKnob.onChange = { vTxt.text="${(it*100).toInt()}%" }
         fKnob.onChange = { fTxt.text="${(it*100).toInt()}%" }
         nKnob.onChange = { nTxt.text="${(it*100).toInt()}%" }
-
-        val labels = listOf(
-            Triple("🔊 VOLUME", vKnob, vTxt),
-            Triple("⚡ EFFECT", fKnob, fTxt),
-            Triple("🚧 NOISE GATE", nKnob, nTxt)
-        )
-        labels.forEach { triple ->
-            val (lbl, k, t) = triple
+        listOf("🔊 VOLUME" to vKnob to vTxt, "⚡ EFFECT" to fKnob to fTxt, "🚧 NOISE GATE" to nKnob to nTxt).forEach { (lbl, k, t) ->
             val col = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
             col.addView(k, LinearLayout.LayoutParams(60,60))
             col.addView(t)
@@ -254,8 +240,9 @@ class MainActivity : AppCompatActivity() {
             val allPresets = getBuiltInPresets() + loadUserPresets()
             val pos = allPresets.size % PEDALS_PER_PAGE
             val pageNum = (allPresets.size / PEDALS_PER_PAGE) + 1
+            val isNewPage = pos == 0 && allPresets.size > 0
             if(saveNewPreset(nm, vKnob.value, fKnob.value, nKnob.value)) {
-                Toast.makeText(this,"✅ NAISAVE! PAGE $pageNum — PEDAL #${pos+1}",Toast.LENGTH_LONG).show()
+                Toast.makeText(this, if(isNewPage) "✅ BAGONG PAGE $pageNum! — PEDAL #1" else "✅ NAISAVE! PAGE $pageNum — PEDAL #${pos+1}", Toast.LENGTH_LONG).show()
                 savePresetName.text.clear()
                 pageContainer.removeViews(1, pageContainer.childCount-1)
                 buildAllCabinetPages()
@@ -264,19 +251,20 @@ class MainActivity : AppCompatActivity() {
         saveBox.addView(saveBtn)
         mainPage.addView(saveBox)
 
+        val scroll = ScrollView(this)
         val tip = TextView(this)
-        tip.text = "\n📌 CABINET: $PEDALS_PER_PAGE Max/Page • 10 Kaliwa + 10 Kanan\n📌 Pinihit sa Pedal → AGAD NAI-SAVE + SUMASABAY SA MAIN!\n📌 VOLUME=MASTER • EFFECT=LAHAT NG FX • NOISE GATE=NOISE GATE"
+        tip.text = "\n📌 VOLUME → MASTER VOLUME LANG\n📌 EFFECT → LAHAT NG FX SUMASABAY\n📌 NOISE GATE → NOISE GATE LANG\n📌 20 Pedals/Page • BAGONG PAGE sa 21\n📌 Auto-Save habang pini-pihit!"
         tip.textSize = 12f; tip.setTextColor(-0x777778)
         tip.setPadding(12,12,12,12)
-        mainPage.addView(tip)
+        scroll.addView(tip)
+        mainPage.addView(scroll)
 
         pageContainer.addView(mainPage)
     }
 
+    // ✅ BUUIN ANG LAHAT NG PAGE — 20 BAWAT PAGE! 10 KALIWA / 10 KANAN!
     private fun buildAllCabinetPages() {
-        val builtIn = getBuiltInPresets()
-        val user = loadUserPresets()
-        val allPresets = builtIn + user
+        val allPresets = getBuiltInPresets() + loadUserPresets()
         val totalPages = (allPresets.size + PEDALS_PER_PAGE - 1) / PEDALS_PER_PAGE
         val scrW = resources.displayMetrics.widthPixels
 
@@ -314,11 +302,12 @@ class MainActivity : AppCompatActivity() {
             cabPage.addView(topBar)
 
             val info = TextView(this)
-            info.text = "📌 ${pagePedals.size}/$PEDALS_PER_PAGE • 10 Kaliwa + 10 Kanan • AWATOMATIKONG SAVE"
+            info.text = "📌 ${pagePedals.size}/20 • 10 Kaliwa • 10 Kanan • Auto-Save habang pini-pihit"
             info.textSize = 10f; info.setTextColor(-0x888889)
             info.gravity = Gravity.CENTER
             cabPage.addView(info)
 
+            // ✅ DALAWANG HANAY — 10 KALIWA / 10 KANAN!
             val col1 = mutableListOf<PedalPreset>()
             val col2 = mutableListOf<PedalPreset>()
             pagePedals.forEachIndexed { i, p -> if(i%2==0) col1.add(p) else col2.add(p) }
@@ -326,19 +315,20 @@ class MainActivity : AppCompatActivity() {
             val rowContainer = LinearLayout(this)
             rowContainer.orientation = LinearLayout.HORIZONTAL
 
-            listOf(col1, col2).forEach { pedals ->
+            listOf(col1 to "KALIWA", col2 to "KANAN").forEach { (pedals, label) ->
                 val colScroll = ScrollView(this)
                 val colLay = LinearLayout(this)
                 colLay.orientation = LinearLayout.VERTICAL
                 colLay.setPadding(4,4,4,4)
 
-                pedals.forEach { pedal ->
+                pedals.forEachIndexed { idx, pedal ->
                     val card = LinearLayout(this)
                     card.orientation = LinearLayout.VERTICAL
                     card.setBackgroundColor(pedal.color)
                     card.setPadding(8,6,8,6)
                     card.gravity = Gravity.CENTER
 
+                    // ✅ POWER BUTTON — UMIILAW! 💡 ON / ⚫ OFF
                     val power = Button(this)
                     power.text = if(pedal.isOn) "💡 ON" else "⚫ OFF"
                     power.textSize = 11f
@@ -349,9 +339,9 @@ class MainActivity : AppCompatActivity() {
                         pedal.isOn = !pedal.isOn
                         power.text = if(pedal.isOn) "💡 ON" else "⚫ OFF"
                         power.setBackgroundColor(if(pedal.isOn) -0x009933 else -0x555555)
-                        applyPedalToMain(pedal)
-                        saveAllPresets(builtIn, user)
-                        Toast.makeText(this@MainActivity, "✅ ${pedal.name}: ${if(pedal.isOn) "💡 BUHAY" else "⚫ PATAY"}", Toast.LENGTH_SHORT).show()
+                        applyPedal(pedal)
+                        saveAllPresets(getBuiltInPresets() + loadUserPresets()) // ✅ AUTO-SAVE!
+                        Toast.makeText(this@MainActivity, "✅ ${pedal.name}: ${if(pedal.isOn) "NABUHAY!" else "NAMATAY!"}", Toast.LENGTH_SHORT).show()
                     }
                     card.addView(power)
 
@@ -363,51 +353,78 @@ class MainActivity : AppCompatActivity() {
                     name.setPadding(0,2,0,2)
                     card.addView(name)
 
+                    // ✅ 3 PIHITAN — KONEKTADO SA MAIN! AUTO-SAVE!
                     val kRow = LinearLayout(this)
                     kRow.orientation = LinearLayout.HORIZONTAL
                     kRow.gravity = Gravity.CENTER
 
+                    // 🔊 VOLUME → MASTER VOLUME LANG
+                    val vCol = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
                     val vKnob = KnobView(this).apply { baseColor=-0x00DD55; value=pedal.volume }
                     val vTxt = TextView(this).apply { text="${(pedal.volume*100).toInt()}%"; textSize=8f; setTextColor(-0x00DD55) }
-                    vKnob.onChange = { newVal ->
-                        pedal.volume = newVal
-                        vTxt.text = "${(newVal*100).toInt()}%"
-                        AudioMixer.masterVolume = newVal
-                        saveAllPresets(builtIn, user)
+                    vKnob.onChange = {
+                        pedal.volume = it
+                        vTxt.text = "${(it*100).toInt()}%"
+                        AudioMixer.masterVolume = it // ✅ MASTER VOLUME LANG!
+                        saveAllPresets(getBuiltInPresets() + loadUserPresets()) // ✅ AUTO-SAVE!
                     }
-                    val vBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
-                    vBox.addView(vKnob, LinearLayout.LayoutParams(36,36))
-                    vBox.addView(vTxt)
-                    kRow.addView(vBox, LinearLayout.LayoutParams(0,-1,1f))
+                    vCol.addView(vKnob, LinearLayout.LayoutParams(36,36))
+                    vCol.addView(vTxt)
+                    val vLbl = TextView(this).apply { text="🔊"; textSize=9f }
+                    vCol.addView(vLbl)
+                    kRow.addView(vCol, LinearLayout.LayoutParams(0,-1,1f))
 
+                    // ⚡ EFFECT → LAHAT NG FX SUMASABAY!
+                    val fCol = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
                     val fKnob = KnobView(this).apply { baseColor=-0xFF8800; value=pedal.effect }
                     val fTxt = TextView(this).apply { text="${(pedal.effect*100).toInt()}%"; textSize=8f; setTextColor(-0xFF8800) }
-                    fKnob.onChange = { newVal ->
-                        pedal.effect = newVal
-                        fTxt.text = "${(newVal*100).toInt()}%"
-                        fxGetters.forEach { getFx -> if(getFx() > 0.01f) setFxValue(getFx, newVal) }
-                        saveAllPresets(builtIn, user)
+                    fKnob.onChange = {
+                        pedal.effect = it
+                        fTxt.text = "${(it*100).toInt()}%"
+                        // ✅ LAHAT NG FX APEKTADO HINDI 0%!
+                        if(it > 0.01f) {
+                            AudioMixer.overdrive = it
+                            AudioMixer.distortion = it
+                            AudioMixer.fuzz = it * 0.8f
+                            AudioMixer.chorus = it * 0.6f
+                            AudioMixer.flanger = it * 0.5f
+                            AudioMixer.phaser = it * 0.4f
+                            AudioMixer.delay = it * 0.5f
+                            AudioMixer.reverb = it * 0.4f
+                        }
+                        saveAllPresets(getBuiltInPresets() + loadUserPresets()) // ✅ AUTO-SAVE!
                     }
-                    val fBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
-                    fBox.addView(fKnob, LinearLayout.LayoutParams(36,36))
-                    fBox.addView(fTxt)
-                    kRow.addView(fBox, LinearLayout.LayoutParams(0,-1,1f))
+                    fCol.addView(fKnob, LinearLayout.LayoutParams(36,36))
+                    fCol.addView(fTxt)
+                    val fLbl = TextView(this).apply { text="⚡"; textSize=9f }
+                    fCol.addView(fLbl)
+                    kRow.addView(fCol, LinearLayout.LayoutParams(0,-1,1f))
 
+                    // 🚧 NOISE GATE → NOISE GATE LANG!
+                    val nCol = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
                     val nKnob = KnobView(this).apply { baseColor=-0x777777; value=pedal.noiseGate }
                     val nTxt = TextView(this).apply { text="${(pedal.noiseGate*100).toInt()}%"; textSize=8f; setTextColor(-0x777777) }
-                    nKnob.onChange = { newVal ->
-                        pedal.noiseGate = newVal
-                        nTxt.text = "${(newVal*100).toInt()}%"
-                        AudioMixer.noiseGate = newVal
-                        saveAllPresets(builtIn, user)
+                    nKnob.onChange = {
+                        pedal.noiseGate = it
+                        nTxt.text = "${(it*100).toInt()}%"
+                        AudioMixer.noiseGate = it // ✅ NOISE GATE LANG!
+                        saveAllPresets(getBuiltInPresets() + loadUserPresets()) // ✅ AUTO-SAVE!
                     }
-                    val nBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; gravity=Gravity.CENTER }
-                    nBox.addView(nKnob, LinearLayout.LayoutParams(36,36))
-                    nBox.addView(nTxt)
-                    kRow.addView(nBox, LinearLayout.LayoutParams(0,-1,1f))
+                    nCol.addView(nKnob, LinearLayout.LayoutParams(36,36))
+                    nCol.addView(nTxt)
+                    val nLbl = TextView(this).apply { text="🚧"; textSize=9f }
+                    nCol.addView(nLbl)
+                    kRow.addView(nCol, LinearLayout.LayoutParams(0,-1,1f))
 
                     card.addView(kRow)
-                    card.setOnClickListener { applyPedalToMain(pedal) }
+
+                    // ✅ PINDUTIN PARA I-APLAY LAHAT
+                    card.setOnClickListener {
+                        applyPedal(pedal)
+                        Toast.makeText(this,"✅ ${pedal.name} — NAKA-APLAY!",Toast.LENGTH_SHORT).show()
+                        if(!AudioEngine.isRunning()) AudioEngine.start(this@MainActivity)
+                    }
+
                     colLay.addView(card, LinearLayout.LayoutParams(-2, -2).apply { setMargins(0,4,0,4) })
                 }
 
@@ -446,6 +463,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }
 
+// ✅ PEDAL DATA — 3 HALAGA + POWER
 class PedalPreset(
     val name:String,
     val color:Int,
