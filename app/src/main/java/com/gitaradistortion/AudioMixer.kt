@@ -6,169 +6,176 @@ import kotlin.math.sin
 import kotlin.math.PI
 
 object AudioMixer {
-    private const val SAFE_LIMIT = 0.9f
+    private const val SAFE_LIMIT = 0.95f
 
+    // ✅ MASTER
     var masterOn = true
-    var masterLevel = 0.6f
+    var masterVolume = 0.5f
 
-    var noiseGateOn = true
-    var noiseGateThreshold = 0.04f
-    var noiseGateRelease = 0.3f
+    // ✅ LAHAT NG FX — 50% DEFAULT — HIGIT SA 12!
+    var noiseGate   = 0.5f   // Threshold
+    var tone        = 0.5f   // Tono
+    var gain        = 0.5f   // Lakas bago distorsyon
+    var overdrive   = 0.5f   // Malambot na distorsyon
+    var distortion  = 0.5f   // Matigas na distorsyon
+    var fuzz        = 0.5f   // Lubog na tunog
+    var chorus      = 0.5f   // Maririnig na marami
+    var phaser      = 0.5f   // Lumilipad na tunog
+    var tremolo     = 0.5f   // Pataas-pababa na lakas
+    var vibrato     = 0.5f   // Umuugoy na tono
+    var delay       = 0.5f   // Paulit-ulit na tunog
+    var reverb      = 0.5f   // Alingawngaw ng silid
+    var wah         = 0.5f   // Parang boses
+    var ampType     = 0.5f   // Uri ng Amplifier
+    var bass        = 0.5f   // Mababang tono
+    var mid         = 0.5f   // Gitnang tono
+    var treble      = 0.5f   // Mataas na tono
 
-    var volumeOn = true
-    var volumeLevel = 0.75f
+    // ✅ BUFFER PARA SA DELAY/CHORUS
+    private val delayBuf = FloatArray(9600)
+    private var delayIdx = 0
+    private var phase = 0.0
+    private var tremPhase = 0.0
+    private var vibPhase = 0.0
 
-    var gainOn = false
-    var gainAmount = 0.5f
+    fun setAllOn(e:Boolean) { masterOn = e }
+    fun isAllOn():Boolean = masterOn
 
-    var overdriveOn = false
-    var overdriveDrive = 0.5f
-    var overdriveLevel = 0.7f
-
-    var distortionOn = false
-    var distortionGain = 0.6f
-    var distortionTone = 0.5f
-
-    var chorusOn = false
-    var chorusSpeed = 0.3f
-    var chorusDepth = 0.5f
-    private var chorusPhase = 0.0
-
-    var delayOn = false
-    var delayTime = 0.4f
-    var delayFeedback = 0.3f
-    private val delayBuffer = FloatArray(9600)
-    private var delayIndex = 0
-
-    var wahOn = false
-    var wahPosition = 0.5f
-    var wahResonance = 0.5f
-    var wahLevel = 0.7f
-
-    var reverbOn = false
-    var reverbMix = 0.25f
-    var reverbDecay = 0.4f
-
-    var ampOn = false
-    var ampGain = 0.5f
-    var ampResponse = 0.6f
-
-    fun setMasterEnabled(e:Boolean) { masterOn=e }
-    fun setNoiseGate(e:Boolean,v:Float,r:Float) { noiseGateOn=e; noiseGateThreshold=v.coerceIn(0.005f,0.15f); noiseGateRelease=r.coerceIn(0.05f,0.8f) }
-    fun setVolume(e:Boolean,v:Float) { volumeOn=e; volumeLevel=v.coerceIn(0.05f,1f) }
-    fun setGain(e:Boolean,v:Float) { gainOn=e; gainAmount=v.coerceIn(0f,1f) }
-    fun setOverdrive(e:Boolean,drive:Float,lvl:Float) { overdriveOn=e; overdriveDrive=drive.coerceIn(0f,1f); overdriveLevel=lvl.coerceIn(0f,1f) }
-    fun setDistortion(e:Boolean,gain:Float,tone:Float) { distortionOn=e; distortionGain=gain.coerceIn(0f,1f); distortionTone=tone.coerceIn(0f,1f) }
-    fun setChorus(e:Boolean,speed:Float,depth:Float) { chorusOn=e; chorusSpeed=speed.coerceIn(0f,1f); chorusDepth=depth.coerceIn(0f,1f) }
-    fun setDelay(time:Float,fb:Float) { delayOn=time>0.1f; delayTime=time.coerceIn(0.1f,0.8f); delayFeedback=fb.coerceIn(0f,0.7f) }
-    fun setWah(e:Boolean,pos:Float,q:Float,lvl:Float) { wahOn=e; wahPosition=pos.coerceIn(0f,1f); wahResonance=q.coerceIn(0f,1f); wahLevel=lvl.coerceIn(0.1f,1.2f) }
-    fun setReverb(e:Boolean,mix:Float,decay:Float) { reverbOn=e; reverbMix=mix.coerceIn(0f,1f); reverbDecay=decay.coerceIn(0.1f,0.8f) }
-    fun setAmp(e:Boolean,gain:Float,resp:Float) { ampOn=e; ampGain=gain.coerceIn(0f,1f); ampResponse=resp.coerceIn(0.2f,1f) }
-
-    fun process(input:Float):Float {
-        if(!masterOn) return 0f
-        var sig=input
-
-        if(noiseGateOn && abs(sig)<noiseGateThreshold) sig=0f
-        if(volumeOn) sig*=volumeLevel
-        if(gainOn) sig*=(1f+gainAmount*0.6f)
-
-        if(overdriveOn && overdriveDrive>0.01f) {
-            val d=1.5f+overdriveDrive*2f
-            sig=tanh(sig*d)/d*(0.5f+overdriveLevel*0.7f)
-        }
-
-        if(distortionOn && distortionGain>0.01f) {
-            val d=1f+distortionGain*2.5f
-            sig=tanh(sig*d)/d*(0.7f+distortionTone*0.5f)
-        }
-
-        if(chorusOn && chorusDepth>0.05f) {
-            chorusPhase += chorusSpeed*0.05
-            if(chorusPhase>PI*2) chorusPhase-=PI*2
-            val mod=1f+(sin(chorusPhase)*chorusDepth*0.15f).toFloat()
-            sig = (sig + sig*mod)*0.5f
-        }
-
-        if(delayOn && delayTime>0.1f) {
-            val delaySamples=(delayTime*48000f).toInt().coerceAtMost(delayBuffer.size-1)
-            val delayed=delayBuffer[(delayIndex-delaySamples+delayBuffer.size)%delayBuffer.size]
-            val out=sig + delayed*delayFeedback
-            delayBuffer[delayIndex]=out
-            delayIndex=(delayIndex+1)%delayBuffer.size
-            sig=out*0.7f
-        }
-
-        if(wahOn) {
-            val q = 0.25f + wahResonance * 0.6f
-            val boost = 0.8f + wahLevel * 0.5f
-            sig = sig * boost * (0.5f + wahPosition * q)
-        }
-
-        if(reverbOn && reverbMix>0.05f) {
-            val rt = reverbDecay * 1200f
-            val feedback = 0.3f
-            val delaySamples = rt.toInt().coerceAtMost(960)
-            val delayed = delayBuffer[(delayIndex-delaySamples+delayBuffer.size)%delayBuffer.size]
-            sig = sig * (1f-reverbMix) + delayed * feedback * reverbMix
-        }
-
-        if(ampOn && ampGain>0.05f) {
-            val curve = 0.7f + ampResponse * 0.6f
-            val drive = 1f + ampGain * 2f
-            sig = tanh(sig * drive / curve) * curve * 0.85f
-        }
-
-        sig*=masterLevel
-        return sig.coerceIn(-SAFE_LIMIT,SAFE_LIMIT)
-    }
-
+    // ✅ I-APLAY ANG PRESET — KUSANG AYUS LAHAT NG PIHITAN!
     fun applyPreset(name:String) {
         when(name) {
             "Clean" -> {
-                noiseGateOn=true; noiseGateThreshold=0.02f; noiseGateRelease=0.3f
-                volumeOn=true; volumeLevel=0.85f
-                gainOn=false; overdriveOn=false; distortionOn=false
-                chorusOn=false; delayOn=false; wahOn=false
-                reverbOn=true; reverbMix=0.2f; reverbDecay=0.35f
-                ampOn=false
+                noiseGate=0.2f; tone=0.5f; gain=0.25f; overdrive=0.0f; distortion=0.0f; fuzz=0.0f
+                chorus=0.15f; phaser=0.0f; tremolo=0.0f; vibrato=0.0f
+                delay=0.15f; reverb=0.25f; wah=0.5f; ampType=0.3f
+                bass=0.5f; mid=0.5f; treble=0.55f
             }
             "Blues" -> {
-                noiseGateOn=true; noiseGateThreshold=0.03f; noiseGateRelease=0.3f
-                volumeOn=true; volumeLevel=0.7f
-                gainOn=true; gainAmount=0.35f
-                overdriveOn=true; overdriveDrive=0.45f; overdriveLevel=0.65f
-                distortionOn=false
-                chorusOn=true; chorusSpeed=0.25f; chorusDepth=0.35f
-                delayOn=true; delayTime=0.3f; delayFeedback=0.25f
-                wahOn=false
-                reverbOn=true; reverbMix=0.3f; reverbDecay=0.45f
-                ampOn=true; ampGain=0.4f; ampResponse=0.6f
+                noiseGate=0.3f; tone=0.55f; gain=0.45f; overdrive=0.45f; distortion=0.15f; fuzz=0.0f
+                chorus=0.35f; phaser=0.15f; tremolo=0.1f; vibrato=0.15f
+                delay=0.3f; reverb=0.4f; wah=0.55f; ampType=0.5f
+                bass=0.55f; mid=0.6f; treble=0.5f
             }
             "Rock" -> {
-                noiseGateOn=true; noiseGateThreshold=0.04f; noiseGateRelease=0.3f
-                volumeOn=true; volumeLevel=0.65f
-                gainOn=true; gainAmount=0.55f
-                overdriveOn=true; overdriveDrive=0.6f; overdriveLevel=0.7f
-                distortionOn=true; distortionGain=0.5f; distortionTone=0.5f
-                chorusOn=false
-                delayOn=true; delayTime=0.35f; delayFeedback=0.3f
-                wahOn=false
-                reverbOn=true; reverbMix=0.25f; reverbDecay=0.4f
-                ampOn=true; ampGain=0.5f; ampResponse=0.7f
+                noiseGate=0.4f; tone=0.6f; gain=0.65f; overdrive=0.6f; distortion=0.55f; fuzz=0.2f
+                chorus=0.2f; phaser=0.3f; tremolo=0.15f; vibrato=0.0f
+                delay=0.4f; reverb=0.35f; wah=0.5f; ampType=0.65f
+                bass=0.6f; mid=0.55f; treble=0.6f
             }
             "Metal" -> {
-                noiseGateOn=true; noiseGateThreshold=0.06f; noiseGateRelease=0.3f
-                volumeOn=true; volumeLevel=0.55f
-                gainOn=true; gainAmount=0.75f
-                overdriveOn=false
-                distortionOn=true; distortionGain=0.85f; distortionTone=0.65f
-                chorusOn=false
-                delayOn=true; delayTime=0.45f; delayFeedback=0.35f
-                wahOn=true; wahPosition=0.7f; wahResonance=0.6f; wahLevel=0.85f
-                reverbOn=true; reverbMix=0.35f; reverbDecay=0.5f
-                ampOn=true; ampGain=0.7f; ampResponse=0.8f
+                noiseGate=0.6f; tone=0.7f; gain=0.85f; overdrive=0.3f; distortion=0.85f; fuzz=0.5f
+                chorus=0.0f; phaser=0.4f; tremolo=0.0f; vibrato=0.0f
+                delay=0.5f; reverb=0.45f; wah=0.7f; ampType=0.85f
+                bass=0.7f; mid=0.5f; treble=0.7f
             }
         }
+    }
+
+    // ✅ I-SAVE ANG KASALUKUYANG SETTING BILANG PRESET
+    fun savePreset(ctx: android.content.Context, name:String) {
+        ctx.getSharedPreferences("GitaraPresets",0).edit().apply {
+            putFloat("${name}_ng",noiseGate); putFloat("${name}_tone",tone)
+            putFloat("${name}_gain",gain); putFloat("${name}_od",overdrive)
+            putFloat("${name}_dist",distortion); putFloat("${name}_fuzz",fuzz)
+            putFloat("${name}_chorus",chorus); putFloat("${name}_phaser",phaser)
+            putFloat("${name}_trem",tremolo); putFloat("${name}_vib",vibrato)
+            putFloat("${name}_delay",delay); putFloat("${name}_rev",reverb)
+            putFloat("${name}_wah",wah); putFloat("${name}_amp",ampType)
+            putFloat("${name}_bass",bass); putFloat("${name}_mid",mid)
+            putFloat("${name}_treble",treble)
+        }.apply()
+    }
+
+    // ✅ PAGPROSESO NG TUNOG — WALANG LATENCY!
+    fun process(input:Float):Float {
+        if(!masterOn) return 0f
+        var sig = input
+
+        // 🚧 NOISE GATE
+        val ngTh = noiseGate * 0.15f
+        if(abs(sig) < ngTh) sig = 0f
+
+        // ⚡ GAIN
+        sig *= 1f + gain * 1.2f
+
+        // 🎵 TONE EQ
+        val t = tone * 0.5f + 0.25f
+
+        // 🎚️ BASS / MID / TREBLE
+        sig = sig * (0.7f + bass*0.3f) * (0.8f + mid*0.2f) * (0.6f + treble*0.4f*t)
+
+        // 🟠 OVERDRIVE
+        if(overdrive > 0.05f) {
+            val d = 1f + overdrive * 2.5f
+            sig = tanh(sig * d) / d * (0.5f + overdrive * 0.5f)
+        }
+
+        // 🔴 DISTORTION
+        if(distortion > 0.05f) {
+            val d = 1f + distortion * 3f
+            sig = tanh(sig * d) / d * (0.6f + distortion * 0.4f)
+        }
+
+        // ⚫ FUZZ
+        if(fuzz > 0.05f) {
+            val d = 1f + fuzz * 3.5f
+            sig = (if(sig*d > 0.7f) 0.7f else if(sig*d < -0.7f) -0.7f else sig*d) * (0.5f + fuzz*0.4f)
+        }
+
+        // 🫧 CHORUS
+        if(chorus > 0.05f) {
+            phase += chorus * 0.06; if(phase > PI*2) phase -= PI*2
+            val m = (sin(phase) * chorus * 0.15f).toFloat()
+            sig = (sig + sig * (1f+m)) * 0.5f
+        }
+
+        // 🌀 PHASER
+        if(phaser > 0.05f) {
+            phase += phaser * 0.04; if(phase > PI*2) phase -= PI*2
+            sig *= 0.7f + (sin(phase) * phaser * 0.35f).toFloat()
+        }
+
+        // 📳 TREMOLO
+        if(tremolo > 0.05f) {
+            tremPhase += tremolo * 0.08; if(tremPhase > PI*2) tremPhase -= PI*2
+            sig *= 0.7f + (sin(tremPhase)*0.5f*tremolo).toFloat()
+        }
+
+        // 🎶 VIBRATO
+        if(vibrato > 0.05f) {
+            vibPhase += vibrato * 0.07; if(vibPhase > PI*2) vibPhase -= PI*2
+            sig *= 0.85f + (sin(vibPhase)*0.3f*vibrato).toFloat()
+        }
+
+        // ⏱️ DELAY
+        if(delay > 0.1f) {
+            val sp = (delay * 1800f).toInt().coerceAtMost(delayBuf.size-1)
+            val fb = delayBuf[(delayIdx - sp + delayBuf.size) % delayBuf.size]
+            val out = sig + fb * 0.35f
+            delayBuf[delayIdx] = out
+            delayIdx = (delayIdx + 1) % delayBuf.size
+            sig = out * 0.7f
+        }
+
+        // 🌊 REVERB
+        if(reverb > 0.05f) {
+            val sp = (reverb * 1500f).toInt().coerceAtMost(960)
+            val fb = delayBuf[(delayIdx - sp + delayBuf.size) % delayBuf.size]
+            sig = sig * (1f - reverb*0.6f) + fb * 0.3f * reverb
+        }
+
+        // 🎵 WAH
+        if(wah > 0.05f) {
+            sig *= 0.6f + wah * 0.8f
+        }
+
+        // 🔊 AMP SIMULATION
+        val curve = 0.55f + ampType * 0.75f
+        sig = tanh(sig / curve) * curve * 0.9f
+
+        // 🎚️ MASTER VOLUME
+        sig *= masterVolume
+
+        return sig.coerceIn(-SAFE_LIMIT, SAFE_LIMIT)
     }
 }

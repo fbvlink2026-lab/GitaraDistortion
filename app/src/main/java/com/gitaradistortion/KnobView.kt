@@ -2,85 +2,35 @@ package com.gitaradistortion
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.RectF
-import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import kotlin.math.*
 
-class KnobView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr) {
-
+class KnobView(ctx:Context):View(ctx) {
     var value = 0.5f
-        set(v) { field = v.coerceIn(0f, 1f); invalidate() }
-
-    var onValueChange: ((Float) -> Unit)? = null
+        set(v) { field=v.coerceIn(0f,1f); invalidate(); onChange?.invoke(field) }
+    var onChange:((Float)->Unit)?=null
     var baseColor = 0xFFFF8822.toInt()
+    private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var downY=0f; private var downV=0f
 
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val bgRect = RectF()
-    private var centerX = 0f
-    private var centerY = 0f
-    private var radius = 0f
-    private val startAngle = -135f
-    private val endAngle = 135f
-    private val angleRange = endAngle - startAngle
-
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        centerX = w / 2f
-        centerY = h / 2f
-        radius = minOf(w, h) / 2f - 4f
-        bgRect.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+    override fun onDraw(c:Canvas) {
+        val cx=width/2f; val cy=height/2f; val r=minOf(cx,cy)-3f
+        p.style=Paint.Style.FILL; p.color=0xFF2A2A2A.toInt(); c.drawCircle(cx,cy,r,p)
+        p.style=Paint.Style.STROKE; p.color=baseColor; p.strokeWidth=2.5f; c.drawCircle(cx,cy,r,p)
+        val ang=(value*270-225)*PI/180
+        val x1=cx+(r*0.65*cos(ang)).toFloat()
+        val y1=cy+(r*0.65*sin(ang)).toFloat()
+        val x2=cx+(r*0.85*cos(ang)).toFloat()
+        val y2=cy+(r*0.85*sin(ang)).toFloat()
+        p.strokeWidth=3f; p.color=0xFFFFFFFF.toInt(); c.drawLine(x1,y1,x2,y2,p)
     }
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        paint.color = Color.parseColor("#2A2A2A")
-        paint.style = Paint.Style.FILL
-        canvas.drawCircle(centerX, centerY, radius, paint)
-
-        paint.color = Color.parseColor("#444444")
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 3f
-        canvas.drawArc(bgRect, startAngle, angleRange, false, paint)
-
-        paint.color = baseColor
-        paint.strokeWidth = 4f
-        val sweep = value * angleRange
-        canvas.drawArc(bgRect, startAngle, sweep, false, paint)
-
-        paint.color = Color.parseColor("#C89C3C")
-        paint.style = Paint.Style.FILL
-        canvas.drawCircle(centerX, centerY, radius * 0.65f, paint)
-
-        paint.color = Color.WHITE
-        paint.strokeWidth = 3f
-        val ptrAngle = Math.toRadians((startAngle + sweep).toDouble())
-        val ptrLen = radius * 0.55f
-        val ptrX = centerX + sin(ptrAngle).toFloat() * ptrLen
-        val ptrY = centerY - cos(ptrAngle).toFloat() * ptrLen
-        canvas.drawLine(centerX, centerY, ptrX, ptrY, paint)
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        when (event.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                val dx = event.x - centerX
-                val dy = event.y - centerY
-                var angle = Math.toDegrees(atan2(dx.toDouble(), -dy.toDouble())).toFloat()
-                if (angle < startAngle) angle += 360f
-                val newValue = ((angle - startAngle) / angleRange).coerceIn(0f, 1f)
-                if (newValue != value) {
-                    value = newValue
-                    onValueChange?.invoke(value)
-                }
-                return true
-            }
+    override fun onTouchEvent(e:MotionEvent):Boolean {
+        when(e.action) {
+            MotionEvent.ACTION_DOWN -> { downY=e.rawY; downV=value; return true }
+            MotionEvent.ACTION_MOVE -> value=(downY-e.rawY)/height*1.2f+downV
         }
-        return super.onTouchEvent(event)
+        return true
     }
 }

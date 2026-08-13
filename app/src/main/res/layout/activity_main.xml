@@ -1,27 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#121212"
-    android:padding="8dp">
-
-    <TextView
-        android:id="@+id/iRigHint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="🔌 Isaksak ang iRig → Pahintulutan ang Mikropono → I-ON"
-        android:textColor="#FFCC00"
-        android:textSize="13sp"
-        android:gravity="center"
-        android:padding="8dp"
-        android:background="#2A2A00"
-        android:layout_marginBottom="8dp"/>
-
-    <FrameLayout
-        android:id="@+id/fragmentContainer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
-
-</LinearLayout>
+    android:background="#121212"/>
