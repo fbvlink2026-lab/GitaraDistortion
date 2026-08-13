@@ -11,7 +11,7 @@ object AudioMixer {
     private const val SAFE_LIMIT = 0.95f
     private lateinit var prefs: SharedPreferences
 
-    var masterOn = false  // ✅ DEFAULT OFF — HINDI AGAD MAGSISIMULA!
+    var masterOn = false  // ✅ HINDI AGAD BUKAS
     var masterVolume = 0.5f
 
     var noiseGate   = 0.5f
