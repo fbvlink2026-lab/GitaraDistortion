@@ -30,11 +30,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainPage: LinearLayout
     private lateinit var pageContainer: LinearLayout
     private lateinit var savePresetName: EditText
-    private lateinit var mainPowerBtn: Button // ✅ REFERENCE SA MAIN POWER BUTTON
+    private lateinit var mainPowerBtn: Button
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
 
-    // ✅ MAIN MIXER — 19 PIHITAN — WALANG BABAGUHIN!
+    // ✅ MAIN MIXER — WALANG BABAGUHIN!
     private val fxList = listOf(
         Triple("🚧 NOISE GATE", -0x3BBB78, { AudioMixer.noiseGate }),
         Triple("🎵 TONE", -0x0033BC, { AudioMixer.tone }),
@@ -57,8 +57,9 @@ class MainActivity : AppCompatActivity() {
         Triple("🎚️ MASTER", -0x000001, { AudioMixer.masterVolume })
     )
 
-    private fun getBuiltInPresets(): MutableList<PedalPreset> {
-        return mutableListOf(
+    // ✅ DEFAULT PRESETS — APAT LANG! HINDI NA DADAGDAG!
+    private fun getFixedDefaultPresets(): List<PedalPreset> {
+        return listOf(
             PedalPreset("Clean", -0x3399BB, isOn = false, vol = 0.7f, fx = 0.2f, ng = 0.1f),
             PedalPreset("Blues", -0x99BB3D, isOn = false, vol = 0.8f, fx = 0.4f, ng = 0.2f),
             PedalPreset("Rock", -0x66DDDD, isOn = false, vol = 0.85f, fx = 0.7f, ng = 0.3f),
@@ -66,29 +67,40 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    // ✅ USER PRESETS — MGA GINAGAWA MO LANG
     private fun loadUserPresets(): MutableList<PedalPreset> {
         val list = mutableListOf<PedalPreset>()
         try {
             val json = prefs.getString("user_pedal_presets", "[]")
             val arr = JSONArray(json)
+            val defaultNames = listOf("Clean", "Blues", "Rock", "Metal")
             for(i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
-                list.add(PedalPreset(
-                    name = o.getString("name"),
-                    color = o.optInt("color", -0xBB7733),
-                    isOn = o.optBoolean("on", false),
-                    vol = o.optDouble("vol", 0.5).toFloat(),
-                    fx = o.optDouble("fx", 0.5).toFloat(),
-                    ng = o.optDouble("ng", 0.5).toFloat()
-                ))
+                val name = o.getString("name")
+                // ✅ HINDI ISASAMA KUNG DEFAULT NA!
+                if(name !in defaultNames) {
+                    list.add(PedalPreset(
+                        name = name,
+                        color = o.optInt("color", -0xBB7733),
+                        isOn = o.optBoolean("on", false),
+                        vol = o.optDouble("vol", 0.5).toFloat(),
+                        fx = o.optDouble("fx", 0.5).toFloat(),
+                        ng = o.optDouble("ng", 0.5).toFloat()
+                    ))
+                }
             }
         } catch(_:Exception) {}
         return list
     }
 
-    private fun saveAllPresets(allPresets: List<PedalPreset>) {
+    // ✅ LAHAT NG PRESETS = DEFAULT + USER LANG
+    private fun getAllPresets(): List<PedalPreset> {
+        return getFixedDefaultPresets() + loadUserPresets()
+    }
+
+    private fun saveAllUserPresets(userPresets: List<PedalPreset>) {
         val arr = JSONArray()
-        allPresets.forEach { arr.put(it.toJson()) }
+        userPresets.forEach { arr.put(it.toJson()) }
         prefs.edit().putString("user_pedal_presets", arr.toString()).apply()
     }
 
@@ -224,14 +236,13 @@ class MainActivity : AppCompatActivity() {
         scroll.addView(grid)
         mainPage.addView(scroll)
 
-        // ✅ MAIN POWER BUTTON — I-SAVE ANG REFERENCE!
         val bar = LinearLayout(this)
         bar.orientation = LinearLayout.HORIZONTAL
         bar.gravity = Gravity.CENTER
         bar.setBackgroundColor(-0xDDDDFF)
         bar.setPadding(8,8,8,8)
 
-        mainPowerBtn = Button(this) // ✅ I-SAVE ANG REFERENCE
+        mainPowerBtn = Button(this)
         mainPowerBtn.text="🟢 ON"; mainPowerBtn.setTextColor(Color.WHITE)
         mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize=13f
         mainPowerBtn.setOnClickListener {
@@ -253,17 +264,22 @@ class MainActivity : AppCompatActivity() {
         saveBtn.setBackgroundColor(-0xBB7733); saveBtn.textSize=12f
         saveBtn.setOnClickListener {
             val n = savePresetName.text.toString().trim()
+            val defaultNames = listOf("Clean", "Blues", "Rock", "Metal")
             if(n.isBlank()) {
                 Toast.makeText(this,"❌ Ilagay ang pangalan!",Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val all = loadUserPresets()
-            if(all.any { it.name == n } || n in listOf("Clean","Blues","Rock","Metal")) {
-                Toast.makeText(this,"❌ May pangalan na!",Toast.LENGTH_SHORT).show()
+            if(n in defaultNames) {
+                Toast.makeText(this,"❌ Hindi pwedeng pangalan ng Default Preset!",Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            all.add(PedalPreset(n, pickColor(), false, 0.5f, 0.5f, AudioMixer.noiseGate))
-            saveAllPresets(all)
+            val userPresets = loadUserPresets()
+            if(userPresets.any { it.name == n }) {
+                Toast.makeText(this,"❌ May preset na ganyang pangalan!",Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            userPresets.add(PedalPreset(n, pickColor(), false, 0.5f, 0.5f, AudioMixer.noiseGate))
+            saveAllUserPresets(userPresets)
             Toast.makeText(this,"✅ NAISAVE: $n!",Toast.LENGTH_LONG).show()
             savePresetName.text.clear()
             pageContainer.removeViews(1, pageContainer.childCount-1)
@@ -274,14 +290,10 @@ class MainActivity : AppCompatActivity() {
         pageContainer.addView(mainPage)
     }
 
-    // ==========================================
-    // ✅ CABINET — 2 PEDALS LANG BAWAT PAGE! BUONG SCREEN!
-    // ==========================================
     private fun buildCabinetPages() {
-        val allPresets = getBuiltInPresets() + loadUserPresets()
+        val allPresets = getAllPresets()
         val w = resources.displayMetrics.widthPixels
-        val h = resources.displayMetrics.heightPixels
-        val PER_PAGE = 2 // ✅ 2 PEDALS LANG — BUONG SCREEN!
+        val PER_PAGE = 2
 
         for(pageIdx in 0 until allPresets.size step PER_PAGE) {
             val pagePresets = allPresets.subList(pageIdx, minOf(pageIdx+PER_PAGE, allPresets.size))
@@ -316,35 +328,30 @@ class MainActivity : AppCompatActivity() {
             cabPage.addView(topBar)
 
             val hint = TextView(this)
-            hint.text = "👆 SWIPE ←→ | 2 PEDALS LANG — LAKI AT KITANG-KITA!"
+            hint.text = "👆 SWIPE ←→ | Default: 4 lang + Iyong mga ginawa"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
             hint.setPadding(0,4,0,8)
             cabPage.addView(hint)
 
-            // ✅ 2 PEDALS — PATAYO SA ISA'T ISA, BUONG SCREEN SAKOP!
             pagePresets.forEach { preset ->
-                cabPage.addView(buildBigPedalView(preset, allPresets))
+                cabPage.addView(buildBigPedalView(preset))
             }
 
             pageContainer.addView(cabPage)
         }
     }
 
-    // ==========================================
-    // ✅ MALAKING PEDAL VIEW — SAKOP BUONG SCREEN!
-    // ==========================================
-    private fun buildBigPedalView(preset: PedalPreset, allPresets: List<PedalPreset>): LinearLayout {
+    private fun buildBigPedalView(preset: PedalPreset): LinearLayout {
         val w = resources.displayMetrics.widthPixels
         val pedal = LinearLayout(this)
         pedal.orientation = LinearLayout.VERTICAL
         pedal.setBackgroundColor(preset.color)
         pedal.setPadding(16,12,16,12)
         pedal.gravity = Gravity.CENTER
-        pedal.layoutParams = LinearLayout.LayoutParams(w - 48, 0, 1f) // ✅ MALAKI!
+        pedal.layoutParams = LinearLayout.LayoutParams(w - 48, 0, 1f)
 
-        // ✅ 💡 POWER BUTTON — SABAY SA MAIN POWER!
         val powerBtn = Button(this)
         powerBtn.text = if(preset.isOn) "💡 NAKA-ON" else "⚫ NAKA-OFF"
         powerBtn.textSize = 16f
@@ -356,7 +363,15 @@ class MainActivity : AppCompatActivity() {
             powerBtn.text = if(preset.isOn) "💡 NAKA-ON" else "⚫ NAKA-OFF"
             powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF333333.toInt())
 
-            // ✅ SABAY ANG MAIN POWER BUTTON!
+            val allPresets = getAllPresets()
+            val userPresets = loadUserPresets()
+            val presetIndex = allPresets.indexOfFirst { it.name == preset.name }
+            if(presetIndex >= 4) {
+                val userIndex = presetIndex - 4
+                if(userIndex < userPresets.size) userPresets[userIndex].isOn = preset.isOn
+                saveAllUserPresets(userPresets)
+            }
+
             if(preset.isOn) {
                 AudioMixer.setAllOn(true)
                 mainPowerBtn.text = "🟢 ON"
@@ -370,12 +385,9 @@ class MainActivity : AppCompatActivity() {
                 mainPowerBtn.setBackgroundColor(-0xDD7733)
                 Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!",Toast.LENGTH_SHORT).show()
             }
-
-            saveAllPresets(allPresets)
         }
         pedal.addView(powerBtn)
 
-        // ✅ PANGALAN NG PEDAL — MALAKI
         val name = TextView(this)
         name.text = preset.name
         name.textSize = 22f
@@ -384,7 +396,6 @@ class MainActivity : AppCompatActivity() {
         name.setPadding(0,8,0,8)
         pedal.addView(name)
 
-        // ✅ 🎚️ VOLUME KNOB — MALAKI
         val volRow = LinearLayout(this)
         volRow.orientation = LinearLayout.HORIZONTAL
         volRow.gravity = Gravity.CENTER_VERTICAL
@@ -395,14 +406,20 @@ class MainActivity : AppCompatActivity() {
         volKnob.onChange = { v ->
             preset.vol = v
             volPct.text = "${(v*100).toInt()}%"
+            val allPresets = getAllPresets()
+            val userPresets = loadUserPresets()
+            val presetIndex = allPresets.indexOfFirst { it.name == preset.name }
+            if(presetIndex >= 4) {
+                val userIndex = presetIndex - 4
+                if(userIndex < userPresets.size) userPresets[userIndex].vol = v
+                saveAllUserPresets(userPresets)
+            }
             if(preset.isOn) { AudioMixer.masterVolume = v; updateKnobsFromPreset() }
-            saveAllPresets(allPresets)
         }
         volRow.addView(volLabel); volRow.addView(volKnob); volRow.addView(volPct)
         volRow.setPadding(0,8,0,8)
         pedal.addView(volRow)
 
-        // ✅ 🎛️ EFFECT KNOB — MALAKI
         val fxRow = LinearLayout(this)
         fxRow.orientation = LinearLayout.HORIZONTAL
         fxRow.gravity = Gravity.CENTER_VERTICAL
@@ -413,6 +430,14 @@ class MainActivity : AppCompatActivity() {
         fxKnob.onChange = { v ->
             preset.fx = v
             fxPct.text = "${(v*100).toInt()}%"
+            val allPresets = getAllPresets()
+            val userPresets = loadUserPresets()
+            val presetIndex = allPresets.indexOfFirst { it.name == preset.name }
+            if(presetIndex >= 4) {
+                val userIndex = presetIndex - 4
+                if(userIndex < userPresets.size) userPresets[userIndex].fx = v
+                saveAllUserPresets(userPresets)
+            }
             if(preset.isOn) {
                 val fxStrength = v
                 if(AudioMixer.overdrive > 0f || v > 0.05f) AudioMixer.overdrive = fxStrength
@@ -424,13 +449,11 @@ class MainActivity : AppCompatActivity() {
                 if(AudioMixer.reverb > 0f || v > 0.05f) AudioMixer.reverb = fxStrength * 0.5f
                 updateKnobsFromPreset()
             }
-            saveAllPresets(allPresets)
         }
         fxRow.addView(fxLabel); fxRow.addView(fxKnob); fxRow.addView(fxPct)
         fxRow.setPadding(0,8,0,8)
         pedal.addView(fxRow)
 
-        // ✅ 🚧 NOISE GATE KNOB — MALAKI
         val ngRow = LinearLayout(this)
         ngRow.orientation = LinearLayout.HORIZONTAL
         ngRow.gravity = Gravity.CENTER_VERTICAL
@@ -441,8 +464,15 @@ class MainActivity : AppCompatActivity() {
         ngKnob.onChange = { v ->
             preset.ng = v
             ngPct.text = "${(v*100).toInt()}%"
+            val allPresets = getAllPresets()
+            val userPresets = loadUserPresets()
+            val presetIndex = allPresets.indexOfFirst { it.name == preset.name }
+            if(presetIndex >= 4) {
+                val userIndex = presetIndex - 4
+                if(userIndex < userPresets.size) userPresets[userIndex].ng = v
+                saveAllUserPresets(userPresets)
+            }
             if(preset.isOn) { AudioMixer.noiseGate = v; updateKnobsFromPreset() }
-            saveAllPresets(allPresets)
         }
         ngRow.addView(ngLabel); ngRow.addView(ngKnob); ngRow.addView(ngPct)
         ngRow.setPadding(0,8,0,8)
