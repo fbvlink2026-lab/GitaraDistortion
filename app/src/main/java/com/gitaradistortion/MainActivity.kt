@@ -31,7 +31,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var savePresetName: EditText
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
 
-    // ✅ BUILT-IN PRESETS — INAYOS NA PANGALAN NG PARAMETER!
     private fun getBuiltInPresets() = listOf(
         PedalPreset("Clean", -0x3399BB, volume=0.75f, effect=0.20f, noiseGate=0.05f, isOn=true, desc="Malinaw"),
         PedalPreset("Blues", -0x99BB3D, volume=0.80f, effect=0.45f, noiseGate=0.08f, isOn=true, desc="Mainit"),
@@ -190,7 +189,6 @@ class MainActivity : AppCompatActivity() {
         savePresetName.setPadding(10,6,10,6)
         saveBox.addView(savePresetName)
 
-        // ✅ INAYOS NA — WALANG DESTRUCTURING ERROR!
         val saveKnobRow = LinearLayout(this)
         saveKnobRow.orientation = LinearLayout.HORIZONTAL
         saveKnobRow.gravity = Gravity.CENTER
@@ -204,7 +202,6 @@ class MainActivity : AppCompatActivity() {
         fKnob.onChange = { fTxt.text="${(it*100).toInt()}%" }
         nKnob.onChange = { nTxt.text="${(it*100).toInt()}%" }
 
-        // ✅ INAYOS NA LISTAHAN — WALANG ERROR!
         val items = listOf(
             Triple("🔊 VOLUME", vKnob, vTxt),
             Triple("⚡ EFFECT", fKnob, fTxt),
@@ -447,13 +444,13 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }
 
-// ✅ PEDAL DATA — TAMA NA ANG PANGALAN NG PARAMETER!
+// ✅ INAYOS NA: val → var! PWEDE NA BAGUHIN ANG HALAGA!
 class PedalPreset(
     val name:String,
     val color:Int,
-    val volume:Float,
-    val effect:Float,
-    val noiseGate:Float,
+    var volume:Float,     // ✅ var = PWEDE BAGUHIN!
+    var effect:Float,     // ✅ var = PWEDE BAGUHIN!
+    var noiseGate:Float,  // ✅ var = PWEDE BAGUHIN!
     var isOn:Boolean,
     val desc:String
 )
