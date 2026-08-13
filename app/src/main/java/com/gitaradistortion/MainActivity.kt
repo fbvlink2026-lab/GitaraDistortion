@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadUserPresets(): MutableList<PedalPreset> {
         val list = mutableListOf<PedalPreset>()
         try {
-            val json = prefs.getString("user_presets_v5", "[]")
+            val json = prefs.getString("user_presets_v6", "[]")
             val arr = JSONArray(json)
             for(i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity() {
                 put("desc", p.desc)
             })
         }
-        prefs.edit().putString("user_presets_v5", arr.toString()).apply()
+        prefs.edit().putString("user_presets_v6", arr.toString()).apply()
     }
 
     private fun saveNewPreset(name:String, vol:Float, fx:Float, ng:Float):Boolean {
@@ -97,14 +97,15 @@ class MainActivity : AppCompatActivity() {
         if(!p.isOn) {
             AudioMixer.masterVolume = 0.05f
             AudioMixer.noiseGate = 0.01f
+            // ✅ TINAWAG NA ANG FUNCTION: getFx() — MAY () NA!
             fxGetters.forEach { getFx -> if(getFx() > 0.01f) setFxValue(getFx, 0f) }
             return
         }
         AudioMixer.masterVolume = p.volume
         AudioMixer.noiseGate = p.noiseGate
         fxGetters.forEach { getFx ->
-            val current = getFx() // ✅ TAWAGIN ANG FUNCTION!
-            if(current > 0.01f) setFxValue(getFx(), p.effect)
+            val current = getFx() // ✅ MAY () NA!
+            if(current > 0.01f) setFxValue(getFx, p.effect)
         }
         if(!AudioEngine.isRunning()) AudioEngine.start(this)
     }
@@ -224,7 +225,6 @@ class MainActivity : AppCompatActivity() {
         fKnob.onChange = { fTxt.text="${(it*100).toInt()}%" }
         nKnob.onChange = { nTxt.text="${(it*100).toInt()}%" }
 
-        // ✅ TAMA NA: TRIPLE PARA HINDI MAGKAMALI SA DESTRUCTURING!
         val labels = listOf(
             Triple("🔊 VOLUME", vKnob, vTxt),
             Triple("⚡ EFFECT", fKnob, fTxt),
