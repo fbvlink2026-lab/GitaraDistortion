@@ -1,6 +1,5 @@
 package com.gitaradistortion
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -9,61 +8,71 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.animation.AlphaAnimation
-import android.view.animation.AnimationSet
+import android.view.animation.Animation
 import android.view.animation.ScaleAnimation
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.view.setPadding
+import androidx.appcompat.app.AppCompatActivity
 
-class SplashActivity : Activity() {
+class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
 
         val root = LinearLayout(this)
-        root.orientation = LinearLayout.VERTICAL
+        root.setBackgroundColor(0xFF0A0A0A.toInt())
         root.gravity = Gravity.CENTER
-        root.setBackgroundColor(0xFF121212.toInt())
+        root.orientation = LinearLayout.VERTICAL
 
-        // ✅ GUITAR FX — GUMAGALAW
+        // ✅ GUITAR FX — ANIMATED!
         val title = TextView(this)
-        title.text = "GUITAR FX"
-        title.textSize = 48f
-        title.setTextColor(0xFFFFCC00.toInt())
-        title.setShadowLayer(8f, 0f, 4f, 0xAA000000.toInt())
+        title.text = "🎸 GUITAR FX"
+        title.textSize = 38f
+        title.setTextColor(0xFFFFD700.toInt()) // GINTO
+        title.setShadowLayer(15f, 0f, 0f, 0xFFFFAA00.toInt())
         title.gravity = Gravity.CENTER
-        title.visibility = View.INVISIBLE
         root.addView(title)
 
-        // ✅ PAGKAGALAW — LUMALABAS AT LUMALAKI
-        val anim = AnimationSet(true).apply {
-            addAnimation(ScaleAnimation(0.5f, 1f, 0.5f, 1f,
-                ScaleAnimation.RELATIVE_TO_SELF, 0.5f,
-                ScaleAnimation.RELATIVE_TO_SELF, 0.5f).apply {
-                duration = 1200
-            })
-            addAnimation(AlphaAnimation(0f, 1f).apply { duration = 1200 })
-        }
+        // ✅ ANIMATION: LUMALAKI + KUMIKITAKIT
+        val scale = ScaleAnimation(
+            0.6f, 1f, 0.6f, 1f,
+            Animation.RELATIVE_TO_SELF, 0.5f,
+            Animation.RELATIVE_TO_SELF, 0.5f
+        )
+        scale.duration = 1800
+        scale.repeatMode = Animation.REVERSE
+        scale.repeatCount = Animation.INFINITE
+        title.startAnimation(scale)
 
-        // ✅ SA IBABA — NAGLALOAD
+        // ✅ SUBTITLE
         val sub = TextView(this)
-        sub.text = "Inihahanda ang tunog..."
-        sub.textSize = 14f
-        sub.setTextColor(0xFF999999.toInt())
-        sub.setPadding(0, 24, 0, 0)
+        sub.text = "Handa na para sa iRig / USB Audio Interface"
+        sub.textSize = 13f
+        sub.setTextColor(0xFFAAAAAA.toInt())
         sub.gravity = Gravity.CENTER
+        sub.setPadding(0, 20, 0, 0)
+        val fadeIn = AlphaAnimation(0f, 1f)
+        fadeIn.duration = 2000
+        fadeIn.startOffset = 800
+        sub.startAnimation(fadeIn)
         root.addView(sub)
+
+        // ✅ COPYRIGHT
+        val copy = TextView(this)
+        copy.text = "Created by: MartoDosko\n© 2026"
+        copy.textSize = 12f
+        copy.setTextColor(0xFF777777.toInt())
+        copy.gravity = Gravity.CENTER
+        copy.setPadding(0, 40, 0, 0)
+        copy.startAnimation(fadeIn)
+        root.addView(copy)
 
         setContentView(root)
 
-        // ✅ SIMULAN ANG GALAW PAGKABUKAS
-        Handler(Looper.getMainLooper()).postDelayed({
-            title.visibility = View.VISIBLE
-            title.startAnimation(anim)
-        }, 200)
-
-        // ✅ AWTOMATIK LIPAT PAGKATAPOS NG 2.5 SEGUNDO
+        // ✅ AWTOMATIK PUMUNTA SA MAIN AFTER 2.5 SEGUNDOS
         Handler(Looper.getMainLooper()).postDelayed({
             startActivity(Intent(this, MainActivity::class.java))
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             finish()
         }, 2500)
     }

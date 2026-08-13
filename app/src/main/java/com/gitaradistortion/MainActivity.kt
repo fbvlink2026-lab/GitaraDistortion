@@ -21,11 +21,10 @@ import androidx.core.content.ContextCompat
 import org.json.JSONArray
 
 class MainActivity : AppCompatActivity() {
-    private var currentPage = 0 // 0=Main Mixer, 1+=Cabinet Page
+    private var currentPage = 0 // 0=Main Mixer, 1+=Cabinet
     private var cabinetPageIndex = 0
     private var startX = 0f
     private lateinit var mainPage: LinearLayout
-    private lateinit var cabinetContainer: LinearLayout
     private lateinit var pageContainer: LinearLayout
     private lateinit var savePresetName: EditText
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
@@ -56,13 +55,13 @@ class MainActivity : AppCompatActivity() {
 
     // ✅ BUILT-IN PRESETS
     private fun getBuiltInPresets() = listOf(
-        PresetData("Clean", 0xFF226644.toInt(), desc="Malinaw"),
-        PresetData("Blues", 0xFF664422.toInt(), desc="Mainit"),
-        PresetData("Rock", 0xFF992222.toInt(), desc="Matigas"),
-        PresetData("Metal", 0xFF222222.toInt(), desc="Mabigat")
+        PresetData("Clean", 0xFF226644.toInt(), "Malinaw"),
+        PresetData("Blues", 0xFF664422.toInt(), "Mainit"),
+        PresetData("Rock", 0xFF992222.toInt(), "Matigas"),
+        PresetData("Metal", 0xFF222222.toInt(), "Mabigat")
     )
 
-    // ✅ NAKASAVE NA PRESETS NG USER
+    // ✅ I-LOAD ANG MGA NAKASAVE NA PRESET NG USER
     private fun loadUserPresets(): MutableList<PresetData> {
         val list = mutableListOf<PresetData>()
         try {
@@ -80,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         return list
     }
 
-    // ✅ I-SAVE ANG PRESET NG USER
+    // ✅ I-SAVE ANG KASALUKUYANG SETTING BILANG PRESET
     private fun saveCurrentAsPreset(name:String):Boolean {
         if(name.isBlank() || name in listOf("Clean","Blues","Rock","Metal")) return false
         val list = loadUserPresets()
@@ -114,13 +113,15 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    // ✅ I-APLAY ANG PRESET — KUSANG AYUS LAHAT NG PIHITAN
     private fun applyAnyPreset(name:String) {
-        if(name in listOf("Clean","Blues","Rock","Metal")) {
-            AudioMixer.applyPreset(name)
-            return
-        }
-        val ng = prefs.getFloat("preset_${name}_ng", 0.5f)
-        AudioMixer.noiseGate = ng
+        if(name == "Clean") { AudioMixer.applyPreset("Clean"); return }
+        if(name == "Blues") { AudioMixer.applyPreset("Blues"); return }
+        if(name == "Rock") { AudioMixer.applyPreset("Rock"); return }
+        if(name == "Metal") { AudioMixer.applyPreset("Metal"); return }
+
+        // ✅ USER'S SAVED PRESET
+        AudioMixer.noiseGate = prefs.getFloat("preset_${name}_ng", 0.5f)
         AudioMixer.tone = prefs.getFloat("preset_${name}_tone", 0.5f)
         AudioMixer.gain = prefs.getFloat("preset_${name}_gain", 0.5f)
         AudioMixer.overdrive = prefs.getFloat("preset_${name}_od", 0.5f)
@@ -143,7 +144,7 @@ class MainActivity : AppCompatActivity() {
 
     private val colors = listOf(0xFF4488CC,0xFFCC4488,0xFF44CC88,0xFFCC8844,0xFF8844CC,0xFFCCCC44)
     private var colorIdx=0
-    private fun pickColor():Int = colors[colorIdx++ % colors.size].toInt() and 0xFFFFFF or 0xFF000000.toInt()
+    private fun pickColor():Int = (colors[colorIdx++ % colors.size] or 0xFF000000.toInt())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -158,21 +159,21 @@ class MainActivity : AppCompatActivity() {
 
         pageContainer = LinearLayout(this)
         pageContainer.orientation = LinearLayout.HORIZONTAL
-        pageContainer.layoutParams = LinearLayout.LayoutParams(-1,-1)
+        pageContainer.layoutParams = LinearLayout.LayoutParams(-1, -1)
 
         buildMainPage()
-        buildAllCabinetPages()
+        buildCabinetPages()
 
         root.addView(pageContainer)
 
-        // ✅ SWIPE — LAHAT NG PAGE GUMAGANA!
+        // ✅ SWIPE — LAHAT GUMAGANA!
         pageContainer.setOnTouchListener { _, e ->
             when(e.action) {
                 MotionEvent.ACTION_DOWN -> startX = e.rawX
                 MotionEvent.ACTION_MOVE -> {
                     val d = startX - e.rawX
                     if(d > 120) {
-                        if(currentPage == 0) goToCabinetPage(0)
+                        if(currentPage == 0) goToCabinetPage()
                         else goNextCabinetPage()
                     }
                     if(d < -120) {
@@ -188,7 +189,7 @@ class MainActivity : AppCompatActivity() {
         val w = resources.displayMetrics.widthPixels
         mainPage = LinearLayout(this)
         mainPage.orientation = LinearLayout.VERTICAL
-        mainPage.layoutParams = LinearLayout.LayoutParams(w,-1)
+        mainPage.layoutParams = LinearLayout.LayoutParams(w, -1)
         mainPage.setPadding(8,8,8,8)
 
         val t = TextView(this)
@@ -277,65 +278,74 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             if(saveCurrentAsPreset(n)) {
-                Toast.makeText(this,"✅ NAISAVE: $n — NAKUHA NA SA CABINET!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"✅ NAISAVE: $n! Buksan ang Cabinet para makita!",Toast.LENGTH_LONG).show()
                 savePresetName.text.clear()
                 pageContainer.removeViews(1, pageContainer.childCount-1)
-                buildAllCabinetPages()
-            } else Toast.makeText(this,"❌ Hindi pwede o may pangalan na!",Toast.LENGTH_SHORT).show()
+                buildCabinetPages()
+            } else Toast.makeText(this,"❌ Hindi pwede o pangalan na gamit!",Toast.LENGTH_SHORT).show()
         }
         bar.addView(saveBtn)
         mainPage.addView(bar)
         pageContainer.addView(mainPage)
     }
 
-    private fun buildAllCabinetPages() {
+    // ✅ BUUIN ANG LAHAT NG CABINET PAGES — 2 PRESET BAWAT PAGE
+    private fun buildCabinetPages() {
         val allPresets = getBuiltInPresets() + loadUserPresets()
         val w = resources.displayMetrics.widthPixels
-        val perPage = 2 // ✅ DALAWANG PRESET BAWAT HILERA/PAGE
-        cabinetContainer = LinearLayout(this)
-        cabinetContainer.orientation = LinearLayout.HORIZONTAL
+        val perPage = 2
 
-        for(pageIdx in 0..allPresets.size step perPage) {
-            val pagePresets = allPresets.drop(pageIdx).take(perPage)
-            if(pagePresets.isEmpty()) break
-
+        for(pageIdx in 0 until allPresets.size step perPage) {
+            val pagePresets = allPresets.subList(pageIdx, minOf(pageIdx+perPage, allPresets.size))
             val cabPage = LinearLayout(this)
             cabPage.orientation = LinearLayout.VERTICAL
-            cabPage.layoutParams = LinearLayout.LayoutParams(w,-1)
+            cabPage.layoutParams = LinearLayout.LayoutParams(w, -1)
             cabPage.setBackgroundColor(0xFF1A1A1A.toInt())
             cabPage.setPadding(8,8,8,8)
 
+            // ✅ ⬅️ ARROW SA ITAAS KALIWA — LAGI MAKIKITA!
             val topBar = LinearLayout(this)
             topBar.orientation = LinearLayout.HORIZONTAL
-            topBar.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            topBar.gravity = Gravity.CENTER_VERTICAL
+            topBar.setPadding(4,4,4,8)
+
             val backBtn = Button(this)
-            backBtn.text="⬅️"; backBtn.textSize=20f; backBtn.setTextColor(Color.WHITE)
-            backBtn.setBackgroundColor(0xFF333333.toInt()); backBtn.setPadding(12,4,12,4)
+            backBtn.text = "⬅️"
+            backBtn.textSize = 22f
+            backBtn.setTextColor(Color.WHITE)
+            backBtn.setBackgroundColor(0xFF333333.toInt())
+            backBtn.setPadding(14, 6, 14, 6)
             backBtn.setOnClickListener { goToMainPage() }
             topBar.addView(backBtn)
 
-            val t = TextView(this)
-            t.text = "📦 CABINET — PAGE ${(pageIdx/perPage)+1}"
-            t.textSize=18f; t.setTextColor(0xFFCCCC66.toInt())
-            t.gravity=Gravity.CENTER; t.setPadding(16,0,0,0)
-            topBar.addView(t, LinearLayout.LayoutParams(0,-1,1f))
+            val pageNum = (pageIdx / perPage) + 1
+            val title = TextView(this)
+            title.text = "📦 CABINET — PAGE $pageNum"
+            title.textSize = 18f
+            title.setTextColor(0xFFCCCC66.toInt())
+            title.setPadding(16,0,0,0)
+            topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
 
-            val h = TextView(this)
-            h.text = "👉 SWIPE PAKALIWA/PABALIK = LIPAT PAGE | ⬅️ = BALIK MAIN"
-            h.textSize=11f; h.setTextColor(0xFF777777.toInt())
-            h.gravity=Gravity.CENTER; h.setPadding(0,4,0,8)
-            cabPage.addView(h)
+            val hint = TextView(this)
+            hint.text = "👆 SWIPE ←→ LIPAT PAGE | ⬅️ = BALIK MAIN"
+            hint.textSize = 11f
+            hint.setTextColor(0xFF777777.toInt())
+            hint.gravity = Gravity.CENTER
+            hint.setPadding(0,4,0,8)
+            cabPage.addView(hint)
 
-            val row = LinearLayout(this)
-            row.orientation = LinearLayout.HORIZONTAL
-            row.gravity = Gravity.CENTER
-            row.setPadding(4,8,4,4)
+            // ✅ MGA PRESET PEDALS — HILERA PAHABA
+            val pedalRow = LinearLayout(this)
+            pedalRow.orientation = LinearLayout.HORIZONTAL
+            pedalRow.gravity = Gravity.CENTER
+            pedalRow.setPadding(4,8,4,4)
+
             pagePresets.forEach { preset ->
                 val pedal = LinearLayout(this)
                 pedal.orientation = LinearLayout.VERTICAL
                 pedal.setBackgroundColor(preset.color)
-                pedal.setPadding(20,16,20,16)
+                pedal.setPadding(24, 18, 24, 18)
                 pedal.gravity = Gravity.CENTER
                 pedal.setOnClickListener {
                     applyAnyPreset(preset.name)
@@ -344,29 +354,38 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this,"✅ PRESET: ${preset.name} — NAAYOS LAHAT!",Toast.LENGTH_SHORT).show()
                     if(!AudioEngine.isRunning()) AudioEngine.start(this@MainActivity)
                 }
+
                 val lbl = TextView(this)
-                lbl.text=preset.name; lbl.textSize=18f; lbl.setTextColor(Color.WHITE); lbl.gravity=Gravity.CENTER
+                lbl.text = preset.name
+                lbl.textSize = 18f
+                lbl.setTextColor(Color.WHITE)
+                lbl.gravity = Gravity.CENTER
+                lbl.setPadding(0,4,0,2)
                 pedal.addView(lbl)
+
                 val sub = TextView(this)
-                sub.text=preset.desc; sub.textSize=10f; sub.setTextColor(0xAAFFFFFF.toInt()); sub.gravity=Gravity.CENTER
+                sub.text = preset.desc
+                sub.textSize = 10f
+                sub.setTextColor(0xAAFFFFFF.toInt())
+                sub.gravity = Gravity.CENTER
                 pedal.addView(sub)
-                row.addView(pedal, LinearLayout.LayoutParams(0,-1,1f).apply { setMargins(8,4,8,4) })
+
+                pedalRow.addView(pedal, LinearLayout.LayoutParams(0,-1,1f).apply { setMargins(10,4,10,4) })
             }
-            cabPage.addView(row)
-            cabinetContainer.addView(cabPage)
+            cabPage.addView(pedalRow)
+            pageContainer.addView(cabPage)
         }
-        pageContainer.addView(cabinetContainer)
     }
 
-    private fun goToCabinetPage(idx:Int=0) { currentPage=1; cabinetPageIndex=idx; pageContainer.scrollTo(resources.displayMetrics.widthPixels*(1+idx),0) }
+    private fun goToCabinetPage() { currentPage=1; cabinetPageIndex=0; pageContainer.scrollTo(resources.displayMetrics.widthPixels,0) }
     private fun goNextCabinetPage() {
         val w = resources.displayMetrics.widthPixels
-        val maxPage = cabinetContainer.childCount
-        if(cabinetPageIndex+1 < maxPage) { cabinetPageIndex++; pageContainer.scrollTo(w*(1+cabinetPageIndex),0) }
+        val maxPage = pageContainer.childCount - 1
+        if(cabinetPageIndex + 1 < maxPage) { cabinetPageIndex++; pageContainer.scrollTo(w*(1+cabinetPageIndex),0) }
     }
     private fun goPrevCabinetPage() {
-        if(cabinetPageIndex>0) { cabinetPageIndex--; pageContainer.scrollTo(resources.displayMetrics.widthPixels*(1+cabinetPageIndex),0) }
-        else if(currentPage>0) goToMainPage()
+        if(cabinetPageIndex > 0) { cabinetPageIndex--; pageContainer.scrollTo(resources.displayMetrics.widthPixels*(1+cabinetPageIndex),0) }
+        else if(currentPage > 0) goToMainPage()
     }
     private fun goToMainPage() { currentPage=0; cabinetPageIndex=0; pageContainer.scrollTo(0,0) }
 
@@ -400,9 +419,11 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }
 
-// ✅ Tulong para sa Preset Data
+// ✅ Tulong — Preset Data
 class PresetData(val name:String, val color:Int, val desc:String="") {
     fun toJson() = org.json.JSONObject().apply {
-        put("name",name); put("color",color); put("desc",desc)
+        put("name", name)
+        put("color", color)
+        put("desc", desc)
     }
 }
