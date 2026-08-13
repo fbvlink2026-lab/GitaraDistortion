@@ -31,7 +31,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var savePresetName: EditText
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
 
-    // ✅ BUILT-IN PRESETS
     private fun getBuiltInPresets() = listOf(
         PedalPreset("Clean", -0x3399BB, volume=0.75f, effect=0.20f, noiseGate=0.05f, isOn=true, desc="Malinaw"),
         PedalPreset("Blues", -0x99BB3D, volume=0.80f, effect=0.45f, noiseGate=0.08f, isOn=true, desc="Mainit"),
@@ -129,10 +128,7 @@ class MainActivity : AppCompatActivity() {
         pageContainer.orientation = LinearLayout.HORIZONTAL
         pageContainer.layoutParams = LinearLayout.LayoutParams(-1, -1)
 
-        // ✅ PAGE 0: BUONG MAIN MIXER PANEL — LAHAT NG 19 PIHITAN! WALANG BINAGO!
         buildMainMixerPage()
-
-        // ✅ PAGE 1+: CABINET — I-SAVE + MGA NAKA-SAVE NA PEDAL
         buildAllCabinetPages()
 
         root.addView(pageContainer)
@@ -155,7 +151,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ BUONG MAIN MIXER — IBINABALIK ANG LAHAT NG 19 PIHITAN!
     private fun buildMainMixerPage() {
         val w = resources.displayMetrics.widthPixels
         val mainPage = LinearLayout(this)
@@ -181,34 +176,31 @@ class MainActivity : AppCompatActivity() {
         content.orientation = LinearLayout.VERTICAL
         content.setPadding(4,4,4,4)
 
-        // ✅ UNANG HANAY — VOLUME, TONE, GAIN, NOISE GATE
-        content.addView(buildKnobRow("🔊 VOLUME", -0x00DD55, AudioMixer::masterVolume, { AudioMixer.masterVolume = it }))
-        content.addView(buildKnobRow("🎵 TONE", -0xFFCC00, AudioMixer::tone, { AudioMixer.tone = it }))
-        content.addView(buildKnobRow("⚡ GAIN", -0xFF6600, AudioMixer::gain, { AudioMixer.gain = it }))
-        content.addView(buildKnobRow("🚧 NOISE GATE", -0x888889, AudioMixer::noiseGate, { AudioMixer.noiseGate = it }))
+        // ✅ INAYOS NA: { } para maging function!
+        content.addView(buildKnobRow("🔊 VOLUME", -0x00DD55, { AudioMixer.masterVolume }, { AudioMixer.masterVolume = it }))
+        content.addView(buildKnobRow("🎵 TONE", -0xFFCC00, { AudioMixer.tone }, { AudioMixer.tone = it }))
+        content.addView(buildKnobRow("⚡ GAIN", -0xFF6600, { AudioMixer.gain }, { AudioMixer.gain = it }))
+        content.addView(buildKnobRow("🚧 NOISE GATE", -0x888889, { AudioMixer.noiseGate }, { AudioMixer.noiseGate = it }))
 
-        // ✅ PANGALAWANG HANAY — DISTORTION FAMILY
-        content.addView(buildKnobRow("🔥 OVERDRIVE", -0xDD4400, AudioMixer::overdrive, { AudioMixer.overdrive = it }))
-        content.addView(buildKnobRow("💥 DISTORTION", -0xCC2200, AudioMixer::distortion, { AudioMixer.distortion = it }))
-        content.addView(buildKnobRow("🧶 FUZZ", -0xAA0022, AudioMixer::fuzz, { AudioMixer.fuzz = it }))
+        content.addView(buildKnobRow("🔥 OVERDRIVE", -0xDD4400, { AudioMixer.overdrive }, { AudioMixer.overdrive = it }))
+        content.addView(buildKnobRow("💥 DISTORTION", -0xCC2200, { AudioMixer.distortion }, { AudioMixer.distortion = it }))
+        content.addView(buildKnobRow("🧶 FUZZ", -0xAA0022, { AudioMixer.fuzz }, { AudioMixer.fuzz = it }))
 
-        // ✅ PANGATLONG HANAY — MODULATION
-        content.addView(buildKnobRow("🎶 CHORUS", -0x2288DD, AudioMixer::chorus, { AudioMixer.chorus = it }))
-        content.addView(buildKnobRow("🌊 FLANGER", -0x22AADD, AudioMixer.flanger, { AudioMixer.flanger = it }))
-        content.addView(buildKnobRow("🌀 PHASER", -0x4488CC, AudioMixer.phaser, { AudioMixer.phaser = it }))
-        content.addView(buildKnobRow("📳 TREMOLO", -0x66AA66, AudioMixer.tremolo, { AudioMixer.tremolo = it }))
-        content.addView(buildKnobRow("🫨 VIBRATO", -0x88BB44, AudioMixer.vibrato, { AudioMixer.vibrato = it }))
+        content.addView(buildKnobRow("🎶 CHORUS", -0x2288DD, { AudioMixer.chorus }, { AudioMixer.chorus = it }))
+        content.addView(buildKnobRow("🌊 FLANGER", -0x22AADD, { AudioMixer.flanger }, { AudioMixer.flanger = it }))
+        content.addView(buildKnobRow("🌀 PHASER", -0x4488CC, { AudioMixer.phaser }, { AudioMixer.phaser = it }))
+        content.addView(buildKnobRow("📳 TREMOLO", -0x66AA66, { AudioMixer.tremolo }, { AudioMixer.tremolo = it }))
+        content.addView(buildKnobRow("🫨 VIBRATO", -0x88BB44, { AudioMixer.vibrato }, { AudioMixer.vibrato = it }))
 
-        // ✅ PANG-APAT NA HANAY — TIME & SPACE
-        content.addView(buildKnobRow("⏱️ DELAY", -0x6666CC, AudioMixer.delay, { AudioMixer.delay = it }))
-        content.addView(buildKnobRow("🏛️ REVERB", -0x8866DD, AudioMixer.reverb, { AudioMixer.reverb = it }))
+        content.addView(buildKnobRow("⏱️ DELAY", -0x6666CC, { AudioMixer.delay }, { AudioMixer.delay = it }))
+        content.addView(buildKnobRow("🏛️ REVERB", -0x8866DD, { AudioMixer.reverb }, { AudioMixer.reverb = it }))
 
         scroll.addView(content)
         mainPage.addView(scroll)
         pageContainer.addView(mainPage)
     }
 
-    // ✅ TUMUTULONG — BUUIN ANG ISANG HANAY NG PIHITAN
+    // ✅ INAYOS NA: getValue ay () -> Float
     private fun buildKnobRow(labelText:String, color:Int, getValue:()->Float, setValue:(Float)->Unit): LinearLayout {
         val row = LinearLayout(this)
         row.orientation = LinearLayout.HORIZONTAL
@@ -242,7 +234,6 @@ class MainActivity : AppCompatActivity() {
         return row
     }
 
-    // ✅ BUUIN ANG LAHAT NG CABINET PAGE
     private fun buildAllCabinetPages() {
         val allPresets = getBuiltInPresets() + loadUserPresets()
         val totalPages = (allPresets.size + PEDALS_PER_PAGE - 1) / PEDALS_PER_PAGE
@@ -281,12 +272,10 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(pageTitle, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
 
-            // ✅ I-SAVE BAGONG PEDAL — NASA CABINET LANG!
             val saveBox = LinearLayout(this)
             saveBox.orientation = LinearLayout.VERTICAL
             saveBox.setBackgroundColor(-0x2A2A2B)
             saveBox.setPadding(10,10,10,10)
-            saveBox.setPadding(8,4,8,4)
 
             val saveTitle = TextView(this)
             saveTitle.text = "💾 I-SAVE BAGONG PEDAL"
@@ -502,7 +491,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }
 
-// ✅ PEDAL DATA — var = PWEDE BAGUHIN!
 class PedalPreset(
     val name:String,
     val color:Int,
