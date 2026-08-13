@@ -29,6 +29,8 @@ class PedalBoardFragment : Fragment() {
     private val activePedals = mutableSetOf<String>()
 
     private val allPedals = listOf(
+        "reverb" to "🌊 REVERB" to 0xFF44CCDD.toInt(),
+        "amp" to "🔊 AMP" to 0xFFFFBB44.toInt(),
         "noisegate" to "🚧 NOISE GATE" to 0xFF44DD88.toInt(),
         "volume" to "🔊 VOLUME" to 0xFF4488FF.toInt(),
         "gain" to "⚡ GAIN" to 0xFFFFDD22.toInt(),
