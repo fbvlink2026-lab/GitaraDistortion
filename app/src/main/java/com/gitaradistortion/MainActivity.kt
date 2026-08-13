@@ -4,9 +4,11 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -16,19 +18,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.viewpager2.widget.ViewPager2
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import androidx.viewpager2.widget.ViewPager2
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewPager: ViewPager2
     private val knobBindings = mutableListOf<Pair<KnobView, TextView>>()
-    private val presetNames = listOf("Clean","Blues","Rock","Metal")
-    private val presetColors = listOf(0xFF226644,0xFF664422,0xFF992222,0xFF222222)
-    private val presetDesc = listOf("Malinaw","Mainit","Matigas","Mabigat")
 
-    // ✅ LAHAT NG FX — 18 PIHITAN
     private val fxList = listOf(
         Triple("🚧 NOISE GATE",0xFF44DD88.toInt(),{v:Float->AudioMixer.noiseGate=v}),
         Triple("🎵 TONE",0xFFFFCC44.toInt(),{v->AudioMixer.tone=v}),
@@ -55,48 +51,37 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         AudioMixer.init(this)
         checkPermission()
-        buildViewPager()
+        setupViewPager()
     }
 
-    private fun buildViewPager() {
+    private fun setupViewPager() {
         viewPager = findViewById(R.id.viewPager)
-        viewPager.isUserInputEnabled = true
+        val mixerScreen = buildMixerScreen()
+        val cabinetScreen = buildCabinetScreen()
+        val screens = listOf(mixerScreen, cabinetScreen)
 
-        val adapter = ScreenAdapter(this)
-        viewPager.adapter = adapter
-    }
+        viewPager.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            override fun getItemCount(): Int = 2
 
-    private inner class ScreenAdapter(ctx:Context): androidx.recyclerview.widget.RecyclerView.Adapter<ViewHolder>() {
-        private val SCREEN_MIXER = 0
-        private val SCREEN_CABINET = 1
-        override fun getItemCount()=2
-
-        override fun onCreateViewHolder(p:RecyclerView.ViewHolder, t:Int):ViewHolder {
-            return when(t){
-                SCREEN_MIXER -> MixerViewHolder(buildMixerScreen())
-                SCREEN_CABINET -> CabinetViewHolder(buildCabinetScreen())
-                else -> MixerViewHolder(LinearLayout(this@MainActivity))
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+                val screen = if(viewType == 0) screens[0] else screens[1]
+                return object : RecyclerView.ViewHolder(screen) {}
             }
+
+            override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {}
+            override fun getItemViewType(position: Int): Int = position
         }
-
-        override fun onBindViewHolder(h:ViewHolder, pos:Int){}
-        override fun getItemViewType(pos:Int)=pos
-
-        inner class MixerViewHolder(v:LinearLayout):ViewHolder(v)
-        inner class CabinetViewHolder(v:LinearLayout):ViewHolder(v)
     }
 
-    // ==========================================
-    // 🎛️ SCREEN 1 — MAIN MIXER PANEL
-    // ==========================================
-    private fun buildMixerScreen():LinearLayout {
+    private fun buildMixerScreen(): LinearLayout {
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
+
         val title = TextView(this)
-        title.text = "🎛️ MAIN MIXER — SWIPE PAKALIWA → PRESETS"
-        title.textSize = 14f; title.setTextColor(0xFFFFCC00.toInt())
-        title.gravity = Gravity.CENTER; title.setPadding(0,8,0,4)
+        title.text = "🎛️ MAIN MIXER — SWIPE PAKALIWA → PRESETS CABINET"
+        title.textSize = 13f; title.setTextColor(0xFFFFCC00.toInt())
+        title.gravity = Gravity.CENTER; title.setPadding(0,12,0,6)
         root.addView(title)
 
         val scroll = ScrollView(this)
@@ -113,7 +98,7 @@ class MainActivity : AppCompatActivity() {
                 val col = LinearLayout(this)
                 col.orientation = LinearLayout.VERTICAL
                 col.gravity = Gravity.CENTER
-                col.setPadding(4,4,4,4)
+                col.setPadding(4,6,4,6)
                 val knob = KnobView(this)
                 knob.baseColor = color
                 knob.value = 0.5f
@@ -124,13 +109,13 @@ class MainActivity : AppCompatActivity() {
                     pct.text = "${(v*100).toInt()}%"
                     setter(v)
                 }
-                col.addView(knob, LinearLayout.LayoutParams(72,72))
+                col.addView(knob, LinearLayout.LayoutParams(76,76))
                 col.addView(pct)
                 val lbl = TextView(this)
                 lbl.text = label; lbl.setTextColor(color); lbl.textSize = 8f
                 lbl.gravity = Gravity.CENTER
                 col.addView(lbl)
-                rowLay.addView(col, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT,1f))
+                rowLay.addView(col, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT,1f))
                 knobBindings.add(knob to pct)
             }
             grid.addView(rowLay)
@@ -138,11 +123,10 @@ class MainActivity : AppCompatActivity() {
         scroll.addView(grid)
         root.addView(scroll)
 
-        // ✅ MASTER BAR — ON/OFF + SAVE
         val bar = LinearLayout(this)
         bar.orientation = LinearLayout.HORIZONTAL
         bar.setBackgroundColor(0xFF220000.toInt())
-        bar.setPadding(6,8,6,8)
+        bar.setPadding(8,10,8,10)
         val btn = Button(this)
         btn.text = "🟢 ON"
         btn.setTextColor(Color.WHITE)
@@ -156,23 +140,23 @@ class MainActivity : AppCompatActivity() {
         }
         bar.addView(btn)
         val nameIn = EditText(this)
-        nameIn.hint="Pangalan"
+        nameIn.hint="Pangalan ng Preset"
         nameIn.setTextColor(Color.WHITE)
         nameIn.setHintTextColor(0xFF888888.toInt())
         nameIn.textSize=11f
         nameIn.setBackgroundColor(0xFF333333.toInt())
-        nameIn.setPadding(8,2,8,2)
-        bar.addView(nameIn, LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f).apply { setMargins(8,0,8,0) })
+        nameIn.setPadding(10,4,10,4)
+        bar.addView(nameIn, LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f).apply { setMargins(10,0,10,0) })
         val saveBtn = Button(this)
-        saveBtn.text="💾 SAVE"
+        saveBtn.text="💾 I-SAVE"
         saveBtn.setTextColor(Color.WHITE)
         saveBtn.setBackgroundColor(0xFF226644.toInt())
         saveBtn.textSize=11f
         saveBtn.setOnClickListener {
             val n = nameIn.text.toString().trim()
-            if(n.isEmpty()){Toast.makeText(this,"❌ Ilagay ang pangalan!",Toast.LENGTH_SHORT).show();return@setOnClickListener}
+            if(n.isEmpty()){Toast.makeText(this,"❌ Ilagay ang pangalan ng Preset!",Toast.LENGTH_SHORT).show();return@setOnClickListener}
             AudioMixer.savePreset(n)
-            Toast.makeText(this,"✅ NAISAVE: $n",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,"✅ NAISAVE: \"$n\" — Makikita na sa Cabinet!",Toast.LENGTH_SHORT).show()
             nameIn.text.clear()
         }
         bar.addView(saveBtn)
@@ -180,58 +164,79 @@ class MainActivity : AppCompatActivity() {
         return root
     }
 
-    // ==========================================
-    // 📦 SCREEN 2 — CABINET — MGA PEDAL NAKAHILIRA!
-    // ==========================================
     private fun buildCabinetScreen():LinearLayout {
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF1A1A1A.toInt())
-        val title = TextView(this)
-        title.text = "📦 PRESETS — PUMILI NG PEDAL • SWIPE PAKANAN → BALIK MIXER"
-        title.textSize = 13f; title.setTextColor(0xFFCCCC66.toInt())
-        title.gravity = Gravity.CENTER; title.setPadding(0,12,0,8)
-        root.addView(title)
 
-        // ✅ MGA PEDAL — NAKAHILIRA HORIZONTAL! KATULAD NG TONEBRIDGE!
+        val topBar = LinearLayout(this)
+        topBar.orientation = LinearLayout.HORIZONTAL
+        topBar.setBackgroundColor(0xFF222222.toInt())
+        topBar.setPadding(8,8,8,8)
+
+        val backBtn = Button(this)
+        backBtn.text = "⬅️"
+        backBtn.textSize = 18f
+        backBtn.setTextColor(Color.WHITE)
+        backBtn.setBackgroundColor(0xFF444444.toInt())
+        backBtn.setPadding(12,4,12,4)
+        backBtn.setOnClickListener { viewPager.currentItem = 0 }
+        topBar.addView(backBtn)
+
+        val title = TextView(this)
+        title.text = "📦 PRESETS CABINET — PUMILI NG PEDAL"
+        title.textSize = 14f; title.setTextColor(0xFFCCCC66.toInt())
+        title.gravity = Gravity.CENTER; title.setPadding(12,4,0,4)
+        topBar.addView(title, LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f))
+        root.addView(topBar)
+
         val scroll = ScrollView(this)
-        val row = LinearLayout(this)
-        row.orientation = LinearLayout.HORIZONTAL
-        row.setPadding(12,12,12,12)
-        presetNames.forEachIndexed { i, name ->
+        val horiz = LinearLayout(this)
+        horiz.orientation = LinearLayout.HORIZONTAL
+        horiz.setPadding(12,20,12,20)
+        horiz.gravity = Gravity.CENTER_VERTICAL
+
+        val builtIn = listOf(
+            Triple("Clean",0xFF226644.toInt(),"Malinaw"),
+            Triple("Blues",0xFF664422.toInt(),"Mainit"),
+            Triple("Rock",0xFF992222.toInt(),"Matigas"),
+            Triple("Metal",0xFF222222.toInt(),"Mabigat")
+        )
+        val allPresets = AudioMixer.getPresetNames().toList()
+
+        allPresets.forEach { name ->
+            val (color, desc) = builtIn.find{it.first==name}?.let{Pair(it.second,it.third)} ?: Pair(0xFF445566.toInt(),"Sariling Preset")
             val pedal = LinearLayout(this)
             pedal.orientation = LinearLayout.VERTICAL
-            pedal.setBackgroundColor(presetColors[i].toInt())
-            pedal.setPadding(16,20,16,20)
+            pedal.setBackgroundColor(color)
+            pedal.setPadding(18,24,18,24)
             pedal.gravity = Gravity.CENTER
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            ).apply { setMargins(8,4,8,4) }
-            pedal.layoutParams = params
+            val p = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            p.setMargins(10,4,10,4)
+            pedal.layoutParams = p
             pedal.setOnClickListener {
                 AudioMixer.applyPreset(name)
                 updateAllKnobs()
-                viewPager.currentItem = 0 // ✅ AWTOMATIK BALIK SA MIXER!
-                Toast.makeText(this,"✅ PRESET: $name — AWTOMATIK NAAYOS LAHAT!",Toast.LENGTH_SHORT).show()
+                viewPager.currentItem = 0
+                Toast.makeText(this,"✅ PRESET: \"$name\" — AWTOMATIK NAAYOS LAHAT NG PIHITAN!",Toast.LENGTH_SHORT).show()
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
             }
             val lbl = TextView(this)
             lbl.text = name; lbl.textSize = 18f; lbl.setTextColor(Color.WHITE)
+            lbl.setTypeface(null, Typeface.BOLD)
             lbl.gravity = Gravity.CENTER; lbl.setPadding(0,0,0,4)
             pedal.addView(lbl)
             val sub = TextView(this)
-            sub.text = presetDesc[i]; sub.textSize = 11f; sub.setTextColor(0xAAFFFFFF.toInt())
+            sub.text = desc; sub.textSize = 11f; sub.setTextColor(0xAAFFFFFF.toInt())
             sub.gravity = Gravity.CENTER
             pedal.addView(sub)
-            row.addView(pedal)
+            horiz.addView(pedal)
         }
-        scroll.addView(row)
+        scroll.addView(horiz)
         root.addView(scroll)
         return root
     }
 
-    // ✅ AWTOMATIK AYUSIN LAHAT NG PIHITAN MULA SA PRESET!
     private fun updateAllKnobs() {
         val vals = AudioMixer.getAllValues()
         for(i in knobBindings.indices) {
@@ -243,7 +248,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkPermission() {
         if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this,"✅ Handa na! Swipe pakaliwa para sa Presets!",Toast.LENGTH_LONG).show()
+            Toast.makeText(this,"✅ Handa na! Swipe pakaliwa → Presets Cabinet!",Toast.LENGTH_LONG).show()
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO),123)
         }

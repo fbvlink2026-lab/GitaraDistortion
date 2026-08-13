@@ -11,11 +11,9 @@ object AudioMixer {
     private const val SAFE_LIMIT = 0.95f
     private lateinit var prefs: SharedPreferences
 
-    // ✅ MASTER
     var masterOn = true
     var masterVolume = 0.5f
 
-    // ✅ LAHAT NG FX — 50% DEFAULT
     var noiseGate   = 0.5f
     var tone        = 0.5f
     var gain        = 0.5f
@@ -36,25 +34,21 @@ object AudioMixer {
 
     private val delayBuf = FloatArray(9600)
     private var delayIdx = 0
-    private var phase = 0.0
-    private var tremPhase = 0.0
-    private var vibPhase = 0.0
+    private var phase = 0.0; private var tremPhase = 0.0; private var vibPhase = 0.0
 
     fun init(ctx: Context) { prefs = ctx.getSharedPreferences("GitaraPresets", 0) }
     fun setAllOn(e:Boolean) { masterOn = e }
     fun isAllOn():Boolean = masterOn
 
-    // ✅ I-APLAY ANG PRESET
     fun applyPreset(name:String) {
         when(name) {
-            "Clean" -> { noiseGate=0.2f;tone=0.5f;gain=0.25f;overdrive=0.0f;distortion=0.0f;fuzz=0.0f;chorus=0.15f;phaser=0.0f;tremolo=0.0f;vibrato=0.0f;delay=0.15f;reverb=0.25f;wah=0.5f;ampType=0.3f;bass=0.5f;mid=0.5f;treble=0.55f }
-            "Blues" -> { noiseGate=0.3f;tone=0.55f;gain=0.45f;overdrive=0.45f;distortion=0.15f;fuzz=0.0f;chorus=0.35f;phaser=0.15f;tremolo=0.1f;vibrato=0.15f;delay=0.3f;reverb=0.4f;wah=0.55f;ampType=0.5f;bass=0.55f;mid=0.6f;treble=0.5f }
-            "Rock" -> { noiseGate=0.4f;tone=0.6f;gain=0.65f;overdrive=0.6f;distortion=0.55f;fuzz=0.2f;chorus=0.2f;phaser=0.3f;tremolo=0.15f;vibrato=0.0f;delay=0.4f;reverb=0.35f;wah=0.5f;ampType=0.65f;bass=0.6f;mid=0.55f;treble=0.6f }
-            "Metal" -> { noiseGate=0.6f;tone=0.7f;gain=0.85f;overdrive=0.3f;distortion=0.85f;fuzz=0.5f;chorus=0.0f;phaser=0.4f;tremolo=0.0f;vibrato=0.0f;delay=0.5f;reverb=0.45f;wah=0.7f;ampType=0.85f;bass=0.7f;mid=0.5f;treble=0.7f }
+            "Clean" -> { noiseGate=0.2f;tone=0.5f;gain=0.25f;overdrive=0.0f;distortion=0.0f;fuzz=0.0f;chorus=0.15f;phaser=0.0f;tremolo=0.0f;vibrato=0.0f;delay=0.15f;reverb=0.25f;wah=0.5f;ampType=0.3f;bass=0.5f;mid=0.5f;treble=0.55f;masterVolume=0.5f }
+            "Blues" -> { noiseGate=0.3f;tone=0.55f;gain=0.45f;overdrive=0.45f;distortion=0.15f;fuzz=0.0f;chorus=0.35f;phaser=0.15f;tremolo=0.1f;vibrato=0.15f;delay=0.3f;reverb=0.4f;wah=0.55f;ampType=0.5f;bass=0.55f;mid=0.6f;treble=0.5f;masterVolume=0.5f }
+            "Rock" -> { noiseGate=0.4f;tone=0.6f;gain=0.65f;overdrive=0.6f;distortion=0.55f;fuzz=0.2f;chorus=0.2f;phaser=0.3f;tremolo=0.15f;vibrato=0.0f;delay=0.4f;reverb=0.35f;wah=0.5f;ampType=0.65f;bass=0.6f;mid=0.55f;treble=0.6f;masterVolume=0.5f }
+            "Metal" -> { noiseGate=0.6f;tone=0.7f;gain=0.85f;overdrive=0.3f;distortion=0.85f;fuzz=0.5f;chorus=0.0f;phaser=0.4f;tremolo=0.0f;vibrato=0.0f;delay=0.5f;reverb=0.45f;wah=0.7f;ampType=0.85f;bass=0.7f;mid=0.5f;treble=0.7f;masterVolume=0.5f }
         }
     }
 
-    // ✅ I-SAVE ANG PRESET
     fun savePreset(name:String) {
         prefs.edit().apply {
             putFloat("${name}_ng",noiseGate); putFloat("${name}_tone",tone)
@@ -65,25 +59,27 @@ object AudioMixer {
             putFloat("${name}_delay",delay); putFloat("${name}_rev",reverb)
             putFloat("${name}_wah",wah); putFloat("${name}_amp",ampType)
             putFloat("${name}_bass",bass); putFloat("${name}_mid",mid)
-            putFloat("${name}_treble",treble)
+            putFloat("${name}_treble",treble); putFloat("${name}_master",masterVolume)
+            putStringSet("__list__", getPresetNames().toMutableSet().apply { add(name) })
         }.apply()
     }
 
-    // ✅ KUNIN LAHAT NG VALUES PARA SA PIHITAN
+    fun getPresetNames():Set<String> = prefs.getStringSet("__list__", setOf("Clean","Blues","Rock","Metal"))!!
+
     fun getAllValues():FloatArray = floatArrayOf(
         noiseGate,tone,gain,overdrive,distortion,fuzz,
         chorus,phaser,tremolo,vibrato,delay,reverb,
         wah,ampType,bass,mid,treble,masterVolume
     )
 
-    // ✅ PAGPROSESO NG TUNOG — WALANG LATENCY
     fun process(input:Float):Float {
         if(!masterOn) return 0f
         var sig = input
         val ngTh = noiseGate * 0.15f
         if(abs(sig) < ngTh) sig = 0f
         sig *= 1f + gain * 1.2f
-        sig = sig * (0.7f + bass*0.3f) * (0.8f + mid*0.2f) * (0.6f + treble*0.4f*(tone*0.5f+0.25f))
+        val t = tone * 0.5f + 0.25f
+        sig = sig * (0.7f + bass*0.3f) * (0.8f + mid*0.2f) * (0.6f + treble*0.4f*t)
         if(overdrive>0.05f){val d=1f+overdrive*2.5f;sig=tanh(sig*d)/d*(0.5f+overdrive*0.5f)}
         if(distortion>0.05f){val d=1f+distortion*3f;sig=tanh(sig*d)/d*(0.6f+distortion*0.4f)}
         if(fuzz>0.05f){val d=1f+fuzz*3.5f;sig=(if(sig*d>0.7f)0.7f else if(sig*d<-0.7f)-0.7f else sig*d)*(0.5f+fuzz*0.4f)}
