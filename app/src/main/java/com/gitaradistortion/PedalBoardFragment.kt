@@ -13,21 +13,18 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 
-class PedalBoardFragment : Fragment {
-    constructor() : super()
+class PedalBoardFragment : Fragment() {
     private var cabinetVisible = false
     private lateinit var mainRow: LinearLayout
     private lateinit var activeArea: LinearLayout
     private lateinit var cabinetArea: LinearLayout
     private lateinit var cabinetInner: LinearLayout
+    private lateinit var pedalRowsContainer: LinearLayout
     private var startX = 0f
 
-    // ✅ SINO ANG NASA AKTIBONG PEDAL?
     private val activePedals = mutableSetOf<String>()
-    private val pedalViews = mutableMapOf<String, View>()
-
-    // ✅ MGA PEDAL NA NANDOON SA SIMULA
     private val initialPedals = listOf("noisegate", "volume", "gain")
+    private val allCabinetPedals = listOf("overdrive", "distortion", "tone")
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -38,7 +35,7 @@ class PedalBoardFragment : Fragment {
         root.setBackgroundColor(0xFF121212.toInt())
         root.setPadding(6, 8, 6, 6)
 
-        // ✅ TAAS: MASTER ON/OFF
+        // ✅ MASTER ON/OFF
         val masterBar = LinearLayout(ctx)
         masterBar.orientation = LinearLayout.HORIZONTAL
         masterBar.gravity = Gravity.CENTER
@@ -77,14 +74,14 @@ class PedalBoardFragment : Fragment {
 
         // ✅ TITLE
         val title = TextView(ctx)
-        title.text = "🎛️ PEDAL BOARD ← Hilahin pakaliwa para sa Cabinet"
+        title.text = "🎛️ PEDAL BOARD ← Hilahin pakaliwa"
         title.textSize = 13f
         title.setTextColor(0xFFFFCC00.toInt())
         title.gravity = Gravity.CENTER
         title.setPadding(0, 6, 0, 6)
         root.addView(title)
 
-        // ✅ GITNA: HILAHAN PAKALIWA/PABANAN
+        // ✅ HILAHAN
         mainRow = LinearLayout(ctx)
         mainRow.orientation = LinearLayout.HORIZONTAL
         mainRow.setOnTouchListener { _, event ->
@@ -108,22 +105,19 @@ class PedalBoardFragment : Fragment {
         activeArea.setBackgroundColor(0xFF1A1A1A.toInt())
 
         val activeTitle = TextView(ctx)
-        activeTitle.text = "✅ AKTIBONG PEDAL (3 kada hanay)"
+        activeTitle.text = "✅ AKTIBONG PEDAL (3/hanay)"
         activeTitle.textSize = 12f
         activeTitle.setTextColor(0xFF88FF88.toInt())
         activeTitle.gravity = Gravity.CENTER
         activeTitle.setPadding(0, 4, 0, 6)
         activeArea.addView(activeTitle)
 
-        // ✅ HANAY NG PEDAL — DITO ILALAGAY
-        val rowContainer = LinearLayout(ctx)
-        rowContainer.orientation = LinearLayout.VERTICAL
-        rowContainer.setId(View.generateViewId())
-        activeArea.addView(rowContainer)
-
+        pedalRowsContainer = LinearLayout(ctx)
+        pedalRowsContainer.orientation = LinearLayout.VERTICAL
+        activeArea.addView(pedalRowsContainer)
         mainRow.addView(activeArea)
 
-        // ✅ KANAN — CABINET (NAKATAGO SA SIMULA)
+        // ✅ KANAN — CABINET
         cabinetArea = LinearLayout(ctx)
         cabinetArea.orientation = LinearLayout.VERTICAL
         val cabLP = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 0f)
@@ -133,7 +127,7 @@ class PedalBoardFragment : Fragment {
         cabinetArea.visibility = View.GONE
 
         val cabTitle = TextView(ctx)
-        cabTitle.text = "📦 CABINET — Pindutin → Ilipat | Pindutin muli → Ibalik"
+        cabTitle.text = "📦 CABINET — Pindutin → Ilipat / Pindutin muli → Ibalik"
         cabTitle.textSize = 10f
         cabTitle.setTextColor(0xFFCCCC66.toInt())
         cabTitle.gravity = Gravity.CENTER
@@ -144,7 +138,6 @@ class PedalBoardFragment : Fragment {
         cabinetInner = LinearLayout(ctx)
         cabinetInner.orientation = LinearLayout.VERTICAL
 
-        // ✅ MGA PEDAL SA CABINET — MAY KULAY KAPAG NAGAMIT NA
         addCabinetPedal(ctx, "overdrive", "🟠 OVERDRIVE", 0xFFFFAA22.toInt())
         addCabinetPedal(ctx, "distortion", "🔴 DISTORTION", 0xFFFF4422.toInt())
         addCabinetPedal(ctx, "tone", "🎨 TONE", 0xFF44DDAA.toInt())
@@ -154,16 +147,12 @@ class PedalBoardFragment : Fragment {
         mainRow.addView(cabinetArea)
         root.addView(mainRow)
 
-        // ✅ ILAGAY ANG MGA UNA NANG PEDAL SA SIMULA
-        initialPedals.forEach { pedalId ->
-            activePedals.add(pedalId)
-        }
-        updateActiveDisplay()
-
+        // ✅ SIMULA — MAY 3 NA AGAD
+        activePedals.addAll(initialPedals)
+        updatePedalLayout()
         return root
     }
 
-    // ✅ ILAGAY ANG PEDAL SA CABINET
     private fun addCabinetPedal(ctx: android.content.Context, id: String, label: String, color: Int) {
         val tv = TextView(ctx)
         tv.text = label
@@ -172,43 +161,40 @@ class PedalBoardFragment : Fragment {
         tv.setPadding(12, 14, 12, 14)
         tv.textSize = 13f
         tv.gravity = Gravity.CENTER
-        tv.setTag(id)
-        tv.setOnClickListener {
-            togglePedal(id, label, color)
-        }
+        tv.tag = id
+        tv.setOnClickListener { togglePedal(id) }
         cabinetInner.addView(tv)
     }
 
-    // ✅ PINDUTIN → ILIPAT O IBALIK! WALANG DOBLE!
-    private fun togglePedal(pedalId: String, label: String, color: Int) {
+    private fun togglePedal(pedalId: String) {
         val ctx = context ?: return
-        val cabinetBtn = cabinetInner.findViewWithTag<TextView>(pedalId)
+        val btn = cabinetInner.findViewWithTag<TextView>(pedalId) ?: return
 
         if (activePedals.contains(pedalId)) {
-            // ✅ NASA AKTIBONG NA → IBALIK SA CABINET!
             activePedals.remove(pedalId)
-            pedalViews.remove(pedalId)
-            cabinetBtn?.setTextColor(color)
-            cabinetBtn?.setBackgroundColor(0xFF333333.toInt())
+            btn.setTextColor(getPedalColor(pedalId))
+            btn.setBackgroundColor(0xFF333333.toInt())
         } else {
-            // ✅ HINDI PA NASA AKTIBONG → ILIPAT!
             activePedals.add(pedalId)
-            cabinetBtn?.setTextColor(0xFF888888.toInt())
-            cabinetBtn?.setBackgroundColor(0xFF111111.toInt())
+            btn.setTextColor(0xFF777777.toInt())
+            btn.setBackgroundColor(0xFF111111.toInt())
         }
-
-        // ✅ AYUSIN ANG BUONG AYOS — 3 SA HANAY!
-        updateActiveDisplay()
+        updatePedalLayout()
     }
 
-    // ✅ AYUSIN ANG AYOS — 3 LANG SA ISANG HANAY!
-    private fun updateActiveDisplay() {
-        val ctx = context ?: return
-        val rowContainer = activeArea.findViewById<LinearLayout>(View.generateViewId())
-        rowContainer.removeAllViews()
-        pedalViews.clear()
+    private fun getPedalColor(pedalId: String): Int {
+        return when(pedalId) {
+            "overdrive" -> 0xFFFFAA22.toInt()
+            "distortion" -> 0xFFFF4422.toInt()
+            "tone" -> 0xFF44DDAA.toInt()
+            else -> 0xFFFFFFFF.toInt()
+        }
+    }
 
-        // ✅ ILAGAY ANG BAWAT PEDAL — 3 SA ISANG HANAY!
+    private fun updatePedalLayout() {
+        val ctx = context ?: return
+        pedalRowsContainer.removeAllViews()
+
         val list = activePedals.toList()
         for (i in list.indices step 3) {
             val row = LinearLayout(ctx)
@@ -217,17 +203,14 @@ class PedalBoardFragment : Fragment {
             row.setPadding(2, 4, 2, 4)
 
             for (j in i until minOf(i + 3, list.size)) {
-                val pid = list[j]
-                val pedalView = makePedalView(pid, ctx)
-                row.addView(pedalView, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                val view = createPedalView(list[j], ctx)
+                row.addView(view, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             }
-
-            rowContainer.addView(row)
+            pedalRowsContainer.addView(row)
         }
     }
 
-    // ✅ GUMAWA NG TUNAY NA PEDAL VIEW
-    private fun makePedalView(pedalId: String, ctx: android.content.Context): View {
+    private fun createPedalView(pedalId: String, ctx: android.content.Context): View {
         return when (pedalId) {
             "noisegate" -> NoiseGatePedal().makeView(ctx)
             "volume" -> VolumePedal().makeView(ctx)
@@ -235,7 +218,7 @@ class PedalBoardFragment : Fragment {
             "overdrive" -> OverdrivePedal().makeView(ctx)
             "distortion" -> DistortionPedal().makeView(ctx)
             "tone" -> TonePedal().makeView(ctx)
-            else -> TextView(ctx)
+            else -> TextView(ctx).apply { text = pedalId }
         }
     }
 
