@@ -17,6 +17,12 @@ class MainActivity : AppCompatActivity() {
         fun setVolumeLevelGlobal(level: Float) { AudioMixer.updateVolumeLevel(level) }
         fun setGainEnabledGlobal(enabled: Boolean) { AudioMixer.updateGainEnabled(enabled) }
         fun setGainLevelGlobal(level: Float) { AudioMixer.updateGainLevel(level) }
+        fun setOverdriveEnabledGlobal(enabled: Boolean) { AudioMixer.updateOverdriveEnabled(enabled) }
+        fun setOverdriveLevelGlobal(level: Float) { AudioMixer.updateOverdriveLevel(level) }
+        fun setDistortionEnabledGlobal(enabled: Boolean) { AudioMixer.updateDistortionEnabled(enabled) }
+        fun setDistortionLevelGlobal(level: Float) { AudioMixer.updateDistortionLevel(level) }
+        fun setToneEnabledGlobal(enabled: Boolean) { AudioMixer.updateToneEnabled(enabled) }
+        fun setToneLevelGlobal(level: Float) { AudioMixer.updateToneLevel(level) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

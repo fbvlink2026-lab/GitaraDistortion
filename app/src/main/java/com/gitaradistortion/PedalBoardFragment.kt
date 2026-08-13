@@ -4,14 +4,22 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 
 class PedalBoardFragment : Fragment() {
+    private var cabinetVisible = false
+    private lateinit var mainRow: LinearLayout
+    private lateinit var activeArea: LinearLayout
+    private lateinit var cabinetArea: LinearLayout
+    private var startX = 0f
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -21,9 +29,7 @@ class PedalBoardFragment : Fragment() {
         root.setBackgroundColor(0xFF121212.toInt())
         root.setPadding(6, 8, 6, 6)
 
-        // ==========================================
-        // ✅ TAAS: 🔴 MASTER ON/OFF
-        // ==========================================
+        // ✅ TAAS: MASTER ON/OFF
         val masterBar = LinearLayout(ctx)
         masterBar.orientation = LinearLayout.HORIZONTAL
         masterBar.gravity = Gravity.CENTER
@@ -60,28 +66,34 @@ class PedalBoardFragment : Fragment() {
         masterBar.addView(masterBtn)
         root.addView(masterBar)
 
-        // ==========================================
         // ✅ TITLE
-        // ==========================================
         val title = TextView(ctx)
-        title.text = "🎛️ PEDAL BOARD"
-        title.textSize = 18f
+        title.text = "🎛️ PEDAL BOARD ← Hilahin pakaliwa para sa Cabinet"
+        title.textSize = 14f
         title.setTextColor(0xFFFFCC00.toInt())
         title.gravity = Gravity.CENTER
         title.setPadding(0, 8, 0, 8)
         root.addView(title)
 
-        // ==========================================
-        // ✅ GITNA: AKTIBONG PEDAL + CABINET SA KANAN
-        // ==========================================
-        val mainRow = LinearLayout(ctx)
+        // ✅ GITNA: HILAHAN PAKALIWA/PABANAN
+        mainRow = LinearLayout(ctx)
         mainRow.orientation = LinearLayout.HORIZONTAL
-        mainRow.setPadding(2, 2, 2, 2)
+        mainRow.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> startX = event.rawX
+                MotionEvent.ACTION_MOVE -> {
+                    val delta = startX - event.rawX
+                    if (delta > 80 && !cabinetVisible) showCabinet()
+                    if (delta < -80 && cabinetVisible) hideCabinet()
+                }
+            }
+            true
+        }
 
         // ✅ KALIWA — AKTIBONG PEDAL
-        val activeArea = LinearLayout(ctx)
+        activeArea = LinearLayout(ctx)
         activeArea.orientation = LinearLayout.VERTICAL
-        val activeLP = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 2.5f)
+        val activeLP = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 3f)
         activeArea.layoutParams = activeLP
         activeArea.setPadding(2, 2, 6, 2)
         activeArea.setBackgroundColor(0xFF1A1A1A.toInt())
@@ -116,60 +128,103 @@ class PedalBoardFragment : Fragment() {
         activeArea.addView(pedalsRow)
         mainRow.addView(activeArea)
 
-        // ✅ KANAN — CABINET
-        val cabinet = LinearLayout(ctx)
-        cabinet.orientation = LinearLayout.VERTICAL
-        val cabLP = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-        cabinet.layoutParams = cabLP
-        cabinet.setBackgroundColor(0xFF2A2A2A.toInt())
-        cabinet.setPadding(6, 6, 6, 6)
+        // ✅ KANAN — CABINET (NAKATAGO SA SIMULA)
+        cabinetArea = LinearLayout(ctx)
+        cabinetArea.orientation = LinearLayout.VERTICAL
+        val cabLP = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 0f)
+        cabinetArea.layoutParams = cabLP
+        cabinetArea.setBackgroundColor(0xFF2A2A2A.toInt())
+        cabinetArea.setPadding(6, 6, 6, 6)
+        cabinetArea.visibility = View.GONE
 
         val cabTitle = TextView(ctx)
-        cabTitle.text = "📦 CABINET"
-        cabTitle.textSize = 13f
+        cabTitle.text = "📦 CABINET — Pindutin → Ilipat sa Aktibong Pedal"
+        cabTitle.textSize = 11f
         cabTitle.setTextColor(0xFFCCCC66.toInt())
         cabTitle.gravity = Gravity.CENTER
-        cabTitle.setPadding(0, 4, 0, 6)
-        cabinet.addView(cabTitle)
+        cabTitle.setPadding(0, 4, 0, 8)
+        cabinetArea.addView(cabTitle)
 
-        val cabHint = TextView(ctx)
-        cabHint.text = "Ilalabas pa-later"
-        cabHint.textSize = 9f
-        cabHint.setTextColor(0xFF777777.toInt())
-        cabHint.gravity = Gravity.CENTER
-        cabHint.setPadding(0, 0, 0, 6)
-        cabinet.addView(cabHint)
+        val cabScroll = ScrollView(ctx)
+        val cabInner = LinearLayout(ctx)
+        cabInner.orientation = LinearLayout.VERTICAL
 
-        // ✅ MGA PEDAL SA CABINET
-        val cabItem1 = TextView(ctx)
-        cabItem1.text = "🟠 OVERDRIVE"
-        cabItem1.setTextColor(0xFFFFAA22.toInt())
-        cabItem1.setBackgroundColor(0xFF383020.toInt())
-        cabItem1.setPadding(8, 10, 8, 10)
-        cabItem1.textSize = 12f
-        cabItem1.gravity = Gravity.CENTER
-        cabinet.addView(cabItem1)
+        // ✅ OVERDRIVE — PINDUTIN → LIPAT SA AKTIBONG PEDAL!
+        val btnOverdrive = makeCabinetItem(ctx, "🟠 OVERDRIVE", 0xFFFFAA22.toInt())
+        btnOverdrive.setOnClickListener {
+            addPedalToActive("overdrive")
+        }
+        cabInner.addView(btnOverdrive)
 
-        val cabItem2 = TextView(ctx)
-        cabItem2.text = "🔴 DISTORTION"
-        cabItem2.setTextColor(0xFFFF4422.toInt())
-        cabItem2.setBackgroundColor(0xFF402020.toInt())
-        cabItem2.setPadding(8, 10, 8, 10)
-        cabItem2.textSize = 12f
-        cabItem2.gravity = Gravity.CENTER
-        cabinet.addView(cabItem2)
+        // ✅ DISTORTION — PINDUTIN → LIPAT SA AKTIBONG PEDAL!
+        val btnDistortion = makeCabinetItem(ctx, "🔴 DISTORTION", 0xFFFF4422.toInt())
+        btnDistortion.setOnClickListener {
+            addPedalToActive("distortion")
+        }
+        cabInner.addView(btnDistortion)
 
-        val cabItem3 = TextView(ctx)
-        cabItem3.text = "🎨 TONE"
-        cabItem3.setTextColor(0xFF44DDAA.toInt())
-        cabItem3.setBackgroundColor(0xFF203830.toInt())
-        cabItem3.setPadding(8, 10, 8, 10)
-        cabItem3.textSize = 12f
-        cabItem3.gravity = Gravity.CENTER
-        cabinet.addView(cabItem3)
+        // ✅ TONE — PINDUTIN → LIPAT SA AKTIBONG PEDAL!
+        val btnTone = makeCabinetItem(ctx, "🎨 TONE", 0xFF44DDAA.toInt())
+        btnTone.setOnClickListener {
+            addPedalToActive("tone")
+        }
+        cabInner.addView(btnTone)
 
-        mainRow.addView(cabinet)
+        cabScroll.addView(cabInner)
+        cabinetArea.addView(cabScroll)
+        mainRow.addView(cabinetArea)
         root.addView(mainRow)
         return root
+    }
+
+    private fun makeCabinetItem(ctx: android.content.Context, text: String, color: Int): TextView {
+        val tv = TextView(ctx)
+        tv.text = text
+        tv.setTextColor(color)
+        tv.setBackgroundColor(0xFF333333.toInt())
+        tv.setPadding(12, 14, 12, 14)
+        tv.textSize = 13f
+        tv.gravity = Gravity.CENTER
+        return tv
+    }
+
+    private fun showCabinet() {
+        cabinetVisible = true
+        activeArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f)
+        cabinetArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f)
+        cabinetArea.visibility = View.VISIBLE
+    }
+
+    private fun hideCabinet() {
+        cabinetVisible = false
+        activeArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 3f)
+        cabinetArea.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 0f)
+        cabinetArea.visibility = View.GONE
+    }
+
+    private fun addPedalToActive(pedalType: String) {
+        val ctx = view?.context ?: return
+        val pedalsRow = activeArea.getChildAt(1) as LinearLayout
+
+        when (pedalType) {
+            "overdrive" -> {
+                val pedal = OverdrivePedal()
+                pedal.onEnabledChanged = { MainActivity.setOverdriveEnabledGlobal(it) }
+                pedal.onLevelChanged = { v -> MainActivity.setOverdriveLevelGlobal(v) }
+                pedalsRow.addView(pedal.makeView(ctx), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            }
+            "distortion" -> {
+                val pedal = DistortionPedal()
+                pedal.onEnabledChanged = { MainActivity.setDistortionEnabledGlobal(it) }
+                pedal.onLevelChanged = { v -> MainActivity.setDistortionLevelGlobal(v) }
+                pedalsRow.addView(pedal.makeView(ctx), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            }
+            "tone" -> {
+                val pedal = TonePedal()
+                pedal.onEnabledChanged = { MainActivity.setToneEnabledGlobal(it) }
+                pedal.onLevelChanged = { v -> MainActivity.setToneLevelGlobal(v) }
+                pedalsRow.addView(pedal.makeView(ctx), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            }
+        }
     }
 }
