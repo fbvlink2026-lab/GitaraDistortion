@@ -18,13 +18,14 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
-    private var cabinetOpen = false
+    private var currentPage = 0 // 0 = Main Mixer, 1 = Cabinet
     private var startX = 0f
-    private lateinit var mainPanel: LinearLayout
-    private lateinit var cabinetContainer: LinearLayout
-    private lateinit var cabinetPanel: LinearLayout
+    private lateinit var mainPage: LinearLayout
+    private lateinit var cabinetPage: LinearLayout
+    private lateinit var pageContainer: LinearLayout
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
 
+    // ✅ LAHAT NG FX — 19 PIHITAN
     private val fxList = listOf(
         Triple("🚧 NOISE GATE", 0xFF44DD88.toInt(), { AudioMixer.noiseGate }),
         Triple("🎵 TONE", 0xFFFFCC44.toInt(), { AudioMixer.tone }),
@@ -56,34 +57,42 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildUI() {
         val root = findViewById<LinearLayout>(R.id.rootLayout)
+        root.setBackgroundColor(0xFF121212.toInt())
 
-        val title = TextView(this)
-        title.text = "🎸 GITARA FX — MIXER & PRESETS"
-        title.textSize = 18f
-        title.setTextColor(0xFFFFCC00.toInt())
-        title.gravity = Gravity.CENTER
-        title.setPadding(0,8,0,4)
-        root.addView(title)
-
-        val hint = TextView(this)
-        hint.text = "👆 PIHITIN ANG MIXER • SWIPE PAKALIWA = PRESETS CABINET"
-        hint.textSize = 11f
-        hint.setTextColor(0xFF888888.toInt())
-        hint.gravity = Gravity.CENTER
-        hint.setPadding(0,0,0,6)
-        root.addView(hint)
-
-        val twoPanels = LinearLayout(this)
-        twoPanels.orientation = LinearLayout.HORIZONTAL
-        twoPanels.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+        // ✅ PAGE CONTAINER — DALAWANG PAGE MAGKATABI
+        pageContainer = LinearLayout(this)
+        pageContainer.orientation = LinearLayout.HORIZONTAL
+        pageContainer.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.MATCH_PARENT
         )
 
-        mainPanel = LinearLayout(this)
-        mainPanel.orientation = LinearLayout.VERTICAL
-        mainPanel.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 3f)
-        mainPanel.setBackgroundColor(0xFF121212.toInt())
-        mainPanel.setPadding(4,4,4,4)
+        // ==========================================
+        // 🎛️ PAGE 1: MAIN MIXER PANEL
+        // ==========================================
+        mainPage = LinearLayout(this)
+        mainPage.orientation = LinearLayout.VERTICAL
+        mainPage.layoutParams = LinearLayout.LayoutParams(
+            resources.displayMetrics.widthPixels,
+            LinearLayout.LayoutParams.MATCH_PARENT
+        )
+        mainPage.setPadding(8,8,8,8)
+
+        val mainTitle = TextView(this)
+        mainTitle.text = "🎛️ MAIN MIXER PANEL"
+        mainTitle.textSize = 20f
+        mainTitle.setTextColor(0xFFFFCC00.toInt())
+        mainTitle.gravity = Gravity.CENTER
+        mainTitle.setPadding(0,8,0,4)
+        mainPage.addView(mainTitle)
+
+        val mainHint = TextView(this)
+        mainHint.text = "👉 SWIPE PAKALIWA → PUMUNTA SA PRESETS CABINET"
+        mainHint.textSize = 12f
+        mainHint.setTextColor(0xFF888888.toInt())
+        mainHint.gravity = Gravity.CENTER
+        mainHint.setPadding(0,0,0,8)
+        mainPage.addView(mainHint)
 
         val scroll = ScrollView(this)
         val grid = LinearLayout(this)
@@ -93,12 +102,13 @@ class MainActivity : AppCompatActivity() {
             val rowLay = LinearLayout(this)
             rowLay.orientation = LinearLayout.HORIZONTAL
             rowLay.gravity = Gravity.CENTER
+            rowLay.setPadding(2,4,2,4)
             for(k in row until minOf(row+perRow, fxList.size)) {
                 val (label, color, getVal) = fxList[k]
                 val col = LinearLayout(this)
                 col.orientation = LinearLayout.VERTICAL
                 col.gravity = Gravity.CENTER
-                col.setPadding(2,4,2,4)
+                col.setPadding(4,4,4,4)
 
                 val knob = KnobView(this)
                 knob.baseColor = color
@@ -106,7 +116,7 @@ class MainActivity : AppCompatActivity() {
                 val pct = TextView(this)
                 pct.text = "${(knob.value*100).toInt()}%"
                 pct.setTextColor(color)
-                pct.textSize = 10f
+                pct.textSize = 11f
                 knob.onChange = { v ->
                     pct.text = "${(v*100).toInt()}%"
                     when(k) {
@@ -131,12 +141,12 @@ class MainActivity : AppCompatActivity() {
                         18 -> AudioMixer.masterVolume = v
                     }
                 }
-                col.addView(knob, LinearLayout.LayoutParams(72,72))
+                col.addView(knob, LinearLayout.LayoutParams(80,80))
                 col.addView(pct)
                 val lbl = TextView(this)
                 lbl.text = label
                 lbl.setTextColor(color)
-                lbl.textSize = 8f
+                lbl.textSize = 9f
                 lbl.gravity = Gravity.CENTER
                 col.addView(lbl)
                 rowLay.addView(col, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -145,20 +155,21 @@ class MainActivity : AppCompatActivity() {
             grid.addView(rowLay)
         }
         scroll.addView(grid)
-        mainPanel.addView(scroll)
+        mainPage.addView(scroll)
 
+        // ✅ MASTER BAR — ITAAS SA MAIN PAGE
         val masterBar = LinearLayout(this)
         masterBar.orientation = LinearLayout.HORIZONTAL
         masterBar.gravity = Gravity.CENTER
         masterBar.setBackgroundColor(0xFF220000.toInt())
-        masterBar.setPadding(4,8,4,8)
+        masterBar.setPadding(8,8,8,8)
 
         val masterBtn = Button(this)
         masterBtn.text = "🟢 ON"
         masterBtn.setTextColor(Color.WHITE)
         masterBtn.setBackgroundColor(0xFF228833.toInt())
-        masterBtn.textSize = 12f
-        masterBtn.setPadding(12,6,12,6)
+        masterBtn.textSize = 13f
+        masterBtn.setPadding(16,8,16,8)
         masterBtn.setOnClickListener {
             val isOn = AudioMixer.isAllOn()
             AudioMixer.setAllOn(!isOn)
@@ -174,22 +185,22 @@ class MainActivity : AppCompatActivity() {
         masterBar.addView(masterBtn)
 
         val saveName = EditText(this)
-        saveName.hint = "Pangalan"
+        saveName.hint = "Pangalan Preset"
         saveName.setTextColor(Color.WHITE)
         saveName.setHintTextColor(0xFF888888.toInt())
-        saveName.textSize = 11f
+        saveName.textSize = 12f
         saveName.setBackgroundColor(0xFF333333.toInt())
-        saveName.setPadding(8,2,8,2)
-        saveName.minWidth = 90
+        saveName.setPadding(8,4,8,4)
+        saveName.minWidth = 100
         saveName.gravity = Gravity.CENTER
-        masterBar.addView(saveName, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(8,0,8,0) })
+        masterBar.addView(saveName, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(12,0,12,0) })
 
         val saveBtn = Button(this)
         saveBtn.text = "💾 SAVE"
         saveBtn.setTextColor(Color.WHITE)
         saveBtn.setBackgroundColor(0xFF226644.toInt())
-        saveBtn.textSize = 11f
-        saveBtn.setPadding(8,6,8,6)
+        saveBtn.textSize = 12f
+        saveBtn.setPadding(12,8,12,8)
         saveBtn.setOnClickListener {
             val name = saveName.text.toString().trim()
             if(name.isEmpty()) {
@@ -197,55 +208,86 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             AudioMixer.savePreset(this, name)
-            Toast.makeText(this, "✅ NAISAVE: $name — Nasa Cabinet na!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "✅ NAISAVE: $name!", Toast.LENGTH_SHORT).show()
             saveName.text.clear()
         }
         masterBar.addView(saveBtn)
-        mainPanel.addView(masterBar)
+        mainPage.addView(masterBar)
 
-        cabinetContainer = LinearLayout(this)
-        cabinetContainer.orientation = LinearLayout.HORIZONTAL
-        cabinetContainer.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 0f)
-        cabinetContainer.visibility = View.GONE
-        cabinetPanel = LinearLayout(this)
-        cabinetPanel.orientation = LinearLayout.VERTICAL
-        cabinetPanel.setBackgroundColor(0xFF1A1A1A.toInt())
-        cabinetPanel.setPadding(8,8,8,8)
+        // ==========================================
+        // 📦 PAGE 2: CABINET PANEL — PEDALS HILERA PAHABA!
+        // ==========================================
+        cabinetPage = LinearLayout(this)
+        cabinetPage.orientation = LinearLayout.VERTICAL
+        cabinetPage.layoutParams = LinearLayout.LayoutParams(
+            resources.displayMetrics.widthPixels,
+            LinearLayout.LayoutParams.MATCH_PARENT
+        )
+        cabinetPage.setBackgroundColor(0xFF1A1A1A.toInt())
+        cabinetPage.setPadding(8,8,8,8)
+
+        // ✅ ⬅️ ARROW SA ITAAS KALIWA — BUMALIK SA MAIN!
+        val topBar = LinearLayout(this)
+        topBar.orientation = LinearLayout.HORIZONTAL
+        topBar.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+        topBar.setPadding(4,4,4,12)
+
+        val backArrow = Button(this)
+        backArrow.text = "⬅️"
+        backArrow.textSize = 20f
+        backArrow.setTextColor(Color.WHITE)
+        backArrow.setBackgroundColor(0xFF333333.toInt())
+        backArrow.setPadding(12,4,12,4)
+        backArrow.setOnClickListener { goToMainPage() }
+        topBar.addView(backArrow)
 
         val cabTitle = TextView(this)
-        cabTitle.text = "📦 PRESETS — PILIIN ANG TUNOG"
-        cabTitle.textSize = 13f
+        cabTitle.text = "📦 PRESETS CABINET"
+        cabTitle.textSize = 20f
         cabTitle.setTextColor(0xFFCCCC66.toInt())
         cabTitle.gravity = Gravity.CENTER
-        cabTitle.setPadding(0,8,0,12)
-        cabinetPanel.addView(cabTitle)
+        cabTitle.setPadding(16,0,0,0)
+        topBar.addView(cabTitle, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        cabinetPage.addView(topBar)
 
+        val cabHint = TextView(this)
+        cabHint.text = "👉 PUMILI NG PRESET → KUSANG AYUS LAHAT NG PIHITAN!"
+        cabHint.textSize = 12f
+        cabHint.setTextColor(0xFF888888.toInt())
+        cabHint.gravity = Gravity.CENTER
+        cabHint.setPadding(0,0,0,12)
+        cabinetPage.addView(cabHint)
+
+        // ✅ PRESET PEDALS — HILERA PAHABA! MAGKAKATABI!
         val cabScroll = ScrollView(this)
-        val cabList = LinearLayout(this)
-        cabList.orientation = LinearLayout.VERTICAL
+        val pedalRow = LinearLayout(this)
+        pedalRow.orientation = LinearLayout.HORIZONTAL
+        pedalRow.gravity = Gravity.CENTER
+        pedalRow.setPadding(4,4,4,4)
 
         listOf(
-            Triple("Clean", 0xFF226644.toInt(), "Malinaw na tunog"),
-            Triple("Blues", 0xFF664422.toInt(), "Mainit na tono"),
-            Triple("Rock", 0xFF992222.toInt(), "Matigas na tunog"),
-            Triple("Metal", 0xFF222222.toInt(), "Mabigat na distorsyon")
+            Triple("Clean", 0xFF226644.toInt(), "Malinaw"),
+            Triple("Blues", 0xFF664422.toInt(), "Mainit"),
+            Triple("Rock", 0xFF992222.toInt(), "Matigas"),
+            Triple("Metal", 0xFF222222.toInt(), "Mabigat")
         ).forEach { (name, color, desc) ->
             val pedal = LinearLayout(this)
             pedal.orientation = LinearLayout.VERTICAL
             pedal.setBackgroundColor(color)
-            pedal.setPadding(12,12,12,12)
+            pedal.setPadding(16,12,16,12)
             pedal.gravity = Gravity.CENTER
+            pedal.setPadding(8,12,8,12)
             pedal.setOnClickListener {
                 AudioMixer.applyPreset(name)
                 updateKnobsFromPreset()
-                closeCabinet()
-                Toast.makeText(this, "✅ PRESET: $name — KUSANG NAAYOS LAHAT NG PIHITAN!", Toast.LENGTH_SHORT).show()
+                goToMainPage()
+                Toast.makeText(this, "✅ PRESET: $name — NAAYOS LAHAT!", Toast.LENGTH_SHORT).show()
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
             }
 
             val lbl = TextView(this)
             lbl.text = name
-            lbl.textSize = 16f
+            lbl.textSize = 15f
             lbl.setTextColor(Color.WHITE)
             lbl.gravity = Gravity.CENTER
             lbl.setPadding(0,4,0,2)
@@ -253,34 +295,44 @@ class MainActivity : AppCompatActivity() {
 
             val sub = TextView(this)
             sub.text = desc
-            sub.textSize = 10f
+            sub.textSize = 9f
             sub.setTextColor(0xAAFFFFFF.toInt())
             sub.gravity = Gravity.CENTER
             pedal.addView(sub)
 
-            cabList.addView(pedal, LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0,4,0,4) })
+            pedalRow.addView(pedal, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(6,4,6,4) })
         }
-        cabScroll.addView(cabList)
-        cabinetPanel.addView(cabScroll)
-        cabinetContainer.addView(cabinetPanel)
+        cabScroll.addView(pedalRow)
+        cabinetPage.addView(cabScroll)
 
-        twoPanels.addView(mainPanel)
-        twoPanels.addView(cabinetContainer)
-        root.addView(twoPanels)
+        // ✅ ILAGAY DALAWANG PAGE SA CONTAINER
+        pageContainer.addView(mainPage)
+        pageContainer.addView(cabinetPage)
+        root.addView(pageContainer)
 
-        twoPanels.setOnTouchListener { _, e ->
+        // ✅ SWIPE PAKALIWA = PUMUNTA SA CABINET
+        pageContainer.setOnTouchListener { _, e ->
             when(e.action) {
                 MotionEvent.ACTION_DOWN -> startX = e.rawX
                 MotionEvent.ACTION_MOVE -> {
                     val d = startX - e.rawX
-                    if(d > 100 && !cabinetOpen) openCabinet()
-                    if(d < -100 && cabinetOpen) closeCabinet()
+                    if(d > 120 && currentPage == 0) goToCabinetPage()
                 }
             }
             true
         }
+    }
+
+    private fun goToCabinetPage() {
+        currentPage = 1
+        pageContainer.scrollTo(resources.displayMetrics.widthPixels, 0)
+    }
+    private fun goToMainPage() {
+        currentPage = 0
+        pageContainer.scrollTo(0, 0)
     }
 
     private fun updateKnobsFromPreset() {
@@ -300,23 +352,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openCabinet() {
-        cabinetOpen = true
-        mainPanel.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.5f)
-        cabinetContainer.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.5f)
-        cabinetContainer.visibility = View.VISIBLE
-    }
-    private fun closeCabinet() {
-        cabinetOpen = false
-        mainPanel.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 3f)
-        cabinetContainer.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 0f)
-        cabinetContainer.visibility = View.GONE
-    }
-
     private fun checkPermission() {
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "✅ Handa na! Pihitin o pumili ng Preset!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "✅ Handa na! Swipe pakaliwa para sa Presets!", Toast.LENGTH_LONG).show()
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 123)
         }
