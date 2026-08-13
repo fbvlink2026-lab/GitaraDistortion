@@ -191,6 +191,27 @@ class MainActivity : AppCompatActivity() {
         return getFixedDefaultPresets() + loadUserPresets()
     }
 
+    // ✅ BILANGIN KUNG ILAN ANG NAKA-ON NA PRESET
+    private fun countPresetsOn(): Int {
+        return getAllPresets().count { it.isOn }
+    }
+
+    // ✅ I-UPDATE ANG MAIN POWER BUTTON AYON SA BILANG NG NAKA-ON
+    private fun updateMainPowerState() {
+        val onCount = countPresetsOn()
+        if(onCount > 0) {
+            // ✅ MAY KAHIT ISA NAKA-ON → MAIN = ON
+            AudioMixer.setAllOn(true)
+            mainPowerBtn.text = "🟢 ON ($onCount)"
+            mainPowerBtn.setBackgroundColor(-0x33DD33)
+        } else {
+            // ✅ WALA NANG NAKA-ON → MAIN = OFF
+            AudioMixer.setAllOn(false)
+            mainPowerBtn.text = "🔴 OFF"
+            mainPowerBtn.setBackgroundColor(-0xDD7733)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -299,20 +320,9 @@ class MainActivity : AppCompatActivity() {
         bar.setBackgroundColor(-0xDDDDFF)
         bar.setPadding(8,8,8,8)
         mainPowerBtn = Button(this)
-        mainPowerBtn.text = "🟢 ON"; mainPowerBtn.setTextColor(Color.WHITE)
+        mainPowerBtn.text = "🔴 OFF"; mainPowerBtn.setTextColor(Color.WHITE)
         mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize = 13f
-        mainPowerBtn.setOnClickListener {
-            val isOn = AudioMixer.isAllOn()
-            AudioMixer.setAllOn(!isOn)
-            if(isOn) {
-                mainPowerBtn.text = "🔴 OFF"
-                mainPowerBtn.setBackgroundColor(-0xDD3333)
-            } else {
-                mainPowerBtn.text = "🟢 ON"
-                mainPowerBtn.setBackgroundColor(-0x33DD33)
-                AudioEngine.start(this)
-            }
-        }
+        mainPowerBtn.isEnabled = false // ✅ HINDI PWEDE PINDUTIN — AWTOMATIK NA!
         bar.addView(mainPowerBtn)
         savePresetName = EditText(this)
         savePresetName.hint = "Pangalan Preset"
@@ -387,7 +397,7 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
             val hint = TextView(this)
-            hint.text = "👆 SWIPE ←→ | Pindutin ON → EKSAKTONG HALAGA SA MAIN MIXER!"
+            hint.text = "👆 PINDUTIN ON/OFF SA PEDAL → AWTOMATIK ANG MAIN MIXER!"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -420,14 +430,14 @@ class MainActivity : AppCompatActivity() {
             preset.isOn = !preset.isOn
             powerBtn.text = if(preset.isOn) "💡 NAKA-ON" else "⚫ NAKA-OFF"
             powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF333333.toInt())
+
             if(preset.isOn) {
+                // ✅ BINUKSAN → I-LOAD ANG HALAGA → I-UPDATE ANG MAIN
                 loadPresetToMainMixer(preset)
-                AudioMixer.setAllOn(true)
-                mainPowerBtn.text = "🟢 ON"
-                mainPowerBtn.setBackgroundColor(-0x33DD33)
-                Toast.makeText(this,"✅ ${preset.name} — NAKA-ON!\nEksaktong halaga na-save → Main Mixer!",Toast.LENGTH_SHORT).show()
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
+                Toast.makeText(this,"✅ ${preset.name} — NAKA-ON!\nEksaktong halaga na-save → Main Mixer!",Toast.LENGTH_SHORT).show()
             } else {
+                // ✅ PINATAY → I-SAVE ANG KASALUKUYANG HALAGA BAGO PATAYIN
                 val idx = allPresets.indexOfFirst { it.name == preset.name }
                 if(idx >= defaultCount) {
                     val userPresets = loadUserPresets()
@@ -437,11 +447,11 @@ class MainActivity : AppCompatActivity() {
                         saveAllUserPresets(userPresets)
                     }
                 }
-                AudioMixer.setAllOn(false)
-                mainPowerBtn.text = "🔴 OFF"
-                mainPowerBtn.setBackgroundColor(-0xDD7733)
                 Toast.makeText(this,"⚫ ${preset.name} — NAI-SAVE AT NAKA-OFF!",Toast.LENGTH_SHORT).show()
             }
+
+            // ✅ AWTOMATIK NA I-UPDATE ANG MAIN MIXER!
+            updateMainPowerState()
         }
         pedal.addView(powerBtn)
         val name = TextView(this)
