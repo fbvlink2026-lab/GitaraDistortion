@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
     private val PEDALS_PER_PAGE = 20
 
-    // ✅ LAHAT NG FX — FUNCTION NA NAGBABALIK NG HALAGA
+    // ✅ LAHAT NG FX — WALANG TINANGGAL!
     private val fxGetters = listOf(
         { AudioMixer.overdrive }, { AudioMixer.distortion }, { AudioMixer.fuzz },
         { AudioMixer.chorus }, { AudioMixer.flanger }, { AudioMixer.phaser },
@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadUserPresets(): MutableList<PedalPreset> {
         val list = mutableListOf<PedalPreset>()
         try {
-            val json = prefs.getString("user_presets_v6", "[]")
+            val json = prefs.getString("user_presets_v7", "[]")
             val arr = JSONArray(json)
             for(i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity() {
                 put("desc", p.desc)
             })
         }
-        prefs.edit().putString("user_presets_v6", arr.toString()).apply()
+        prefs.edit().putString("user_presets_v7", arr.toString()).apply()
     }
 
     private fun saveNewPreset(name:String, vol:Float, fx:Float, ng:Float):Boolean {
@@ -97,37 +97,37 @@ class MainActivity : AppCompatActivity() {
         if(!p.isOn) {
             AudioMixer.masterVolume = 0.05f
             AudioMixer.noiseGate = 0.01f
-            // ✅ TINAWAG NA ANG FUNCTION: getFx() — MAY () NA!
             fxGetters.forEach { getFx -> if(getFx() > 0.01f) setFxValue(getFx, 0f) }
             return
         }
         AudioMixer.masterVolume = p.volume
         AudioMixer.noiseGate = p.noiseGate
         fxGetters.forEach { getFx ->
-            val current = getFx() // ✅ MAY () NA!
+            val current = getFx()
             if(current > 0.01f) setFxValue(getFx, p.effect)
         }
         if(!AudioEngine.isRunning()) AudioEngine.start(this)
     }
 
     private fun setFxValue(get:()->Float, newValue:Float) {
+        val currentValue = get()
         when {
-            get() === AudioMixer.overdrive -> AudioMixer.overdrive = newValue
-            get() === AudioMixer.distortion -> AudioMixer.distortion = newValue
-            get() === AudioMixer.fuzz -> AudioMixer.fuzz = newValue
-            get() === AudioMixer.chorus -> AudioMixer.chorus = newValue
-            get() === AudioMixer.flanger -> AudioMixer.flanger = newValue
-            get() === AudioMixer.phaser -> AudioMixer.phaser = newValue
-            get() === AudioMixer.tremolo -> AudioMixer.tremolo = newValue
-            get() === AudioMixer.vibrato -> AudioMixer.vibrato = newValue
-            get() === AudioMixer.delay -> AudioMixer.delay = newValue
-            get() === AudioMixer.reverb -> AudioMixer.reverb = newValue
-            get() === AudioMixer.wah -> AudioMixer.wah = newValue
-            get() === AudioMixer.gain -> AudioMixer.gain = newValue
-            get() === AudioMixer.tone -> AudioMixer.tone = newValue
-            get() === AudioMixer.bass -> AudioMixer.bass = newValue
-            get() === AudioMixer.mid -> AudioMixer.mid = newValue
-            get() === AudioMixer.treble -> AudioMixer.treble = newValue
+            currentValue === AudioMixer.overdrive -> AudioMixer.overdrive = newValue
+            currentValue === AudioMixer.distortion -> AudioMixer.distortion = newValue
+            currentValue === AudioMixer.fuzz -> AudioMixer.fuzz = newValue
+            currentValue === AudioMixer.chorus -> AudioMixer.chorus = newValue
+            currentValue === AudioMixer.flanger -> AudioMixer.flanger = newValue
+            currentValue === AudioMixer.phaser -> AudioMixer.phaser = newValue
+            currentValue === AudioMixer.tremolo -> AudioMixer.tremolo = newValue
+            currentValue === AudioMixer.vibrato -> AudioMixer.vibrato = newValue
+            currentValue === AudioMixer.delay -> AudioMixer.delay = newValue
+            currentValue === AudioMixer.reverb -> AudioMixer.reverb = newValue
+            currentValue === AudioMixer.wah -> AudioMixer.wah = newValue
+            currentValue === AudioMixer.gain -> AudioMixer.gain = newValue
+            currentValue === AudioMixer.tone -> AudioMixer.tone = newValue
+            currentValue === AudioMixer.bass -> AudioMixer.bass = newValue
+            currentValue === AudioMixer.mid -> AudioMixer.mid = newValue
+            currentValue === AudioMixer.treble -> AudioMixer.treble = newValue
         }
     }
 
