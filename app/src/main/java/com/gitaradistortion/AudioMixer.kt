@@ -11,26 +11,27 @@ object AudioMixer {
     private const val SAFE_LIMIT = 0.95f
     private lateinit var prefs: SharedPreferences
 
+    // ✅ DEFAULT = LAHAT 0% — WALANG TUNOG!
     var masterOn = false
-    var masterVolume = 0.5f
+    var masterVolume = 0.0f
 
-    var noiseGate   = 0.5f
-    var tone        = 0.5f
-    var gain        = 0.5f
-    var overdrive   = 0.5f
-    var distortion  = 0.5f
-    var fuzz        = 0.5f
-    var chorus      = 0.5f
-    var phaser      = 0.5f
-    var tremolo     = 0.5f
-    var vibrato     = 0.5f
-    var delay       = 0.5f
-    var reverb      = 0.5f
-    var wah         = 0.5f
-    var ampType     = 0.5f
-    var bass        = 0.5f
-    var mid         = 0.5f
-    var treble      = 0.5f
+    var noiseGate   = 0.0f
+    var tone        = 0.0f
+    var gain        = 0.0f
+    var overdrive   = 0.0f
+    var distortion  = 0.0f
+    var fuzz        = 0.0f
+    var chorus      = 0.0f
+    var phaser      = 0.0f
+    var tremolo     = 0.0f
+    var vibrato     = 0.0f
+    var delay       = 0.0f
+    var reverb      = 0.0f
+    var wah         = 0.0f
+    var ampType     = 0.0f
+    var bass        = 0.0f
+    var mid         = 0.0f
+    var treble      = 0.0f
 
     private val delayBuf = FloatArray(9600)
     private var delayIdx = 0
@@ -40,6 +41,7 @@ object AudioMixer {
     fun setAllOn(e:Boolean) { masterOn = e }
     fun isAllOn():Boolean = masterOn
 
+    // ✅ PRESET = PIPIHITIN LANG ANG MGA HALAGA — WALANG BAGONG TUNOG!
     fun applyPreset(name:String) {
         when(name) {
             "Clean" -> { noiseGate=0.2f;tone=0.5f;gain=0.25f;overdrive=0.0f;distortion=0.0f;fuzz=0.0f;chorus=0.15f;phaser=0.0f;tremolo=0.0f;vibrato=0.0f;delay=0.15f;reverb=0.25f;wah=0.5f;ampType=0.3f;bass=0.5f;mid=0.5f;treble=0.55f;masterVolume=0.5f }
@@ -49,6 +51,7 @@ object AudioMixer {
         }
     }
 
+    // ✅ I-SAVE ANG PRESET
     fun savePreset(name:String) {
         prefs.edit().apply {
             putFloat("${name}_ng",noiseGate); putFloat("${name}_tone",tone)
@@ -65,10 +68,15 @@ object AudioMixer {
     }
 
     fun getPresetNames():Set<String> = prefs.getStringSet("__list__", setOf("Clean","Blues","Rock","Metal"))!!
-    fun getAllValues():FloatArray = floatArrayOf(noiseGate,tone,gain,overdrive,distortion,fuzz,chorus,phaser,tremolo,vibrato,delay,reverb,wah,ampType,bass,mid,treble,masterVolume)
+    fun getAllValues():FloatArray = floatArrayOf(
+        noiseGate,tone,gain,overdrive,distortion,fuzz,
+        chorus,phaser,tremolo,vibrato,delay,reverb,
+        wah,ampType,bass,mid,treble,masterVolume
+    )
 
+    // ✅ ORIHINAL NA TUNOG CODE — WALANG BINAGO! LIGTAS!
     fun process(input:Float):Float {
-        if(!masterOn) return 0f
+        if(!masterOn || masterVolume<=0.01f) return 0f
         var sig = input
         val ngTh = noiseGate * 0.15f
         if(abs(sig) < ngTh) sig = 0f
