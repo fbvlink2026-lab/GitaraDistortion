@@ -1,13 +1,11 @@
 package com.gitaradistortion
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
@@ -23,8 +21,8 @@ import androidx.viewpager2.widget.ViewPager2
 class MainActivity : AppCompatActivity() {
     private lateinit var viewPager: ViewPager2
     private val knobBindings = mutableListOf<Pair<KnobView, TextView>>()
+    private var permissionAsked = false
 
-    // ✅ LAHAT NG FX — 18 PIHITAN
     private val fxList = listOf(
         Triple("🚧 NOISE GATE",0xFF44DD88.toInt(),{v:Float->AudioMixer.noiseGate=v}),
         Triple("🎵 TONE",0xFFFFCC44.toInt(),{v->AudioMixer.tone=v}),
@@ -50,8 +48,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         AudioMixer.init(this)
-        checkPermission()
         setupViewPager()
+
+        // ✅ HINDI MAG CRASH — HIHINTAYIN ANG PAHINTULOT
+        checkPermission()
     }
 
     private fun setupViewPager() {
@@ -65,18 +65,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ==========================================
-    // 🎛️ SCREEN 1 — MAIN MIXER PANEL
-    // ==========================================
     private fun buildMixerScreen():LinearLayout {
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF121212.toInt())
 
         val title = TextView(this)
-        title.text = "🎛️ MAIN MIXER — SWIPE PAKALIWA → PRESETS CABINET"
-        title.textSize = 13f; title.setTextColor(0xFFFFCC00.toInt())
-        title.gravity = Gravity.CENTER; title.setPadding(0,12,0,6)
+        title.text = "🎛️ GITARA FX — SWIPE PAKALIWA → PRESETS"
+        title.textSize = 14f; title.setTextColor(0xFFFFCC00.toInt())
+        title.gravity = Gravity.CENTER; title.setPadding(0,16,0,8)
         root.addView(title)
 
         val scroll = ScrollView(this)
@@ -104,7 +101,7 @@ class MainActivity : AppCompatActivity() {
                     pct.text = "${(v*100).toInt()}%"
                     setter(v)
                 }
-                col.addView(knob, LinearLayout.LayoutParams(76,76))
+                col.addView(knob, LinearLayout.LayoutParams(72,72))
                 col.addView(pct)
                 val lbl = TextView(this)
                 lbl.text = label; lbl.setTextColor(color); lbl.textSize = 8f
@@ -118,22 +115,16 @@ class MainActivity : AppCompatActivity() {
         scroll.addView(grid)
         root.addView(scroll)
 
-        // ✅ MASTER BAR — ON/OFF + SAVE PRESET
         val bar = LinearLayout(this)
         bar.orientation = LinearLayout.HORIZONTAL
         bar.setBackgroundColor(0xFF220000.toInt())
-        bar.setPadding(8,10,8,10)
+        bar.setPadding(8,12,8,12)
         val btn = Button(this)
-        btn.text = "🟢 ON"
+        btn.text = "🟢 BUKSAN ANG TUNOG"
         btn.setTextColor(Color.WHITE)
         btn.setBackgroundColor(0xFF228833.toInt())
         btn.textSize = 12f
-        btn.setOnClickListener {
-            val on = AudioMixer.isAllOn()
-            AudioMixer.setAllOn(!on)
-            if(on){btn.text="🔴 OFF";btn.setBackgroundColor(0xFF882222.toInt())}
-            else{btn.text="🟢 ON";btn.setBackgroundColor(0xFF228833.toInt());if(!AudioEngine.isRunning())AudioEngine.start(this)}
-        }
+        btn.setOnClickListener { toggleAudio(btn) }
         bar.addView(btn)
         val nameIn = EditText(this)
         nameIn.hint="Pangalan ng Preset"
@@ -150,9 +141,9 @@ class MainActivity : AppCompatActivity() {
         saveBtn.textSize=11f
         saveBtn.setOnClickListener {
             val n = nameIn.text.toString().trim()
-            if(n.isEmpty()){Toast.makeText(this,"❌ Ilagay ang pangalan ng Preset!",Toast.LENGTH_SHORT).show();return@setOnClickListener}
+            if(n.isEmpty()){Toast.makeText(this,"❌ Ilagay ang pangalan!",Toast.LENGTH_SHORT).show();return@setOnClickListener}
             AudioMixer.savePreset(n)
-            Toast.makeText(this,"✅ NAISAVE: \"$n\" — Makikita na sa Cabinet!",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,"✅ NAISAVE: \"$n\"",Toast.LENGTH_SHORT).show()
             nameIn.text.clear()
         }
         bar.addView(saveBtn)
@@ -160,45 +151,62 @@ class MainActivity : AppCompatActivity() {
         return root
     }
 
-    // ==========================================
-    // 📦 SCREEN 2 — CABINET PANEL
-    // ==========================================
+    private fun toggleAudio(btn:Button) {
+        if(AudioMixer.isAllOn()) {
+            AudioMixer.setAllOn(false)
+            AudioEngine.stop()
+            btn.text = "🟢 BUKSAN ANG TUNOG"
+            btn.setBackgroundColor(0xFF228833.toInt())
+            Toast.makeText(this,"🔴 NAPATAY ANG TUNOG",Toast.LENGTH_SHORT).show()
+        } else {
+            // ✅ SURIIN MUNA ANG PAHINTULOT BAGO SIMULA
+            if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this,"⚠️ Hingi muna ng pahintulot sa Mikropono",Toast.LENGTH_SHORT).show()
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO),123)
+                return
+            }
+            val ok = AudioEngine.start(this)
+            if(ok) {
+                AudioMixer.setAllOn(true)
+                btn.text = "🔴 PATAYIN ANG TUNOG"
+                btn.setBackgroundColor(0xFF882222.toInt())
+                Toast.makeText(this,"✅ TUNOG — NAKABUKAS NA! 🎸",Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun buildCabinetScreen():LinearLayout {
         val root = LinearLayout(this)
         root.orientation = LinearLayout.VERTICAL
         root.setBackgroundColor(0xFF1A1A1A.toInt())
 
-        // ✅ TAAS — ARROW BACK + PAMAGAT
         val topBar = LinearLayout(this)
         topBar.orientation = LinearLayout.HORIZONTAL
         topBar.setBackgroundColor(0xFF222222.toInt())
         topBar.setPadding(8,8,8,8)
 
-        // ⬅️ ARROW BACK — BALIK SA MIXER!
         val backBtn = Button(this)
         backBtn.text = "⬅️"
         backBtn.textSize = 18f
         backBtn.setTextColor(Color.WHITE)
         backBtn.setBackgroundColor(0xFF444444.toInt())
         backBtn.setPadding(12,4,12,4)
-        backBtn.setOnClickListener { viewPager.currentItem = 0 } // ✅ BALIK SA MIXER!
+        backBtn.setOnClickListener { viewPager.currentItem = 0 }
         topBar.addView(backBtn)
 
         val title = TextView(this)
-        title.text = "📦 PRESETS CABINET — PUMILI NG PEDAL"
+        title.text = "📦 PRESETS — PUMILI NG PEDAL"
         title.textSize = 14f; title.setTextColor(0xFFCCCC66.toInt())
         title.gravity = Gravity.CENTER; title.setPadding(12,4,0,4)
         topBar.addView(title, LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f))
         root.addView(topBar)
 
-        // ✅ HILIRANG PEDAL — PABABA SA SCROLL, HORIZONTAL NA HILIRA!
         val scroll = ScrollView(this)
         val horiz = LinearLayout(this)
         horiz.orientation = LinearLayout.HORIZONTAL
         horiz.setPadding(12,20,12,20)
-        horiz.gravity = Gravity.CENTER_VERTICAL
 
-        // ✅ BUILT-IN PRESETS + LAHAT NG NAISAVE NG USER
         val builtIn = listOf(
             Triple("Clean",0xFF226644.toInt(),"Malinaw"),
             Triple("Blues",0xFF664422.toInt(),"Mainit"),
@@ -219,10 +227,9 @@ class MainActivity : AppCompatActivity() {
             pedal.layoutParams = p
             pedal.setOnClickListener {
                 AudioMixer.applyPreset(name)
-                updateAllKnobs() // ✅ AYUSIN LAHAT NG PIHITAN SA MIXER
-                viewPager.currentItem = 0 // ✅ AWTOMATIK BALIK SA MIXER!
-                Toast.makeText(this,"✅ PRESET: \"$name\" — AWTOMATIK NAAYOS LAHAT NG PIHITAN!",Toast.LENGTH_SHORT).show()
-                if(!AudioEngine.isRunning()) AudioEngine.start(this)
+                updateAllKnobs()
+                viewPager.currentItem = 0
+                Toast.makeText(this,"✅ PRESET: \"$name\" — NAAYOS NA!",Toast.LENGTH_SHORT).show()
             }
             val lbl = TextView(this)
             lbl.text = name; lbl.textSize = 18f; lbl.setTextColor(Color.WHITE)
@@ -240,7 +247,6 @@ class MainActivity : AppCompatActivity() {
         return root
     }
 
-    // ✅ AWTOMATIK AYUSIN LAHAT NG PIHITAN SA MIXER
     private fun updateAllKnobs() {
         val vals = AudioMixer.getAllValues()
         for(i in knobBindings.indices) {
@@ -251,15 +257,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermission() {
-        if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this,"✅ Handa na! Swipe pakaliwa → Presets Cabinet!",Toast.LENGTH_LONG).show()
-        } else {
+        if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO)
+            == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this,"✅ Handa na! Pindutin \"BUKSAN ANG TUNOG\"",Toast.LENGTH_LONG).show()
+        } else if(!permissionAsked) {
+            permissionAsked = true
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO),123)
         }
     }
+
     override fun onRequestPermissionsResult(r:Int,p:Array<out String>,g:IntArray) {
         super.onRequestPermissionsResult(r,p,g)
-        if(r==123 && g.firstOrNull()==PackageManager.PERMISSION_GRANTED) Toast.makeText(this,"✅ Pahintulot natanggap!",Toast.LENGTH_SHORT).show()
+        if(r==123) {
+            if(g.firstOrNull()==android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this,"✅ Pahintulot natanggap! Pindutin \"BUKSAN ANG TUNOG\"",Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this,"⚠️ Kailangan ng pahintulot sa Mikropono para marinig ang tunog!",Toast.LENGTH_LONG).show()
+            }
+        }
     }
+
     override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }

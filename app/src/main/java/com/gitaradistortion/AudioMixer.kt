@@ -10,13 +10,10 @@ import kotlin.math.PI
 object AudioMixer {
     private const val SAFE_LIMIT = 0.95f
     private lateinit var prefs: SharedPreferences
-    private val PRESET_KEYS = listOf("ng","tone","gain","od","dist","fuzz","chorus","phaser","trem","vib","delay","rev","wah","amp","bass","mid","treble","master")
 
-    // ✅ MASTER
-    var masterOn = true
+    var masterOn = false  // ✅ DEFAULT OFF — HINDI AGAD MAGSISIMULA!
     var masterVolume = 0.5f
 
-    // ✅ LAHAT NG FX — 18
     var noiseGate   = 0.5f
     var tone        = 0.5f
     var gain        = 0.5f
@@ -43,7 +40,6 @@ object AudioMixer {
     fun setAllOn(e:Boolean) { masterOn = e }
     fun isAllOn():Boolean = masterOn
 
-    // ✅ BUILT-IN PRESETS
     fun applyPreset(name:String) {
         when(name) {
             "Clean" -> { noiseGate=0.2f;tone=0.5f;gain=0.25f;overdrive=0.0f;distortion=0.0f;fuzz=0.0f;chorus=0.15f;phaser=0.0f;tremolo=0.0f;vibrato=0.0f;delay=0.15f;reverb=0.25f;wah=0.5f;ampType=0.3f;bass=0.5f;mid=0.5f;treble=0.55f;masterVolume=0.5f }
@@ -53,7 +49,6 @@ object AudioMixer {
         }
     }
 
-    // ✅ I-SAVE ANG KASALUKUYANG SETTING
     fun savePreset(name:String) {
         prefs.edit().apply {
             putFloat("${name}_ng",noiseGate); putFloat("${name}_tone",tone)
@@ -69,17 +64,9 @@ object AudioMixer {
         }.apply()
     }
 
-    // ✅ KUNIN LAHAT NG NAISAVE NA PRESET
     fun getPresetNames():Set<String> = prefs.getStringSet("__list__", setOf("Clean","Blues","Rock","Metal"))!!
+    fun getAllValues():FloatArray = floatArrayOf(noiseGate,tone,gain,overdrive,distortion,fuzz,chorus,phaser,tremolo,vibrato,delay,reverb,wah,ampType,bass,mid,treble,masterVolume)
 
-    // ✅ KUNIN LAHAT NG VALUES PARA SA PIHITAN
-    fun getAllValues():FloatArray = floatArrayOf(
-        noiseGate,tone,gain,overdrive,distortion,fuzz,
-        chorus,phaser,tremolo,vibrato,delay,reverb,
-        wah,ampType,bass,mid,treble,masterVolume
-    )
-
-    // ✅ PAGPROSESO NG TUNOG — WALANG LATENCY
     fun process(input:Float):Float {
         if(!masterOn) return 0f
         var sig = input

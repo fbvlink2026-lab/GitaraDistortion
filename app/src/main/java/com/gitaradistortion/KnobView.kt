@@ -15,7 +15,7 @@ class KnobView(ctx:Context):View(ctx){
     var baseColor=0xFFFF8822.toInt()
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
     private var downY=0f;private var downV=0f
-    private var touchSlop=ViewConfiguration.get(ctx).scaledTouchSlop
+    private val touchSlop=ViewConfiguration.get(ctx).scaledTouchSlop
     private var isKnobTouch=false
 
     override fun onDraw(c:Canvas){
