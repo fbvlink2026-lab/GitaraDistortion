@@ -25,7 +25,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cabinetPanel: LinearLayout
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
 
-    // ✅ LAHAT NG FX — MIXER STYLE — MAY PANGALAN + KULAY
     private val fxList = listOf(
         Triple("🚧 NOISE GATE", 0xFF44DD88.toInt(), { AudioMixer.noiseGate }),
         Triple("🎵 TONE", 0xFFFFCC44.toInt(), { AudioMixer.tone }),
@@ -34,6 +33,7 @@ class MainActivity : AppCompatActivity() {
         Triple("🔴 DISTORTION", 0xFFFF4422.toInt(), { AudioMixer.distortion }),
         Triple("⚫ FUZZ", 0xFF664422.toInt(), { AudioMixer.fuzz }),
         Triple("🫧 CHORUS", 0xFF66AAFF.toInt(), { AudioMixer.chorus }),
+        Triple("✨ FLANGER", 0xFFFF44DD.toInt(), { AudioMixer.flanger }),
         Triple("🌀 PHASER", 0xFFAA66FF.toInt(), { AudioMixer.phaser }),
         Triple("📳 TREMOLO", 0xFFFF6688.toInt(), { AudioMixer.tremolo }),
         Triple("🎶 VIBRATO", 0xFF88CCFF.toInt(), { AudioMixer.vibrato }),
@@ -57,7 +57,6 @@ class MainActivity : AppCompatActivity() {
     private fun buildUI() {
         val root = findViewById<LinearLayout>(R.id.rootLayout)
 
-        // ✅ PAMAGAT
         val title = TextView(this)
         title.text = "🎸 GITARA FX — MIXER & PRESETS"
         title.textSize = 18f
@@ -74,16 +73,12 @@ class MainActivity : AppCompatActivity() {
         hint.setPadding(0,0,0,6)
         root.addView(hint)
 
-        // ✅ DALAWANG PANEL — MAIN MIXER + PRESETS CABINET
         val twoPanels = LinearLayout(this)
         twoPanels.orientation = LinearLayout.HORIZONTAL
         twoPanels.layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
         )
 
-        // ==========================================
-        // 🎛️ MAIN PANEL — MIXER STYLE — LAHAT NG PIHITAN
-        // ==========================================
         mainPanel = LinearLayout(this)
         mainPanel.orientation = LinearLayout.VERTICAL
         mainPanel.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 3f)
@@ -122,17 +117,18 @@ class MainActivity : AppCompatActivity() {
                         4 -> AudioMixer.distortion = v
                         5 -> AudioMixer.fuzz = v
                         6 -> AudioMixer.chorus = v
-                        7 -> AudioMixer.phaser = v
-                        8 -> AudioMixer.tremolo = v
-                        9 -> AudioMixer.vibrato = v
-                        10 -> AudioMixer.delay = v
-                        11 -> AudioMixer.reverb = v
-                        12 -> AudioMixer.wah = v
-                        13 -> AudioMixer.ampType = v
-                        14 -> AudioMixer.bass = v
-                        15 -> AudioMixer.mid = v
-                        16 -> AudioMixer.treble = v
-                        17 -> AudioMixer.masterVolume = v
+                        7 -> AudioMixer.flanger = v
+                        8 -> AudioMixer.phaser = v
+                        9 -> AudioMixer.tremolo = v
+                        10 -> AudioMixer.vibrato = v
+                        11 -> AudioMixer.delay = v
+                        12 -> AudioMixer.reverb = v
+                        13 -> AudioMixer.wah = v
+                        14 -> AudioMixer.ampType = v
+                        15 -> AudioMixer.bass = v
+                        16 -> AudioMixer.mid = v
+                        17 -> AudioMixer.treble = v
+                        18 -> AudioMixer.masterVolume = v
                     }
                 }
                 col.addView(knob, LinearLayout.LayoutParams(72,72))
@@ -151,12 +147,10 @@ class MainActivity : AppCompatActivity() {
         scroll.addView(grid)
         mainPanel.addView(scroll)
 
-        // ✅ PINAKAIBABA — ON/OFF LAHAT + SAVE PRESET
         val masterBar = LinearLayout(this)
         masterBar.orientation = LinearLayout.HORIZONTAL
         masterBar.gravity = Gravity.CENTER
         masterBar.setBackgroundColor(0xFF220000.toInt())
-        masterBar.setPadding(6,6,6,6)
         masterBar.setPadding(4,8,4,8)
 
         val masterBtn = Button(this)
@@ -209,9 +203,6 @@ class MainActivity : AppCompatActivity() {
         masterBar.addView(saveBtn)
         mainPanel.addView(masterBar)
 
-        // ==========================================
-        // 📦 CABINET — PEDAL STYLE KATULAD NG TONEBRIDGE
-        // ==========================================
         cabinetContainer = LinearLayout(this)
         cabinetContainer.orientation = LinearLayout.HORIZONTAL
         cabinetContainer.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 0f)
@@ -233,7 +224,6 @@ class MainActivity : AppCompatActivity() {
         val cabList = LinearLayout(this)
         cabList.orientation = LinearLayout.VERTICAL
 
-        // ✅ MGA PRESET — PEDAL STYLE! KATULAD NG TONEBRIDGE!
         listOf(
             Triple("Clean", 0xFF226644.toInt(), "Malinaw na tunog"),
             Triple("Blues", 0xFF664422.toInt(), "Mainit na tono"),
@@ -245,7 +235,6 @@ class MainActivity : AppCompatActivity() {
             pedal.setBackgroundColor(color)
             pedal.setPadding(12,12,12,12)
             pedal.gravity = Gravity.CENTER
-            pedal.setPadding(0,4,0,4)
             pedal.setOnClickListener {
                 AudioMixer.applyPreset(name)
                 updateKnobsFromPreset()
@@ -277,12 +266,10 @@ class MainActivity : AppCompatActivity() {
         cabinetPanel.addView(cabScroll)
         cabinetContainer.addView(cabinetPanel)
 
-        // ✅ ILAGAY LAHAT SA SCREEN
         twoPanels.addView(mainPanel)
         twoPanels.addView(cabinetContainer)
         root.addView(twoPanels)
 
-        // ✅ SWIPE PAKALIWA = BUKAS ANG CABINET
         twoPanels.setOnTouchListener { _, e ->
             when(e.action) {
                 MotionEvent.ACTION_DOWN -> startX = e.rawX
@@ -296,15 +283,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ KUSANG AYUSIN ANG LAHAT NG PIHITAN MULA SA PRESET!
     private fun updateKnobsFromPreset() {
         val vals = floatArrayOf(
             AudioMixer.noiseGate, AudioMixer.tone, AudioMixer.gain,
             AudioMixer.overdrive, AudioMixer.distortion, AudioMixer.fuzz,
-            AudioMixer.chorus, AudioMixer.phaser, AudioMixer.tremolo,
-            AudioMixer.vibrato, AudioMixer.delay, AudioMixer.reverb,
-            AudioMixer.wah, AudioMixer.ampType, AudioMixer.bass,
-            AudioMixer.mid, AudioMixer.treble, AudioMixer.masterVolume
+            AudioMixer.chorus, AudioMixer.flanger, AudioMixer.phaser,
+            AudioMixer.tremolo, AudioMixer.vibrato, AudioMixer.delay,
+            AudioMixer.reverb, AudioMixer.wah, AudioMixer.ampType,
+            AudioMixer.bass, AudioMixer.mid, AudioMixer.treble,
+            AudioMixer.masterVolume
         )
         for(i in knobViews.indices) {
             val (knob, pct) = knobViews[i]
