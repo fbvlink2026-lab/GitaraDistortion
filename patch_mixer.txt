@@ -1,0 +1,6 @@
+    var reverbOn = false
+    var reverbMix = 0.25f
+    var reverbDecay = 0.4f
+    var ampOn = false
+    var ampGain = 0.5f
+    var ampResponse = 0.6f

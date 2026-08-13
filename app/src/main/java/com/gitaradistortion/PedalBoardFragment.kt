@@ -29,16 +29,16 @@ class PedalBoardFragment : Fragment() {
     private val activePedals = mutableSetOf<String>()
 
     private val allPedals = listOf(
-        "reverb" to "🌊 REVERB" to 0xFF44CCDD.toInt(),
-        "amp" to "🔊 AMP" to 0xFFFFBB44.toInt(),
-        "noisegate" to "🚧 NOISE GATE" to 0xFF44DD88.toInt(),
-        "volume" to "🔊 VOLUME" to 0xFF4488FF.toInt(),
-        "gain" to "⚡ GAIN" to 0xFFFFDD22.toInt(),
-        "overdrive" to "🟠 OVERDRIVE" to 0xFFFFAA22.toInt(),
-        "distortion" to "🔴 DISTORTION" to 0xFFFF4422.toInt(),
-        "chorus" to "🫧 CHORUS" to 0xFF66AAFF.toInt(),
-        "delay" to "⏱️ DELAY" to 0xFFAA88FF.toInt(),
-        "wah" to "🎵 WAH-WAH" to 0xFFFF66AA.toInt()
+        Triple("noisegate", "🚧 NOISE GATE", 0xFF44DD88.toInt()),
+        Triple("volume", "🔊 VOLUME", 0xFF4488FF.toInt()),
+        Triple("gain", "⚡ GAIN", 0xFFFFDD22.toInt()),
+        Triple("overdrive", "🟠 OVERDRIVE", 0xFFFFAA22.toInt()),
+        Triple("distortion", "🔴 DISTORTION", 0xFFFF4422.toInt()),
+        Triple("chorus", "🫧 CHORUS", 0xFF66AAFF.toInt()),
+        Triple("delay", "⏱️ DELAY", 0xFFAA88FF.toInt()),
+        Triple("wah", "🎵 WAH-WAH", 0xFFFF66AA.toInt()),
+        Triple("reverb", "🌊 REVERB", 0xFF44CCDD.toInt()),
+        Triple("amp", "🔊 AMP", 0xFFFFBB44.toInt())
     )
 
     override fun onCreateView(
@@ -56,7 +56,7 @@ class PedalBoardFragment : Fragment() {
         presetBar.orientation = LinearLayout.HORIZONTAL
         presetBar.gravity = Gravity.CENTER
         presetBar.setBackgroundColor(0xFF1A1A2E.toInt())
-        presetBar.setPadding(4,4,4)
+        presetBar.setPadding(4,4,4,4)
 
         val presets = listOf("Clean","Blues","Rock","Metal")
         presets.forEach { name ->
@@ -106,6 +106,12 @@ class PedalBoardFragment : Fragment() {
                 putFloat("wahPos",AudioMixer.wahPosition)
                 putFloat("wahQ",AudioMixer.wahResonance)
                 putFloat("wahLvl",AudioMixer.wahLevel)
+                putBoolean("revOn",AudioMixer.reverbOn)
+                putFloat("revMx",AudioMixer.reverbMix)
+                putFloat("revDc",AudioMixer.reverbDecay)
+                putBoolean("ampOn",AudioMixer.ampOn)
+                putFloat("ampGn",AudioMixer.ampGain)
+                putFloat("ampRp",AudioMixer.ampResponse)
                 putString("activePedals",activePedals.joinToString(","))
             }.apply()
             Toast.makeText(ctx,"✅ NAISAVE ANG PRESET!",Toast.LENGTH_SHORT).show()
@@ -258,43 +264,20 @@ class PedalBoardFragment : Fragment() {
     }
 
     private fun createPedalView(pid:String, ctx:Context): View = when(pid) {
-        "noisegate" -> {
-            val p = NoiseGatePedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
-        "volume" -> {
-            val p = VolumePedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
-        "gain" -> {
-            val p = GainPedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
-        "overdrive" -> {
-            val p = OverdrivePedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
-        "distortion" -> {
-            val p = DistortionPedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
-        "chorus" -> {
-            val p = ChorusPedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
-        "delay" -> {
-            val p = DelayPedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
-        "wah" -> {
-            val p = WahPedal()
-            p.makeView(ctx).apply { tag = "pedal_$pid" }
-        }
+        "noisegate" -> NoiseGatePedal().makeView(ctx)
+        "volume" -> VolumePedal().makeView(ctx)
+        "gain" -> GainPedal().makeView(ctx)
+        "overdrive" -> OverdrivePedal().makeView(ctx)
+        "distortion" -> DistortionPedal().makeView(ctx)
+        "chorus" -> ChorusPedal().makeView(ctx)
+        "delay" -> DelayPedal().makeView(ctx)
+        "wah" -> WahPedal().makeView(ctx)
+        "reverb" -> ReverbPedal().makeView(ctx)
+        "amp" -> AmpPedal().makeView(ctx)
         else -> TextView(ctx)
     }
 
     private fun updatePedalConnections() {
-        // ✅ Ikabit ang mga halaga mula pedal papuntang AudioMixer
         activePedals.forEach { pid ->
             when(pid) {
                 "noisegate" -> AudioMixer.setNoiseGate(true, AudioMixer.noiseGateThreshold, AudioMixer.noiseGateRelease)
@@ -305,6 +288,8 @@ class PedalBoardFragment : Fragment() {
                 "chorus" -> AudioMixer.setChorus(true, AudioMixer.chorusSpeed, AudioMixer.chorusDepth)
                 "delay" -> AudioMixer.setDelay(AudioMixer.delayTime, AudioMixer.delayFeedback)
                 "wah" -> AudioMixer.setWah(true, AudioMixer.wahPosition, AudioMixer.wahResonance, AudioMixer.wahLevel)
+                "reverb" -> AudioMixer.setReverb(true, AudioMixer.reverbMix, AudioMixer.reverbDecay)
+                "amp" -> AudioMixer.setAmp(true, AudioMixer.ampGain, AudioMixer.ampResponse)
             }
         }
     }
