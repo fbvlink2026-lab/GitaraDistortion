@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
 
-    // ✅ ISA LANG ANG NAKA-ON — TANDAAN ANG KASALUKUYANG NAKA-ON
+    // ✅ ISA LANG PRESET ANG NAKA-ON SA ISANG ORAS
     private var activePresetName: String? = null
 
     private val fxList = listOf(
@@ -194,10 +194,19 @@ class MainActivity : AppCompatActivity() {
         return (getFixedDefaultPresets() + loadUserPresets()).toMutableList()
     }
 
-    // ✅ I-UPDATE ANG BUTTON NG LAHAT NG PRESET SA SCREEN
     private fun refreshAllPresetButtons() {
         pageContainer.removeViews(1, pageContainer.childCount-1)
         buildCabinetPages()
+    }
+
+    // ✅ I-UPDATE ANG MAIN POWER BUTTON — PALAGING ON KAPAG MAY PRESET NA BINUKSAN
+    private fun ensureMainIsOn() {
+        if(!AudioMixer.isAllOn()) {
+            AudioMixer.setAllOn(true)
+            mainPowerBtn.text = "🟢 ON"
+            mainPowerBtn.setBackgroundColor(-0x33DD33)
+            if(!AudioEngine.isRunning()) AudioEngine.start(this)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -308,14 +317,14 @@ class MainActivity : AppCompatActivity() {
         bar.setBackgroundColor(-0xDDDDFF)
         bar.setPadding(8,8,8,8)
 
-        // ✅ MAIN POWER BUTTON — ANG BOSS!
+        // ✅ MAIN POWER BUTTON — MANUAL LANG ANG PAGPATAY
         mainPowerBtn = Button(this)
         mainPowerBtn.text = "🔴 OFF"; mainPowerBtn.setTextColor(Color.WHITE)
         mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize = 13f
         mainPowerBtn.setOnClickListener {
             val isOn = AudioMixer.isAllOn()
             if(isOn) {
-                // ✅ PINATAY ANG MAIN → LAHAT NG PRESET = OFF!
+                // ✅ PINATAY ANG MAIN → LAHAT PRESET = OFF
                 AudioMixer.setAllOn(false)
                 mainPowerBtn.text = "🔴 OFF"
                 mainPowerBtn.setBackgroundColor(-0xDD7733)
@@ -328,23 +337,21 @@ class MainActivity : AppCompatActivity() {
                         p.isOn = false
                         if(i >= defaultNames.size) {
                             val uIdx = i - defaultNames.size
-                            if(uIdx < userPresets.size) {
-                                saveMainMixerToPreset(userPresets[uIdx])
-                            }
+                            if(uIdx < userPresets.size) saveMainMixerToPreset(userPresets[uIdx])
                         }
                     }
                 }
                 saveAllUserPresets(userPresets)
                 refreshAllPresetButtons()
                 AudioEngine.stop()
-                Toast.makeText(this,"⚫ MAIN OFF — LAHAT NG PRESET NAKA-OFF!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"⚫ MAIN OFF — LAHAT PRESET NAKA-OFF!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ BINUKSAN ANG MAIN — WALANG NAKA-ON PANG PRESET
+                // ✅ BINUKSAN ANG MAIN
                 AudioMixer.setAllOn(true)
                 mainPowerBtn.text = "🟢 ON"
                 mainPowerBtn.setBackgroundColor(-0x33DD33)
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
-                Toast.makeText(this,"🟢 MAIN ON — PUMILI NG PRESET SA CABINET!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"🟢 MAIN ON — PUMILI NG PRESET!",Toast.LENGTH_SHORT).show()
             }
         }
         bar.addView(mainPowerBtn)
@@ -362,24 +369,15 @@ class MainActivity : AppCompatActivity() {
         saveBtn.setOnClickListener {
             val n = savePresetName.text.toString().trim()
             val defaultNames = listOf("Clean", "Blues", "Rock", "Metal")
-            if(n.isBlank()) {
-                Toast.makeText(this,"❌ Ilagay ang pangalan!",Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            if(n in defaultNames) {
-                Toast.makeText(this,"❌ Hindi pwedeng pangalan ng Default Preset!",Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            if(n.isBlank()) { Toast.makeText(this,"❌ Ilagay ang pangalan!",Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            if(n in defaultNames) { Toast.makeText(this,"❌ Hindi pwedeng Default Preset!",Toast.LENGTH_SHORT).show(); return@setOnClickListener }
             val userPresets = loadUserPresets()
-            if(userPresets.any { it.name == n }) {
-                Toast.makeText(this,"❌ May preset na ganyang pangalan!",Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            if(userPresets.any { it.name == n }) { Toast.makeText(this,"❌ May preset na ganyang pangalan!",Toast.LENGTH_SHORT).show(); return@setOnClickListener }
             val newPreset = PedalPreset(name=n, color=pickColor(), isOn=false)
             saveMainMixerToPreset(newPreset)
             userPresets.add(newPreset)
             saveAllUserPresets(userPresets)
-            Toast.makeText(this,"✅ NAISAVE: $n!\nKasalukuyang halaga ang na-save!",Toast.LENGTH_LONG).show()
+            Toast.makeText(this,"✅ NAISAVE: $n!",Toast.LENGTH_LONG).show()
             savePresetName.text.clear()
             pageContainer.removeViews(1, pageContainer.childCount-1)
             buildCabinetPages()
@@ -422,15 +420,13 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
             val hint = TextView(this)
-            hint.text = "👆 PILI PRESET → ISA LANG PALAGI NAKA-ON! MAIN = BOSS!"
+            hint.text = "👆 ON PRESET → MAIN ON! PALIT PRESET → DATI OFF!"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
             hint.setPadding(0,4,0,8)
             cabPage.addView(hint)
-            pagePresets.forEach { preset ->
-                cabPage.addView(buildBigPedalView(preset))
-            }
+            pagePresets.forEach { preset -> cabPage.addView(buildBigPedalView(preset)) }
             pageContainer.addView(cabPage)
         }
     }
@@ -452,11 +448,7 @@ class MainActivity : AppCompatActivity() {
         powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF333333.toInt())
         powerBtn.setPadding(24,8,24,8)
         powerBtn.setOnClickListener {
-            // ✅ HINDI PWEDENG PILIIN KUNG NAKA-OFF ANG MAIN
-            if(!AudioMixer.isAllOn()) {
-                Toast.makeText(this,"❌ BUKASAN MUNA ANG MAIN MIXER!",Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            val datiActive = activePresetName
 
             if(preset.isOn) {
                 // ✅ PATAYIN ANG KASALUKUYANG PRESET
@@ -468,31 +460,29 @@ class MainActivity : AppCompatActivity() {
                 if(idx >= defaultCount) {
                     val userPresets = loadUserPresets()
                     val uIdx = idx - defaultCount
-                    if(uIdx < userPresets.size) {
-                        saveMainMixerToPreset(userPresets[uIdx])
-                        saveAllUserPresets(userPresets)
-                    }
+                    if(uIdx < userPresets.size) { saveMainMixerToPreset(userPresets[uIdx]); saveAllUserPresets(userPresets) }
                 }
-                Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!",Toast.LENGTH_SHORT).show()
+                refreshAllPresetButtons()
+                Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF! MAIN MANANATILING ON!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ BAGONG PRESET — PATAYIN ANG DATI BAGO BUKSAN ANG BAGO!
-                val dati = activePresetName
-                if(dati != null) {
-                    val datiPreset = allPresets.find { it.name == dati }
+                // ✅ BUKASAN ANG PRESET → AWTOMATIK ON ANG MAIN!
+                ensureMainIsOn()
+
+                // ✅ PATAYIN ANG DATING PRESET KUNG MAYROON
+                if(datiActive != null) {
+                    val datiPreset = allPresets.find { it.name == datiActive }
                     if(datiPreset != null) {
-                        val dIdx = allPresets.indexOfFirst { it.name == dati }
+                        val dIdx = allPresets.indexOfFirst { it.name == datiActive }
                         if(dIdx >= defaultCount) {
                             val userPresets = loadUserPresets()
                             val uIdx = dIdx - defaultCount
-                            if(uIdx < userPresets.size) {
-                                saveMainMixerToPreset(userPresets[uIdx])
-                                saveAllUserPresets(userPresets)
-                            }
+                            if(uIdx < userPresets.size) { saveMainMixerToPreset(userPresets[uIdx]); saveAllUserPresets(userPresets) }
                         }
                         datiPreset.isOn = false
                     }
                 }
-                // ✅ BUKSAN ANG BAGONG PRESET
+
+                // ✅ BUKASAN ANG BAGONG PRESET
                 preset.isOn = true
                 activePresetName = preset.name
                 loadPresetToMainMixer(preset)
@@ -532,19 +522,11 @@ class MainActivity : AppCompatActivity() {
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
                 val uIdx = idx - defaultCount
-                if(uIdx < userPresets.size) {
-                    userPresets[uIdx].master = v
-                    saveAllUserPresets(userPresets)
-                }
+                if(uIdx < userPresets.size) { userPresets[uIdx].master = v; saveAllUserPresets(userPresets) }
             }
-            if(preset.isOn) {
-                AudioMixer.masterVolume = v
-                updateAllKnobs()
-            }
+            if(preset.isOn) { AudioMixer.masterVolume = v; updateAllKnobs() }
         }
-        volRow.addView(volLabel)
-        volRow.addView(volKnob)
-        volRow.addView(volPct)
+        volRow.addView(volLabel); volRow.addView(volKnob); volRow.addView(volPct)
         volRow.setPadding(0,8,0,8)
         pedal.addView(volRow)
         val fxRow = LinearLayout(this)
@@ -571,19 +553,11 @@ class MainActivity : AppCompatActivity() {
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
                 val uIdx = idx - defaultCount
-                if(uIdx < userPresets.size) {
-                    userPresets[uIdx].dist = v
-                    saveAllUserPresets(userPresets)
-                }
+                if(uIdx < userPresets.size) { userPresets[uIdx].dist = v; saveAllUserPresets(userPresets) }
             }
-            if(preset.isOn) {
-                AudioMixer.distortion = v
-                updateAllKnobs()
-            }
+            if(preset.isOn) { AudioMixer.distortion = v; updateAllKnobs() }
         }
-        fxRow.addView(fxLabel)
-        fxRow.addView(fxKnob)
-        fxRow.addView(fxPct)
+        fxRow.addView(fxLabel); fxRow.addView(fxKnob); fxRow.addView(fxPct)
         fxRow.setPadding(0,8,0,8)
         pedal.addView(fxRow)
         val ngRow = LinearLayout(this)
@@ -610,19 +584,11 @@ class MainActivity : AppCompatActivity() {
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
                 val uIdx = idx - defaultCount
-                if(uIdx < userPresets.size) {
-                    userPresets[uIdx].ng = v
-                    saveAllUserPresets(userPresets)
-                }
+                if(uIdx < userPresets.size) { userPresets[uIdx].ng = v; saveAllUserPresets(userPresets) }
             }
-            if(preset.isOn) {
-                AudioMixer.noiseGate = v
-                updateAllKnobs()
-            }
+            if(preset.isOn) { AudioMixer.noiseGate = v; updateAllKnobs() }
         }
-        ngRow.addView(ngLabel)
-        ngRow.addView(ngKnob)
-        ngRow.addView(ngPct)
+        ngRow.addView(ngLabel); ngRow.addView(ngKnob); ngRow.addView(ngPct)
         ngRow.setPadding(0,8,0,8)
         pedal.addView(ngRow)
         return pedal
@@ -632,30 +598,19 @@ class MainActivity : AppCompatActivity() {
     private fun goNextCabinetPage() {
         val w = resources.displayMetrics.widthPixels
         val maxPage = pageContainer.childCount - 1
-        if(cabinetPageIndex + 1 < maxPage) {
-            cabinetPageIndex += 1
-            pageContainer.scrollTo(w*(1+cabinetPageIndex),0)
-        } else {
-            Toast.makeText(this,"✅ HULING PAGE NA!",Toast.LENGTH_SHORT).show()
-        }
+        if(cabinetPageIndex + 1 < maxPage) { cabinetPageIndex += 1; pageContainer.scrollTo(w*(1+cabinetPageIndex),0) }
+        else Toast.makeText(this,"✅ HULING PAGE NA!",Toast.LENGTH_SHORT).show()
     }
     private fun goPrevCabinetPage() {
-        if(cabinetPageIndex > 0) {
-            cabinetPageIndex -= 1
-            pageContainer.scrollTo(resources.displayMetrics.widthPixels*(1+cabinetPageIndex),0)
-        } else if(currentPage > 0) {
-            goToMainPage()
-        } else {
-            Toast.makeText(this,"✅ UNAANG PAGE NA!",Toast.LENGTH_SHORT).show()
-        }
+        if(cabinetPageIndex > 0) { cabinetPageIndex -= 1; pageContainer.scrollTo(resources.displayMetrics.widthPixels*(1+cabinetPageIndex),0) }
+        else if(currentPage > 0) goToMainPage()
+        else Toast.makeText(this,"✅ UNAANG PAGE NA!",Toast.LENGTH_SHORT).show()
     }
     private fun goToMainPage() { currentPage=0; cabinetPageIndex=0; pageContainer.scrollTo(0,0) }
 
     private val colors = listOf(-0xBB7734, -0x33BB78, -0x7733BB, -0xBB3377, -0x33BBBB, -0xBBBB33)
     private var colorIdx = 0
-    private fun pickColor(): Int {
-        return colors[colorIdx++ % colors.size]
-    }
+    private fun pickColor(): Int = colors[colorIdx++ % colors.size]
 
     private fun checkPermission() {
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
@@ -670,10 +625,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this,"✅ Pahintulot natanggap!",Toast.LENGTH_SHORT).show()
         }
     }
-    override fun onDestroy() {
-        super.onDestroy()
-        AudioEngine.stop()
-    }
+    override fun onDestroy() { super.onDestroy(); AudioEngine.stop() }
 }
 
 class PedalPreset(
@@ -700,30 +652,11 @@ class PedalPreset(
     var treble: Float = 0.5f,
     var master: Float = 0.5f
 ) {
-    fun toJson(): JSONObject {
-        return JSONObject().apply {
-            put("name", name)
-            put("color", color)
-            put("on", isOn)
-            put("ng", ng)
-            put("tone", tone)
-            put("gain", gain)
-            put("od", od)
-            put("dist", dist)
-            put("fuzz", fuzz)
-            put("chorus", chorus)
-            put("flanger", flanger)
-            put("phaser", phaser)
-            put("trem", trem)
-            put("vib", vib)
-            put("delay", delay)
-            put("reverb", reverb)
-            put("wah", wah)
-            put("amp", amp)
-            put("bass", bass)
-            put("mid", mid)
-            put("treble", treble)
-            put("master", master)
-        }
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("name", name); put("color", color); put("on", isOn)
+        put("ng", ng); put("tone", tone); put("gain", gain); put("od", od); put("dist", dist); put("fuzz", fuzz)
+        put("chorus", chorus); put("flanger", flanger); put("phaser", phaser); put("trem", trem); put("vib", vib)
+        put("delay", delay); put("reverb", reverb); put("wah", wah); put("amp", amp)
+        put("bass", bass); put("mid", mid); put("treble", treble); put("master", master)
     }
 }
