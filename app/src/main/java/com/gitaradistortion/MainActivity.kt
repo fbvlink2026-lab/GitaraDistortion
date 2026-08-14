@@ -74,25 +74,25 @@ class MainActivity : AppCompatActivity() {
     private fun getFixedDefaultPresets(): List<PedalPreset> {
         return listOf(
             PedalPreset("Clean", 0xFF22AA44.toInt(), isOn = false,
-                ng=0.1f, tone=0.3f, gain=0.5f, od=0.0f, dist=0.0f, fuzz=0.0f,
+                ng=0.0f, tone=0.0f, gain=0.0f, od=0.0f, dist=0.0f, fuzz=0.0f,
                 chorus=0.0f, flanger=0.0f, phaser=0.0f, trem=0.0f, vib=0.0f,
-                delay=0.0f, reverb=0.2f, wah=0.0f, amp=0.5f,
-                bass=0.5f, mid=0.5f, treble=0.5f, master=0.7f),
+                delay=0.0f, reverb=0.0f, wah=0.0f, amp=0.0f,
+                bass=0.0f, mid=0.0f, treble=0.0f, master=0.0f),
             PedalPreset("Blues", 0xFFFF8800.toInt(), isOn = false,
-                ng=0.2f, tone=0.5f, gain=0.6f, od=0.3f, dist=0.1f, fuzz=0.0f,
-                chorus=0.1f, flanger=0.0f, phaser=0.0f, trem=0.1f, vib=0.0f,
-                delay=0.2f, reverb=0.3f, wah=0.2f, amp=0.5f,
-                bass=0.6f, mid=0.5f, treble=0.4f, master=0.8f),
+                ng=0.0f, tone=0.0f, gain=0.0f, od=0.0f, dist=0.0f, fuzz=0.0f,
+                chorus=0.0f, flanger=0.0f, phaser=0.0f, trem=0.0f, vib=0.0f,
+                delay=0.0f, reverb=0.0f, wah=0.0f, amp=0.0f,
+                bass=0.0f, mid=0.0f, treble=0.0f, master=0.0f),
             PedalPreset("Rock", 0xFFFF4422.toInt(), isOn = false,
-                ng=0.3f, tone=0.6f, gain=0.8f, od=0.5f, dist=0.5f, fuzz=0.2f,
-                chorus=0.2f, flanger=0.1f, phaser=0.1f, trem=0.2f, vib=0.1f,
-                delay=0.3f, reverb=0.2f, wah=0.3f, amp=0.6f,
-                bass=0.6f, mid=0.5f, treble=0.5f, master=0.85f),
+                ng=0.0f, tone=0.0f, gain=0.0f, od=0.0f, dist=0.0f, fuzz=0.0f,
+                chorus=0.0f, flanger=0.0f, phaser=0.0f, trem=0.0f, vib=0.0f,
+                delay=0.0f, reverb=0.0f, wah=0.0f, amp=0.0f,
+                bass=0.0f, mid=0.0f, treble=0.0f, master=0.0f),
             PedalPreset("Metal", 0xFF222222.toInt(), isOn = false,
-                ng=0.5f, tone=0.7f, gain=0.95f, od=0.8f, dist=0.9f, fuzz=0.5f,
-                chorus=0.3f, flanger=0.2f, phaser=0.2f, trem=0.3f, vib=0.2f,
-                delay=0.4f, reverb=0.1f, wah=0.4f, amp=0.7f,
-                bass=0.7f, mid=0.5f, treble=0.6f, master=0.9f)
+                ng=0.0f, tone=0.0f, gain=0.0f, od=0.0f, dist=0.0f, fuzz=0.0f,
+                chorus=0.0f, flanger=0.0f, phaser=0.0f, trem=0.0f, vib=0.0f,
+                delay=0.0f, reverb=0.0f, wah=0.0f, amp=0.0f,
+                bass=0.0f, mid=0.0f, treble=0.0f, master=0.0f)
         )
     }
 
@@ -109,12 +109,12 @@ class MainActivity : AppCompatActivity() {
                     list.add(PedalPreset(
                         name = name,
                         color = o.optInt("color", 0xFFFF8800.toInt()),
-                        isOn = false,
-                        ng = o.optDouble("ng", 0.5).toFloat(),
-                        tone = o.optDouble("tone", 0.5).toFloat(),
-                        gain = o.optDouble("gain", 0.5).toFloat(),
+                        isOn = o.optBoolean("isOn", false),
+                        ng = o.optDouble("ng", 0.0).toFloat(),
+                        tone = o.optDouble("tone", 0.0).toFloat(),
+                        gain = o.optDouble("gain", 0.0).toFloat(),
                         od = o.optDouble("od", 0.0).toFloat(),
-                        dist = o.optDouble("dist", 0.5).toFloat(),
+                        dist = o.optDouble("dist", 0.0).toFloat(),
                         fuzz = o.optDouble("fuzz", 0.0).toFloat(),
                         chorus = o.optDouble("chorus", 0.0).toFloat(),
                         flanger = o.optDouble("flanger", 0.0).toFloat(),
@@ -124,11 +124,11 @@ class MainActivity : AppCompatActivity() {
                         delay = o.optDouble("delay", 0.0).toFloat(),
                         reverb = o.optDouble("reverb", 0.0).toFloat(),
                         wah = o.optDouble("wah", 0.0).toFloat(),
-                        amp = o.optDouble("amp", 0.5).toFloat(),
-                        bass = o.optDouble("bass", 0.5).toFloat(),
-                        mid = o.optDouble("mid", 0.5).toFloat(),
-                        treble = o.optDouble("treble", 0.5).toFloat(),
-                        master = o.optDouble("master", 0.5).toFloat()))
+                        amp = o.optDouble("amp", 0.0).toFloat(),
+                        bass = o.optDouble("bass", 0.0).toFloat(),
+                        mid = o.optDouble("mid", 0.0).toFloat(),
+                        treble = o.optDouble("treble", 0.0).toFloat(),
+                        master = o.optDouble("master", 0.0).toFloat()))
                 }
             }
         } catch(_:Exception) {}
@@ -139,6 +139,38 @@ class MainActivity : AppCompatActivity() {
         val arr = JSONArray()
         userPresets.forEach { arr.put(it.toJson()) }
         prefs.edit().putString("user_pedal_presets", arr.toString()).apply()
+    }
+
+    private fun saveCurrentStateToActivePreset() {
+        val name = activePresetName ?: return
+        val allPresets = getAllPresets()
+        val idx = allPresets.indexOfFirst { it.name == name }
+        if(idx < 4) return
+
+        val preset = allPresets[idx]
+        preset.ng = AudioMixer.noiseGate
+        preset.tone = AudioMixer.tone
+        preset.gain = AudioMixer.gain
+        preset.od = AudioMixer.overdrive
+        preset.dist = AudioMixer.distortion
+        preset.fuzz = AudioMixer.fuzz
+        preset.chorus = AudioMixer.chorus
+        preset.flanger = AudioMixer.flanger
+        preset.phaser = AudioMixer.phaser
+        preset.trem = AudioMixer.tremolo
+        preset.vib = AudioMixer.vibrato
+        preset.delay = AudioMixer.delay
+        preset.reverb = AudioMixer.reverb
+        preset.wah = AudioMixer.wah
+        preset.amp = AudioMixer.ampType
+        preset.bass = AudioMixer.bass
+        preset.mid = AudioMixer.mid
+        preset.treble = AudioMixer.treble
+        preset.master = AudioMixer.masterVolume
+
+        val userPresets = loadUserPresets()
+        userPresets[idx - 4] = preset
+        saveAllUserPresets(userPresets)
     }
 
     private fun loadPresetToMainMixer(preset: PedalPreset) {
@@ -164,26 +196,27 @@ class MainActivity : AppCompatActivity() {
         updateAllKnobs()
     }
 
-    private fun saveMainMixerToPreset(preset: PedalPreset) {
-        preset.ng = AudioMixer.noiseGate
-        preset.tone = AudioMixer.tone
-        preset.gain = AudioMixer.gain
-        preset.od = AudioMixer.overdrive
-        preset.dist = AudioMixer.distortion
-        preset.fuzz = AudioMixer.fuzz
-        preset.chorus = AudioMixer.chorus
-        preset.flanger = AudioMixer.flanger
-        preset.phaser = AudioMixer.phaser
-        preset.trem = AudioMixer.tremolo
-        preset.vib = AudioMixer.vibrato
-        preset.delay = AudioMixer.delay
-        preset.reverb = AudioMixer.reverb
-        preset.wah = AudioMixer.wah
-        preset.amp = AudioMixer.ampType
-        preset.bass = AudioMixer.bass
-        preset.mid = AudioMixer.mid
-        preset.treble = AudioMixer.treble
-        preset.master = AudioMixer.masterVolume
+    private fun zeroAllKnobs() {
+        AudioMixer.noiseGate = 0.0f
+        AudioMixer.tone = 0.0f
+        AudioMixer.gain = 0.0f
+        AudioMixer.overdrive = 0.0f
+        AudioMixer.distortion = 0.0f
+        AudioMixer.fuzz = 0.0f
+        AudioMixer.chorus = 0.0f
+        AudioMixer.flanger = 0.0f
+        AudioMixer.phaser = 0.0f
+        AudioMixer.tremolo = 0.0f
+        AudioMixer.vibrato = 0.0f
+        AudioMixer.delay = 0.0f
+        AudioMixer.reverb = 0.0f
+        AudioMixer.wah = 0.0f
+        AudioMixer.ampType = 0.0f
+        AudioMixer.bass = 0.0f
+        AudioMixer.mid = 0.0f
+        AudioMixer.treble = 0.0f
+        AudioMixer.masterVolume = 0.0f
+        updateAllKnobs()
     }
 
     private fun updateAllKnobs() {
@@ -206,23 +239,14 @@ class MainActivity : AppCompatActivity() {
         return (getFixedDefaultPresets() + loadUserPresets()).toMutableList()
     }
 
-    private fun turnOffAllPresets() {
+    private fun turnOffAllPresetsAndZeroMain() {
+        saveCurrentStateToActivePreset()
         val allPresets = getAllPresets()
-        val defaultNames = listOf("Clean", "Blues", "Rock", "Metal")
-        allPresets.forEachIndexed { i, p ->
-            if(p.isOn) {
-                p.isOn = false
-                if(i >= defaultNames.size) {
-                    val userPresets = loadUserPresets()
-                    val uIdx = i - defaultNames.size
-                    if(uIdx < userPresets.size) {
-                        saveMainMixerToPreset(userPresets[uIdx])
-                        saveAllUserPresets(userPresets)
-                    }
-                }
-            }
-        }
+        allPresets.forEach { it.isOn = false }
         activePresetName = null
+        zeroAllKnobs()
+        updateMainPowerUI(false)
+        refreshAllPresetButtons()
     }
 
     private fun updateMainPowerUI(isOn: Boolean) {
@@ -239,11 +263,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun saveLastState() {
+        val allPresets = getAllPresets()
+        val active = allPresets.find { it.isOn }
+        if(active != null) {
+            prefs.edit().putString("last_active_preset", active.name).apply()
+        } else {
+            prefs.edit().remove("last_active_preset").apply()
+        }
+    }
+
+    private fun restoreLastState() {
+        val lastName = prefs.getString("last_active_preset", null) ?: return
+        val allPresets = getAllPresets()
+        val preset = allPresets.find { it.name == lastName } ?: return
+        preset.isOn = true
+        activePresetName = preset.name
+        loadPresetToMainMixer(preset)
+        updateMainPowerUI(true)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         checkPermission()
         buildUI()
+        restoreLastState()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveLastState()
+        saveCurrentStateToActivePreset()
     }
 
     private fun buildUI() {
@@ -314,9 +365,10 @@ class MainActivity : AppCompatActivity() {
                 pct.setTextColor(Color.BLACK)
                 pct.textSize = 11f
 
+                val idx = k
                 knob.onChange = { v ->
                     pct.text = "${(v*100).toInt()}%"
-                    when(k) {
+                    when(idx) {
                         0 -> AudioMixer.noiseGate = v
                         1 -> AudioMixer.tone = v
                         2 -> AudioMixer.gain = v
@@ -337,16 +389,7 @@ class MainActivity : AppCompatActivity() {
                         17 -> AudioMixer.treble = v
                         18 -> AudioMixer.masterVolume = v
                     }
-                    val activePreset = getAllPresets().find { it.name == activePresetName && it.isOn }
-                    if(activePreset != null && activePreset.name !in listOf("Clean","Blues","Rock","Metal")) {
-                        saveMainMixerToPreset(activePreset)
-                        val userPresets = loadUserPresets()
-                        val idx = getAllPresets().indexOfFirst { it.name == activePresetName } - 4
-                        if(idx >= 0 && idx < userPresets.size) {
-                            userPresets[idx] = activePreset
-                            saveAllUserPresets(userPresets)
-                        }
-                    }
+                    saveCurrentStateToActivePreset()
                 }
 
                 col.addView(knob, LinearLayout.LayoutParams(80,80))
@@ -378,15 +421,10 @@ class MainActivity : AppCompatActivity() {
         mainPowerBtn.setOnClickListener {
             val isOn = AudioMixer.isAllOn()
             if(isOn) {
-                // ✅ MAIN OFF → PATAY LAHAT NG PRESET!
-                turnOffAllPresets()
-                updateMainPowerUI(false)
-                refreshAllPresetButtons()
-                Toast.makeText(this,"⚫ MAIN OFF → PATAY LAHAT NG PRESET!",Toast.LENGTH_SHORT).show()
+                turnOffAllPresetsAndZeroMain()
+                Toast.makeText(this,"⚫ PATAY LAHAT → MAIN = 0% LAHAT!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ MAIN ON → WALANG MANGYAYARI SA PRESET!
-                updateMainPowerUI(true)
-                Toast.makeText(this,"🟢 MAIN ON — WALANG PAGBABAGO SA PRESET!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"⚠️ Walang PRESET na naka-ON! Pumili muna sa Cabinet!",Toast.LENGTH_SHORT).show()
             }
         }
         bar.addView(mainPowerBtn)
@@ -433,8 +471,8 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this,"❌ Hindi pwedeng Default Preset!",Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val userPresets = loadUserPresets()
-            if(userPresets.any { it.name == n }) {
+            val allPresets = getAllPresets()
+            if(allPresets.any { it.name == n }) {
                 Toast.makeText(this,"❌ May preset na ganyang pangalan!",Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -446,9 +484,10 @@ class MainActivity : AppCompatActivity() {
                 reverb=AudioMixer.reverb, wah=AudioMixer.wah, amp=AudioMixer.ampType,
                 bass=AudioMixer.bass, mid=AudioMixer.mid, treble=AudioMixer.treble,
                 master=AudioMixer.masterVolume)
+            val userPresets = loadUserPresets()
             userPresets.add(newPreset)
             saveAllUserPresets(userPresets)
-            Toast.makeText(this,"✅ NAISAVE: $n!",Toast.LENGTH_LONG).show()
+            Toast.makeText(this,"✅ NAISAVE: $n! Pumunta sa Cabinet → Piliin!",Toast.LENGTH_LONG).show()
             savePresetName.text.clear()
             refreshAllPresetButtons()
         }
@@ -499,7 +538,7 @@ class MainActivity : AppCompatActivity() {
             cabPage.addView(topBar)
 
             val hint = TextView(this)
-            hint.text = "👆 ISA LANG ANG PWEDE NAKA-ON! AWTOMATIKONG MAG-OFF ANG IBA!"
+            hint.text = "👆 ISA LANG ANG PWEDE NAKA-ON! OFF = SAVE MUNA → MAIN = 0%"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -530,21 +569,32 @@ class MainActivity : AppCompatActivity() {
         powerBtn.setPadding(24,8,24,8)
         powerBtn.setOnClickListener {
             if(preset.isOn) {
-                // ✅ PRESET OFF → MAIN OFF DIN!
+                saveCurrentStateToActivePreset()
                 preset.isOn = false
                 activePresetName = null
+                zeroAllKnobs()
                 updateMainPowerUI(false)
                 refreshAllPresetButtons()
-                Toast.makeText(this,"⚫ ${preset.name} PATAY → MAIN PATAY DIN!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"⚫ ${preset.name} PATAY → NAISAVE MUNA! MAIN = 0%!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ PRESET ON → PATAY LAHAT NG IBA → MAIN ON DIN!
-                turnOffAllPresets()
+                val active = allPresets.find { it.isOn }
+                if(active != null) {
+                    active.isOn = false
+                    if(active.name !in listOf("Clean","Blues","Rock","Metal")) {
+                        val uIdx = allPresets.indexOfFirst { it.name == active.name } - 4
+                        if(uIdx >= 0) {
+                            val userPresets = loadUserPresets()
+                            userPresets[uIdx] = active
+                            saveAllUserPresets(userPresets)
+                        }
+                    }
+                }
                 preset.isOn = true
                 activePresetName = preset.name
                 loadPresetToMainMixer(preset)
                 updateMainPowerUI(true)
                 refreshAllPresetButtons()
-                Toast.makeText(this,"✅ ${preset.name} BUHAY → MAIN BUHAY DIN!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"✅ ${preset.name} BUHAY → KUSANG AYON ANG MAIN!",Toast.LENGTH_SHORT).show()
             }
         }
         pedal.addView(powerBtn)
@@ -557,7 +607,6 @@ class MainActivity : AppCompatActivity() {
         name.setPadding(0,8,0,8)
         pedal.addView(name)
 
-        // VOLUME KNOB
         val volRow = LinearLayout(this)
         volRow.orientation = LinearLayout.HORIZONTAL
         volRow.gravity = Gravity.CENTER_VERTICAL
@@ -578,7 +627,7 @@ class MainActivity : AppCompatActivity() {
         volKnob.onChange = { v ->
             preset.master = v
             volPct.text = "${(v*100).toInt()}%"
-            if(preset.isOn) { AudioMixer.masterVolume = v; updateAllKnobs() }
+            if(preset.isOn) { AudioMixer.masterVolume = v; updateAllKnobs(); saveCurrentStateToActivePreset() }
             val idx = allPresets.indexOfFirst { it.name == preset.name }
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
@@ -593,7 +642,6 @@ class MainActivity : AppCompatActivity() {
         volRow.setPadding(0,8,0,8)
         pedal.addView(volRow)
 
-        // EFFECTS KNOB
         val fxRow = LinearLayout(this)
         fxRow.orientation = LinearLayout.HORIZONTAL
         fxRow.gravity = Gravity.CENTER_VERTICAL
@@ -614,7 +662,7 @@ class MainActivity : AppCompatActivity() {
         fxKnob.onChange = { v ->
             preset.dist = v
             fxPct.text = "${(v*100).toInt()}%"
-            if(preset.isOn) { AudioMixer.distortion = v; updateAllKnobs() }
+            if(preset.isOn) { AudioMixer.distortion = v; updateAllKnobs(); saveCurrentStateToActivePreset() }
             val idx = allPresets.indexOfFirst { it.name == preset.name }
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
@@ -629,7 +677,6 @@ class MainActivity : AppCompatActivity() {
         fxRow.setPadding(0,8,0,8)
         pedal.addView(fxRow)
 
-        // NOISE GATE KNOB
         val ngRow = LinearLayout(this)
         ngRow.orientation = LinearLayout.HORIZONTAL
         ngRow.gravity = Gravity.CENTER_VERTICAL
@@ -650,7 +697,7 @@ class MainActivity : AppCompatActivity() {
         ngKnob.onChange = { v ->
             preset.ng = v
             ngPct.text = "${(v*100).toInt()}%"
-            if(preset.isOn) { AudioMixer.noiseGate = v; updateAllKnobs() }
+            if(preset.isOn) { AudioMixer.noiseGate = v; updateAllKnobs(); saveCurrentStateToActivePreset() }
             val idx = allPresets.indexOfFirst { it.name == preset.name }
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
@@ -677,9 +724,10 @@ class MainActivity : AppCompatActivity() {
     }
     private fun goPrevCabinetPage() {
         if(cabinetPageIndex > 0) { cabinetPageIndex -= 1; pageContainer.scrollTo(resources.displayMetrics.widthPixels * (1 + cabinetPageIndex), 0) }
-        else if(currentPage > 0) { currentPage = 0; cabinetPageIndex = 0; pageContainer.scrollTo(0,0) }
+        else if(currentPage > 0) { goToMainPage() }
         else Toast.makeText(this,"✅ UNAANG PAGE NA!",Toast.LENGTH_SHORT).show()
     }
+    private fun goToMainPage() { currentPage = 0; cabinetPageIndex = 0; pageContainer.scrollTo(0,0) }
 
     private fun checkPermission() {
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
@@ -701,11 +749,11 @@ class PedalPreset(
     val name: String,
     var color: Int,
     var isOn: Boolean = false,
-    var ng: Float = 0.5f,
-    var tone: Float = 0.5f,
-    var gain: Float = 0.5f,
+    var ng: Float = 0.0f,
+    var tone: Float = 0.0f,
+    var gain: Float = 0.0f,
     var od: Float = 0.0f,
-    var dist: Float = 0.5f,
+    var dist: Float = 0.0f,
     var fuzz: Float = 0.0f,
     var chorus: Float = 0.0f,
     var flanger: Float = 0.0f,
@@ -715,11 +763,11 @@ class PedalPreset(
     var delay: Float = 0.0f,
     var reverb: Float = 0.0f,
     var wah: Float = 0.0f,
-    var amp: Float = 0.5f,
-    var bass: Float = 0.5f,
-    var mid: Float = 0.5f,
-    var treble: Float = 0.5f,
-    var master: Float = 0.5f
+    var amp: Float = 0.0f,
+    var bass: Float = 0.0f,
+    var mid: Float = 0.0f,
+    var treble: Float = 0.0f,
+    var master: Float = 0.0f
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("name", name); put("color", color); put("isOn", isOn)
