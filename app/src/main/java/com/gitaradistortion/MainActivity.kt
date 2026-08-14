@@ -34,11 +34,11 @@ class MainActivity : AppCompatActivity() {
     
     private var activePresetName: String? = null
     
-    // ✅ AWTOMATIK NA ANG MAIN ON/OFF — HINDI NA PWEDE MANUALLY PINDUTIN
+    // ✅ AWTOMATIK ANG MAIN ON/OFF — HINDI NA PWEDE MANUALLY PINDUTIN
     private fun updateMainPowerState() {
         val anyOn = getAllPresets().any { it.isOn }
         if(anyOn) {
-            if(!AudioEngine.isRunning) AudioEngine.start(this)
+            AudioEngine.start(this)
             AudioMixer.setAllOn(true)
             val count = getAllPresets().count { it.isOn }
             mainPowerBtn.text = "🟢 ON ($count)"
