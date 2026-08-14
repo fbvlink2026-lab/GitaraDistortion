@@ -34,7 +34,6 @@ class MainActivity : AppCompatActivity() {
     private val knobViews = mutableListOf<Pair<KnobView, TextView>>()
     private val prefs by lazy { getSharedPreferences("GitaraPresets", Context.MODE_PRIVATE) }
 
-    // ✅ ISA LANG PRESET ANG NAKA-ON SA ISANG ORAS
     private var activePresetName: String? = null
 
     private val fxList = listOf(
@@ -199,14 +198,13 @@ class MainActivity : AppCompatActivity() {
         buildCabinetPages()
     }
 
-    // ✅ PRESET ON → MAIN ON AGAD! HINDI NA KAILANGANG MANUALLY!
-    private fun turnMainOnAutomatically() {
-        if(!AudioMixer.isAllOn()) {
-            AudioMixer.setAllOn(true)
-            mainPowerBtn.text = "🟢 ON"
-            mainPowerBtn.setBackgroundColor(-0x33DD33)
-            if(!AudioEngine.isRunning()) AudioEngine.start(this)
-        }
+    // ✅ ITO ANG SUSI — PRESET ON → AWTOMATIK ON ANG MAIN! WALANG KONDISYON!
+    private fun forceMainPowerOn() {
+        // ✅ AWTOMATIK ON ANG MAIN — KAHIT NAKA-OFF KANINA!
+        AudioMixer.setAllOn(true)
+        mainPowerBtn.text = "🟢 ON"
+        mainPowerBtn.setBackgroundColor(-0x33DD33)
+        if(!AudioEngine.isRunning()) AudioEngine.start(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -317,7 +315,7 @@ class MainActivity : AppCompatActivity() {
         bar.setBackgroundColor(-0xDDDDFF)
         bar.setPadding(8,8,8,8)
 
-        // ✅ MAIN POWER BUTTON — PATAY LANG ANG GAGAMITIN MANUAL
+        // ✅ MAIN POWER BUTTON — ITO LANG ANG NAGPAPATAY NG LAHAT
         mainPowerBtn = Button(this)
         mainPowerBtn.text = "🔴 OFF"; mainPowerBtn.setTextColor(Color.WHITE)
         mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize = 13f
@@ -451,7 +449,7 @@ class MainActivity : AppCompatActivity() {
             val datiActive = activePresetName
 
             if(preset.isOn) {
-                // ✅ PATAYIN ANG PRESET — MAIN MANANATILING ON!
+                // ✅ PATAYIN ANG PRESET — MAIN MANANATILING ON
                 preset.isOn = false
                 activePresetName = null
                 powerBtn.text = "⚫ NAKA-OFF"
@@ -465,10 +463,10 @@ class MainActivity : AppCompatActivity() {
                 refreshAllPresetButtons()
                 Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!\nMAIN MANANATILING ON!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ BUKASAN ANG PRESET → AWTOMATIK ON ANG MAIN! HINDI NA KAILANGANG MANUALLY!
-                turnMainOnAutomatically()
+                // ✅ BUKASAN ANG PRESET → AWTOMATIK ON ANG MAIN! SIGURADO NA!
+                forceMainPowerOn() // 👈 WALANG KONDISYON! DIRETSO ON AGAD!
 
-                // ✅ PATAYIN ANG DATING PRESET KUNG MAYROON
+                // ✅ PATAYIN ANG DATING PRESET
                 if(datiActive != null) {
                     val datiPreset = allPresets.find { it.name == datiActive }
                     if(datiPreset != null) {
