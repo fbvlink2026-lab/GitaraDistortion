@@ -34,20 +34,26 @@ class MainActivity : AppCompatActivity() {
     
     private var activePresetName: String? = null
     
-    // ✅ AWTOMATIK ANG MAIN ON/OFF — HINDI NA PWEDE MANUALLY PINDUTIN
+    // ✅ AWTOMATIK ANG MAIN ON/OFF — AYOS NA!
     private fun updateMainPowerState() {
-        val anyOn = getAllPresets().any { it.isOn }
+        val allPresets = getAllPresets()
+        val anyOn = allPresets.any { it.isOn }
+        
         if(anyOn) {
+            // ✅ MAY NAKA-ON → SIMULAN ANG AUDIO + ILAW GREEN!
             AudioEngine.start(this)
             AudioMixer.setAllOn(true)
-            val count = getAllPresets().count { it.isOn }
+            val count = allPresets.count { it.isOn }
             mainPowerBtn.text = "🟢 ON ($count)"
-            mainPowerBtn.setBackgroundColor(-0x33DD33)
+            mainPowerBtn.setBackgroundColor(0xFF22CC22.toInt())
+            mainPowerBtn.setTextColor(Color.WHITE)
         } else {
+            // ✅ WALA NANG NAKA-ON → ITIGIL ANG AUDIO + ILAW RED!
             AudioEngine.stop()
             AudioMixer.setAllOn(false)
             mainPowerBtn.text = "🔴 OFF"
-            mainPowerBtn.setBackgroundColor(-0xDD7733)
+            mainPowerBtn.setBackgroundColor(0xFFDD3333.toInt())
+            mainPowerBtn.setTextColor(Color.WHITE)
             activePresetName = null
             saveLastActivePresetName(null)
         }
@@ -216,6 +222,7 @@ class MainActivity : AppCompatActivity() {
         checkPermission()
         buildUI()
         
+        // ✅ I-RESTORE ANG HULING NAKA-ON NA PRESET
         val lastName = loadLastActivePresetName()
         if(!lastName.isNullOrBlank()) {
             val preset = getAllPresets().find { it.name == lastName }
@@ -225,6 +232,8 @@ class MainActivity : AppCompatActivity() {
                 activePresetName = lastName
             }
         }
+        
+        // ✅ AWTOMATIK I-UPDATE ANG MAIN BUTTON PAG BUKAS NG APP
         updateMainPowerState()
     }
 
@@ -273,7 +282,7 @@ class MainActivity : AppCompatActivity() {
         t.gravity = Gravity.CENTER; t.setPadding(0,8,0,4)
         mainPage.addView(t)
         val h = TextView(this)
-        h.text = "👉 SWIPE PAKALIWA → CABINET PEDALS | AWTOMATIK ANG MAIN ON/OFF!"
+        h.text = "👉 SWIPE PAKALIWA → CABINET | BUKAS PRESET → MAIN AWTOMATIK NAKA-ON!"
         h.textSize = 11f; h.setTextColor(-0x777778)
         h.gravity = Gravity.CENTER; h.setPadding(0,0,0,8)
         mainPage.addView(h)
@@ -363,7 +372,7 @@ class MainActivity : AppCompatActivity() {
         bar.setPadding(8,8,8,8)
         mainPowerBtn = Button(this)
         mainPowerBtn.text = "🔴 OFF"; mainPowerBtn.setTextColor(Color.WHITE)
-        mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize = 13f
+        mainPowerBtn.setBackgroundColor(0xFFDD3333.toInt()); mainPowerBtn.textSize = 13f
         mainPowerBtn.isClickable = false
         mainPowerBtn.isFocusable = false
         bar.addView(mainPowerBtn)
@@ -463,7 +472,7 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
             val hint = TextView(this)
-            hint.text = "✅ ISA LANG NAKA-ON! ✅ BUKAS BAGO = PATAY LAHAT NG IBA!"
+            hint.text = "✅ BUKAS PRESET → MAIN AWTOMATIK NAKA-ON! ISA LANG NAKA-ON!"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -505,7 +514,7 @@ class MainActivity : AppCompatActivity() {
 
         powerBtn.setOnClickListener {
             if(!preset.isOn) {
-                // ✅ BUKAS BAGO → PATAY LAHAT NG IBA! ISA LANG ANG NAKA-ON!
+                // ✅ BUKAS BAGO → PATAY LAHAT NG IBA! ISA LANG NAKA-ON!
                 getAllPresets().forEach { p ->
                     if(p.isOn && p.name != preset.name) {
                         p.isOn = false
@@ -516,17 +525,19 @@ class MainActivity : AppCompatActivity() {
                 loadPresetToMainMixer(preset)
                 activePresetName = preset.name
                 saveLastActivePresetName(preset.name)
-                Toast.makeText(this,"✅ NAKA-ON: ${preset.name} — LAHAT NG IBA NAKA-OFF!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"✅ NAKA-ON: ${preset.name}",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ PATAYIN ANG HULING NAKA-ON → MAIN AWTOMATIK PATAY
+                // ✅ PATAYIN ANG PRESET
                 preset.isOn = false
                 savePresetChanges(preset)
-                Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"⚫ NAKA-OFF: ${preset.name}",Toast.LENGTH_SHORT).show()
             }
-            // ✅ AWTOMATIK ANG MAIN + ILAW AGAD MAGBABAGO
+            
+            // ✅ AWTOMATIK I-UPDATE ANG MAIN BUTTON + ILAW AGAD!
             updateMainPowerState()
             updatePowerUI()
-            // ✅ I-REBUILD ANG PAGE PARA MAKITA ANG PAGBABAGO SA IBA PAG NAGPATAY
+            
+            // ✅ I-REBUILD ANG PAGE PARA MAKITA ANG PAGBABAGO SA IBA
             pageContainer.removeViews(1, pageContainer.childCount-1)
             buildCabinetPages()
         }
