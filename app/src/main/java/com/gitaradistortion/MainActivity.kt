@@ -36,6 +36,20 @@ class MainActivity : AppCompatActivity() {
 
     private var activePresetName: String? = null
 
+    // 🎨 MGA PAGPIPILING KULAY PARA SA PABALAT NG PEDAL
+    private val pedalColors = listOf(
+        "🔴 PULA" to 0xFFFF4422.toInt(),
+        "🟠 KULAY-ORANGE" to 0xFFFF9900.toInt(),
+        "🟡 DILAW" to 0xFFFFCC00.toInt(),
+        "🟢 BERDE" to 0xFF22CC44.toInt(),
+        "🔵 ASUL" to 0xFF2266FF.toInt(),
+        "🟣 LILA" to 0xFF9944FF.toInt(),
+        "⚪ PUTI" to 0xFFE0E0E0.toInt(),
+        "⚪ PILAK" to 0xFFC0C0C0.toInt(),
+        "🟤 KAYUMANGGI" to 0xFF885522.toInt(),
+        "⚫ ITIM" to 0xFF333333.toInt()
+    )
+
     private val fxList = listOf(
         Triple("🚧 NOISE GATE", -0x3BBB78, { AudioMixer.noiseGate }),
         Triple("🎵 TONE", -0x0033BC, { AudioMixer.tone }),
@@ -60,22 +74,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun getFixedDefaultPresets(): List<PedalPreset> {
         return listOf(
-            PedalPreset("Clean", -0x3399BB, isOn = false,
+            PedalPreset("Clean", 0xFF22AA44.toInt(), isOn = false,
                 ng=0.1f, tone=0.3f, gain=0.5f, od=0.0f, dist=0.0f, fuzz=0.0f,
                 chorus=0.0f, flanger=0.0f, phaser=0.0f, trem=0.0f, vib=0.0f,
                 delay=0.0f, reverb=0.2f, wah=0.0f, amp=0.5f,
                 bass=0.5f, mid=0.5f, treble=0.5f, master=0.7f),
-            PedalPreset("Blues", -0x99BB3D, isOn = false,
+            PedalPreset("Blues", 0xFFFF8800.toInt(), isOn = false,
                 ng=0.2f, tone=0.5f, gain=0.6f, od=0.3f, dist=0.1f, fuzz=0.0f,
                 chorus=0.1f, flanger=0.0f, phaser=0.0f, trem=0.1f, vib=0.0f,
                 delay=0.2f, reverb=0.3f, wah=0.2f, amp=0.5f,
                 bass=0.6f, mid=0.5f, treble=0.4f, master=0.8f),
-            PedalPreset("Rock", -0x66DDDD, isOn = false,
+            PedalPreset("Rock", 0xFFFF4422.toInt(), isOn = false,
                 ng=0.3f, tone=0.6f, gain=0.8f, od=0.5f, dist=0.5f, fuzz=0.2f,
                 chorus=0.2f, flanger=0.1f, phaser=0.1f, trem=0.2f, vib=0.1f,
                 delay=0.3f, reverb=0.2f, wah=0.3f, amp=0.6f,
                 bass=0.6f, mid=0.5f, treble=0.5f, master=0.85f),
-            PedalPreset("Metal", -0xDDDDDD, isOn = false,
+            PedalPreset("Metal", 0xFF222222.toInt(), isOn = false,
                 ng=0.5f, tone=0.7f, gain=0.95f, od=0.8f, dist=0.9f, fuzz=0.5f,
                 chorus=0.3f, flanger=0.2f, phaser=0.2f, trem=0.3f, vib=0.2f,
                 delay=0.4f, reverb=0.1f, wah=0.4f, amp=0.7f,
@@ -95,7 +109,7 @@ class MainActivity : AppCompatActivity() {
                 if(name !in defaultNames) {
                     list.add(PedalPreset(
                         name = name,
-                        color = o.optInt("color", -0xBB7733),
+                        color = o.optInt("color", 0xFFFF8800.toInt()),
                         isOn = false,
                         ng = o.optDouble("ng", 0.5).toFloat(),
                         tone = o.optDouble("tone", 0.5).toFloat(),
@@ -198,7 +212,6 @@ class MainActivity : AppCompatActivity() {
         buildCabinetPages()
     }
 
-    // ✅ PRESET ON → AWTOMATIK ON ANG MAIN! WALANG KONDISYON!
     private fun forceMainPowerOn() {
         AudioMixer.setAllOn(true)
         mainPowerBtn.text = "🟢 ON"
@@ -295,7 +308,6 @@ class MainActivity : AppCompatActivity() {
                         17 -> AudioMixer.treble = v
                         18 -> AudioMixer.masterVolume = v
                     }
-                    // ✅ AUTO-SAVE SA ACTIVE PRESET HABANG GUMAGALAW ANG MAIN!
                     val activePreset = getAllPresets().find { it.name == activePresetName && it.isOn }
                     if(activePreset != null && activePreset.name !in listOf("Clean","Blues","Rock","Metal")) {
                         saveMainMixerToPreset(activePreset)
@@ -325,7 +337,6 @@ class MainActivity : AppCompatActivity() {
         bar.setBackgroundColor(-0xDDDDFF)
         bar.setPadding(8,8,8,8)
 
-        // ✅ MAIN POWER BUTTON
         mainPowerBtn = Button(this)
         mainPowerBtn.text = "🔴 OFF"; mainPowerBtn.setTextColor(Color.WHITE)
         mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize = 13f
@@ -369,6 +380,22 @@ class MainActivity : AppCompatActivity() {
         savePresetName.setBackgroundColor(-0xDDDDDE)
         savePresetName.setPadding(8,4,8,4)
         bar.addView(savePresetName, LinearLayout.LayoutParams(0,-1,1f).apply { setMargins(12,0,12,0) })
+
+        val colorPickerBtn = Button(this)
+        colorPickerBtn.text = "🎨 KULAY"
+        colorPickerBtn.setTextColor(Color.WHITE)
+        colorPickerBtn.setBackgroundColor(0xFF666666.toInt())
+        colorPickerBtn.textSize = 11f
+        var selectedColor = 0xFFFF8800.toInt()
+        colorPickerBtn.setOnClickListener {
+            showColorPickerDialog { color ->
+                selectedColor = color
+                colorPickerBtn.setBackgroundColor(color)
+                Toast.makeText(this,"✅ Napili na kulay!",Toast.LENGTH_SHORT).show()
+            }
+        }
+        bar.addView(colorPickerBtn)
+
         val saveBtn = Button(this)
         saveBtn.text = "💾 SAVE"; saveBtn.setTextColor(Color.WHITE)
         saveBtn.setBackgroundColor(-0xBB7733); saveBtn.textSize = 12f
@@ -379,11 +406,11 @@ class MainActivity : AppCompatActivity() {
             if(n in defaultNames) { Toast.makeText(this,"❌ Hindi pwedeng Default Preset!",Toast.LENGTH_SHORT).show(); return@setOnClickListener }
             val userPresets = loadUserPresets()
             if(userPresets.any { it.name == n }) { Toast.makeText(this,"❌ May preset na ganyang pangalan!",Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-            val newPreset = PedalPreset(name=n, color=pickColor(), isOn=false)
+            val newPreset = PedalPreset(name=n, color=selectedColor, isOn=false)
             saveMainMixerToPreset(newPreset)
             userPresets.add(newPreset)
             saveAllUserPresets(userPresets)
-            Toast.makeText(this,"✅ NAISAVE: $n!",Toast.LENGTH_LONG).show()
+            Toast.makeText(this,"✅ NAISAVE: $n!\n✅ May sariling kulay na!",Toast.LENGTH_LONG).show()
             savePresetName.text.clear()
             pageContainer.removeViews(1, pageContainer.childCount-1)
             buildCabinetPages()
@@ -391,6 +418,16 @@ class MainActivity : AppCompatActivity() {
         bar.addView(saveBtn)
         mainPage.addView(bar)
         pageContainer.addView(mainPage)
+    }
+
+    private fun showColorPickerDialog(onColorSelected: (Int) -> Unit) {
+        val dialog = android.app.AlertDialog.Builder(this)
+        dialog.setTitle("🎨 PILIIN ANG KULAY NG PABALAT")
+        val items = pedalColors.map { it.first }.toTypedArray()
+        dialog.setItems(items) { _, which ->
+            onColorSelected(pedalColors[which].second)
+        }
+        dialog.show()
     }
 
     private fun buildCabinetPages() {
@@ -426,7 +463,7 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
             val hint = TextView(this)
-            hint.text = "👆 PINDUTIN PRESET ON → AWTOMATIK ON ANG MAIN + SABAY ANG PIHITAN!"
+            hint.text = "👆 PILI KULAY BAGO MAG-SAVE! TONEBRIDGE STYLE!"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -457,7 +494,6 @@ class MainActivity : AppCompatActivity() {
             val datiActive = activePresetName
 
             if(preset.isOn) {
-                // ✅ PATAYIN ANG PRESET — AUTO-SAVE BAGO PATAYIN
                 preset.isOn = false
                 val idx = allPresets.indexOfFirst { it.name == preset.name }
                 if(idx >= defaultCount) {
@@ -471,10 +507,8 @@ class MainActivity : AppCompatActivity() {
                 refreshAllPresetButtons()
                 Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!\n✅ NAISAVE NA!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ BUKASAN ANG PRESET → MAIN ON AGAD + SABAY ANG LAHAT NG PIHITAN!
                 forceMainPowerOn()
 
-                // ✅ PATAYIN ANG DATING PRESET + I-SAVE BAGO MAGPALIT
                 if(datiActive != null) {
                     val datiIdx = allPresets.indexOfFirst { it.name == datiActive }
                     if(datiIdx >= 0) {
@@ -488,10 +522,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                // ✅ BUKASAN ANG BAGONG PRESET → I-LOAD LAHAT SA MAIN MIXER!
                 preset.isOn = true
                 activePresetName = preset.name
-                loadPresetToMainMixer(preset) // 👈 SABAY ANG LAHAT NG PIHITAN!
+                loadPresetToMainMixer(preset)
                 refreshAllPresetButtons()
                 Toast.makeText(this,"✅ ${preset.name} — NAKA-ON!\n✅ LAHAT PIHITAN AY AYON SA PRESET!",Toast.LENGTH_SHORT).show()
             }
@@ -505,7 +538,6 @@ class MainActivity : AppCompatActivity() {
         name.setPadding(0,8,0,8)
         pedal.addView(name)
 
-        // ✅ VOLUME KNOB — SABAY SA MAIN + AUTO-SAVE!
         val volRow = LinearLayout(this)
         volRow.orientation = LinearLayout.HORIZONTAL
         volRow.gravity = Gravity.CENTER_VERTICAL
@@ -526,9 +558,7 @@ class MainActivity : AppCompatActivity() {
         volKnob.onChange = { v ->
             preset.master = v
             volPct.text = "${(v*100).toInt()}%"
-            // ✅ SABAY SA MAIN MIXER
             if(preset.isOn) { AudioMixer.masterVolume = v; updateAllKnobs() }
-            // ✅ AUTO-SAVE AGAD!
             val idx = allPresets.indexOfFirst { it.name == preset.name }
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
@@ -540,7 +570,6 @@ class MainActivity : AppCompatActivity() {
         volRow.setPadding(0,8,0,8)
         pedal.addView(volRow)
 
-        // ✅ DISTORTION KNOB — SABAY SA MAIN + AUTO-SAVE!
         val fxRow = LinearLayout(this)
         fxRow.orientation = LinearLayout.HORIZONTAL
         fxRow.gravity = Gravity.CENTER_VERTICAL
@@ -561,9 +590,7 @@ class MainActivity : AppCompatActivity() {
         fxKnob.onChange = { v ->
             preset.dist = v
             fxPct.text = "${(v*100).toInt()}%"
-            // ✅ SABAY SA MAIN MIXER
             if(preset.isOn) { AudioMixer.distortion = v; updateAllKnobs() }
-            // ✅ AUTO-SAVE AGAD!
             val idx = allPresets.indexOfFirst { it.name == preset.name }
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
@@ -575,7 +602,6 @@ class MainActivity : AppCompatActivity() {
         fxRow.setPadding(0,8,0,8)
         pedal.addView(fxRow)
 
-        // ✅ NOISE GATE KNOB — SABAY SA MAIN + AUTO-SAVE!
         val ngRow = LinearLayout(this)
         ngRow.orientation = LinearLayout.HORIZONTAL
         ngRow.gravity = Gravity.CENTER_VERTICAL
@@ -596,9 +622,7 @@ class MainActivity : AppCompatActivity() {
         ngKnob.onChange = { v ->
             preset.ng = v
             ngPct.text = "${(v*100).toInt()}%"
-            // ✅ SABAY SA MAIN MIXER
             if(preset.isOn) { AudioMixer.noiseGate = v; updateAllKnobs() }
-            // ✅ AUTO-SAVE AGAD!
             val idx = allPresets.indexOfFirst { it.name == preset.name }
             if(idx >= defaultCount) {
                 val userPresets = loadUserPresets()
@@ -627,10 +651,6 @@ class MainActivity : AppCompatActivity() {
     }
     private fun goToMainPage() { currentPage=0; cabinetPageIndex=0; pageContainer.scrollTo(0,0) }
 
-    private val colors = listOf(-0xBB7734, -0x33BB78, -0x7733BB, -0xBB3377, -0x33BBBB, -0xBBBB33)
-    private var colorIdx = 0
-    private fun pickColor(): Int = colors[colorIdx++ % colors.size]
-
     private fun checkPermission() {
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this,"✅ Handa na! Swipe pakaliwa → Cabinet!",Toast.LENGTH_LONG).show()
@@ -649,7 +669,7 @@ class MainActivity : AppCompatActivity() {
 
 class PedalPreset(
     val name: String,
-    val color: Int,
+    var color: Int,
     var isOn: Boolean = false,
     var ng: Float = 0.5f,
     var tone: Float = 0.5f,
