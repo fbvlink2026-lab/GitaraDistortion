@@ -76,8 +76,8 @@ class MainActivity : AppCompatActivity() {
         Triple("🎚️ MASTER", -0x000001, { AudioMixer.masterVolume })
     )
 
-    private fun getFixedDefaultPresets(): List<PedalPreset> {
-        return listOf(
+    private fun getFixedDefaultPresets(): MutableList<PedalPreset> {
+        return mutableListOf(
             PedalPreset("Clean", -0x3399BB, isOn = false,
                 ng=0.1f, tone=0.3f, gain=0.5f, od=0.0f, dist=0.0f, fuzz=0.0f,
                 chorus=0.0f, flanger=0.0f, phaser=0.0f, trem=0.0f, vib=0.0f,
@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         return list
     }
 
-    private fun saveAllUserPresets(userPresets: List<PedalPreset>) {
+    private fun saveAllUserPresets(userPresets: MutableList<PedalPreset>) {
         val arr = JSONArray()
         userPresets.forEach { arr.put(it.toJson()) }
         prefs.edit().putString("user_pedal_presets", arr.toString()).apply()
@@ -196,8 +196,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getAllPresets(): List<PedalPreset> {
-        return getFixedDefaultPresets() + loadUserPresets()
+    private fun getAllPresets(): MutableList<PedalPreset> {
+        return getFixedDefaultPresets().apply { addAll(loadUserPresets()) }
     }
 
     private fun saveLastActivePresetName(name: String?) {
