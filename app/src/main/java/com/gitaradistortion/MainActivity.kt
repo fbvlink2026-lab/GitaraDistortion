@@ -472,7 +472,7 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
             val hint = TextView(this)
-            hint.text = "✅ ISA LANG NAKA-ON! Pindutin = AGAD MAG-IILAW!"
+            hint.text = "✅ PINDOT = AGAD MAG-IILAW! ✅ PATAY = AGAD MABABALIK!"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -496,7 +496,7 @@ class MainActivity : AppCompatActivity() {
         
         val powerBtn = Button(this)
         
-        fun updatePowerButton() {
+        fun updatePowerUI() {
             if(preset.isOn) {
                 powerBtn.text = "💡 NAKA-ON"
                 powerBtn.setBackgroundColor(0xFF22CC22.toInt())
@@ -505,9 +505,10 @@ class MainActivity : AppCompatActivity() {
                 powerBtn.setBackgroundColor(0xFF111111.toInt())
             }
             powerBtn.setTextColor(Color.WHITE)
+            powerBtn.invalidate()
         }
         
-        updatePowerButton()
+        updatePowerUI()
         powerBtn.textSize = 16f
         powerBtn.setPadding(24,8,24,8)
 
@@ -521,14 +522,15 @@ class MainActivity : AppCompatActivity() {
                         savePresetChanges(p)
                     }
                 }
+                preset.isOn = true
                 loadPresetToMainMixer(preset)
                 activePresetName = preset.name
                 saveLastActivePresetName(preset.name)
                 if(!mainIsOn) mainIsOn = true
                 Toast.makeText(this,"✅ NAKA-ON: ${preset.name}",Toast.LENGTH_SHORT).show()
             } else {
-                savePresetChanges(preset)
                 preset.isOn = false
+                savePresetChanges(preset)
                 val anyOn = getAllPresets().any { it.isOn }
                 if(!anyOn) {
                     activePresetName = null
@@ -539,7 +541,7 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!",Toast.LENGTH_SHORT).show()
                 }
             }
-            buildCabinetPages()
+            updatePowerUI()
         }
         pedal.addView(powerBtn)
 
