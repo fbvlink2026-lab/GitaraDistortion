@@ -199,8 +199,8 @@ class MainActivity : AppCompatActivity() {
         buildCabinetPages()
     }
 
-    // ✅ I-UPDATE ANG MAIN POWER BUTTON — PALAGING ON KAPAG MAY PRESET NA BINUKSAN
-    private fun ensureMainIsOn() {
+    // ✅ PRESET ON → MAIN ON AGAD! HINDI NA KAILANGANG MANUALLY!
+    private fun turnMainOnAutomatically() {
         if(!AudioMixer.isAllOn()) {
             AudioMixer.setAllOn(true)
             mainPowerBtn.text = "🟢 ON"
@@ -317,7 +317,7 @@ class MainActivity : AppCompatActivity() {
         bar.setBackgroundColor(-0xDDDDFF)
         bar.setPadding(8,8,8,8)
 
-        // ✅ MAIN POWER BUTTON — MANUAL LANG ANG PAGPATAY
+        // ✅ MAIN POWER BUTTON — PATAY LANG ANG GAGAMITIN MANUAL
         mainPowerBtn = Button(this)
         mainPowerBtn.text = "🔴 OFF"; mainPowerBtn.setTextColor(Color.WHITE)
         mainPowerBtn.setBackgroundColor(-0xDD7733); mainPowerBtn.textSize = 13f
@@ -346,12 +346,12 @@ class MainActivity : AppCompatActivity() {
                 AudioEngine.stop()
                 Toast.makeText(this,"⚫ MAIN OFF — LAHAT PRESET NAKA-OFF!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ BINUKSAN ANG MAIN
+                // ✅ BINUKSAN ANG MAIN MANUALLY
                 AudioMixer.setAllOn(true)
                 mainPowerBtn.text = "🟢 ON"
                 mainPowerBtn.setBackgroundColor(-0x33DD33)
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
-                Toast.makeText(this,"🟢 MAIN ON — PUMILI NG PRESET!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"🟢 MAIN ON!",Toast.LENGTH_SHORT).show()
             }
         }
         bar.addView(mainPowerBtn)
@@ -420,7 +420,7 @@ class MainActivity : AppCompatActivity() {
             topBar.addView(title, LinearLayout.LayoutParams(0,-1,1f))
             cabPage.addView(topBar)
             val hint = TextView(this)
-            hint.text = "👆 ON PRESET → MAIN ON! PALIT PRESET → DATI OFF!"
+            hint.text = "👆 PINDUTIN PRESET ON → AWTOMATIK ON ANG MAIN!"
             hint.textSize = 11f
             hint.setTextColor(-0x888889)
             hint.gravity = Gravity.CENTER
@@ -451,7 +451,7 @@ class MainActivity : AppCompatActivity() {
             val datiActive = activePresetName
 
             if(preset.isOn) {
-                // ✅ PATAYIN ANG KASALUKUYANG PRESET
+                // ✅ PATAYIN ANG PRESET — MAIN MANANATILING ON!
                 preset.isOn = false
                 activePresetName = null
                 powerBtn.text = "⚫ NAKA-OFF"
@@ -463,10 +463,10 @@ class MainActivity : AppCompatActivity() {
                     if(uIdx < userPresets.size) { saveMainMixerToPreset(userPresets[uIdx]); saveAllUserPresets(userPresets) }
                 }
                 refreshAllPresetButtons()
-                Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF! MAIN MANANATILING ON!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!\nMAIN MANANATILING ON!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ BUKASAN ANG PRESET → AWTOMATIK ON ANG MAIN!
-                ensureMainIsOn()
+                // ✅ BUKASAN ANG PRESET → AWTOMATIK ON ANG MAIN! HINDI NA KAILANGANG MANUALLY!
+                turnMainOnAutomatically()
 
                 // ✅ PATAYIN ANG DATING PRESET KUNG MAYROON
                 if(datiActive != null) {
@@ -487,7 +487,7 @@ class MainActivity : AppCompatActivity() {
                 activePresetName = preset.name
                 loadPresetToMainMixer(preset)
                 refreshAllPresetButtons()
-                Toast.makeText(this,"✅ ${preset.name} — NAKA-ON!\nDati ay NAKA-OFF NA!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"✅ ${preset.name} — NAKA-ON!\nMAIN AWTOMATIK NABUKASAN!",Toast.LENGTH_SHORT).show()
             }
         }
         pedal.addView(powerBtn)
