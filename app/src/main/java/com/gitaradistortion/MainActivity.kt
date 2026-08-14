@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity() {
     private fun forceMainPowerOn() {
         AudioMixer.setAllOn(true)
         mainPowerBtn.text = "🟢 ON"
-        mainPowerBtn.setBackgroundColor(0xFF22EE22.toInt())
+        mainPowerBtn.setBackgroundColor(0xFF00FF00.toInt())
         if(!AudioEngine.isRunning()) AudioEngine.start(this)
     }
 
@@ -365,7 +365,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 AudioMixer.setAllOn(true)
                 mainPowerBtn.text = "🟢 ON"
-                mainPowerBtn.setBackgroundColor(0xFF22EE22.toInt())
+                mainPowerBtn.setBackgroundColor(0xFF00FF00.toInt())
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
                 Toast.makeText(this,"🟢 MAIN ON!",Toast.LENGTH_SHORT).show()
             }
@@ -490,7 +490,7 @@ class MainActivity : AppCompatActivity() {
         powerBtn.textSize = 16f
         powerBtn.setTextColor(Color.WHITE)
         // ✅ AYOS NA ANG ILAW — ITIM KAPAG OFF, BERDE KAPAG ON!
-        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22EE22.toInt() else 0xFF1A1A1A.toInt())
+        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF00FF00.toInt() else 0xFF1A1A1A.toInt())
         powerBtn.setPadding(24,8,24,8)
         powerBtn.setOnClickListener {
             val datiActive = activePresetName
@@ -529,7 +529,7 @@ class MainActivity : AppCompatActivity() {
                 preset.isOn = true
                 // ✅ ILAW → BERDE UMIILAW
                 powerBtn.text = "💡 NAKA-ON"
-                powerBtn.setBackgroundColor(0xFF22EE22.toInt())
+                powerBtn.setBackgroundColor(0xFF00FF00.toInt())
 
                 activePresetName = preset.name
                 loadPresetToMainMixer(preset)
