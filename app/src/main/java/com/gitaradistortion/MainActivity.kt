@@ -32,10 +32,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var savePresetName: EditText
     private lateinit var mainPowerBtn: Button
     
-    // ✅ HULING NAKA-ON NA PRESET — ISA LANG!
     private var activePresetName: String? = null
     
-    // ✅ MAIN POWER STATE
     private var mainIsOn: Boolean = false
         set(value) {
             field = value
@@ -78,8 +76,8 @@ class MainActivity : AppCompatActivity() {
         Triple("🎚️ MASTER", -0x000001, { AudioMixer.masterVolume })
     )
 
-    private fun getFixedDefaultPresets(): MutableList<PedalPreset> {
-        return mutableListOf(
+    private fun getFixedDefaultPresets(): List<PedalPreset> {
+        return listOf(
             PedalPreset("Clean", -0x3399BB, isOn = false,
                 ng=0.1f, tone=0.3f, gain=0.5f, od=0.0f, dist=0.0f, fuzz=0.0f,
                 chorus=0.0f, flanger=0.0f, phaser=0.0f, trem=0.0f, vib=0.0f,
@@ -198,7 +196,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getAllPresets(): MutableList<PedalPreset> {
+    private fun getAllPresets(): List<PedalPreset> {
         return getFixedDefaultPresets() + loadUserPresets()
     }
 
@@ -498,14 +496,13 @@ class MainActivity : AppCompatActivity() {
         
         val powerBtn = Button(this)
         
-        // ✅ I-REFRESH ANG BUTTON — AGAD ANG PAGBABAGO!
         fun updatePowerButton() {
             if(preset.isOn) {
                 powerBtn.text = "💡 NAKA-ON"
-                powerBtn.setBackgroundColor(0xFF22CC22.toInt()) // ✅ BRIGHT GREEN!
+                powerBtn.setBackgroundColor(0xFF22CC22.toInt())
             } else {
                 powerBtn.text = "⚫ NAKA-OFF"
-                powerBtn.setBackgroundColor(0xFF111111.toInt()) // ✅ DARK BLACK!
+                powerBtn.setBackgroundColor(0xFF111111.toInt())
             }
             powerBtn.setTextColor(Color.WHITE)
         }
@@ -516,7 +513,6 @@ class MainActivity : AppCompatActivity() {
 
         powerBtn.setOnClickListener {
             if(!preset.isOn) {
-                // ✅ BUKASAN ANG PRESET → I-OFF ANG LAHAT NG IBA!
                 val allPresets = getAllPresets()
                 allPresets.forEach { p ->
                     val wasOn = p.isOn
@@ -525,18 +521,14 @@ class MainActivity : AppCompatActivity() {
                         savePresetChanges(p)
                     }
                 }
-                // ✅ I-UPDATE ANG KASALUKUYANG PRESET
                 loadPresetToMainMixer(preset)
                 activePresetName = preset.name
                 saveLastActivePresetName(preset.name)
-                // ✅ AWTOMATIK BUKASAN ANG MAIN
                 if(!mainIsOn) mainIsOn = true
                 Toast.makeText(this,"✅ NAKA-ON: ${preset.name}",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ PATAYIN ANG PRESET
                 savePresetChanges(preset)
                 preset.isOn = false
-                // ✅ TIGNAN MAY NATITIRA PA BA?
                 val anyOn = getAllPresets().any { it.isOn }
                 if(!anyOn) {
                     activePresetName = null
@@ -547,7 +539,6 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!",Toast.LENGTH_SHORT).show()
                 }
             }
-            // ✅ I-REFRESH ANG BUONG PAGE PARA MAKITA AGAD ANG ILAW!
             buildCabinetPages()
         }
         pedal.addView(powerBtn)
