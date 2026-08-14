@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity() {
 
     private var activePresetName: String? = null
 
-    // 🎨 MGA PAGPIPILING KULAY PARA SA PABALAT NG PEDAL
     private val pedalColors = listOf(
         "🔴 PULA" to 0xFFFF4422.toInt(),
         "🟠 KULAY-ORANGE" to 0xFFFF9900.toInt(),
@@ -538,6 +537,7 @@ class MainActivity : AppCompatActivity() {
         name.setPadding(0,8,0,8)
         pedal.addView(name)
 
+        // ✅ VOLUME KNOB
         val volRow = LinearLayout(this)
         volRow.orientation = LinearLayout.HORIZONTAL
         volRow.gravity = Gravity.CENTER_VERTICAL
@@ -570,11 +570,12 @@ class MainActivity : AppCompatActivity() {
         volRow.setPadding(0,8,0,8)
         pedal.addView(volRow)
 
+        // ✅ EFFECTS KNOB — HINDI NA DISTORTION!
         val fxRow = LinearLayout(this)
         fxRow.orientation = LinearLayout.HORIZONTAL
         fxRow.gravity = Gravity.CENTER_VERTICAL
         val fxLabel = TextView(this)
-        fxLabel.text = "🎛️ DISTORTION"
+        fxLabel.text = "🎛️ EFFECTS"
         fxLabel.textSize = 14f
         fxLabel.setTextColor(Color.WHITE)
         fxLabel.setPadding(0,0,12,0)
@@ -602,6 +603,7 @@ class MainActivity : AppCompatActivity() {
         fxRow.setPadding(0,8,0,8)
         pedal.addView(fxRow)
 
+        // ✅ NOISE GATE KNOB
         val ngRow = LinearLayout(this)
         ngRow.orientation = LinearLayout.HORIZONTAL
         ngRow.gravity = Gravity.CENTER_VERTICAL
