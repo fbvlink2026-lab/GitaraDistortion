@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         "⚪ PUTI" to 0xFFE0E0E0.toInt(),
         "⚪ PILAK" to 0xFFC0C0C0.toInt(),
         "🟤 KAYUMANGGI" to 0xFF885522.toInt(),
-        "⚫ ITIM" to 0xFF333333.toInt()
+        "⚫ ITIM" to 0xFF1A1A1A.toInt()
     )
 
     private val fxList = listOf(
@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity() {
     private fun forceMainPowerOn() {
         AudioMixer.setAllOn(true)
         mainPowerBtn.text = "🟢 ON"
-        mainPowerBtn.setBackgroundColor(0xFF22CC22.toInt())
+        mainPowerBtn.setBackgroundColor(0xFF22EE22.toInt())
         if(!AudioEngine.isRunning()) AudioEngine.start(this)
     }
 
@@ -365,7 +365,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 AudioMixer.setAllOn(true)
                 mainPowerBtn.text = "🟢 ON"
-                mainPowerBtn.setBackgroundColor(0xFF22CC22.toInt())
+                mainPowerBtn.setBackgroundColor(0xFF22EE22.toInt())
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
                 Toast.makeText(this,"🟢 MAIN ON!",Toast.LENGTH_SHORT).show()
             }
@@ -490,7 +490,7 @@ class MainActivity : AppCompatActivity() {
         powerBtn.textSize = 16f
         powerBtn.setTextColor(Color.WHITE)
         // ✅ AYOS NA ANG ILAW — ITIM KAPAG OFF, BERDE KAPAG ON!
-        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF1A1A1A.toInt())
+        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22EE22.toInt() else 0xFF1A1A1A.toInt())
         powerBtn.setPadding(24,8,24,8)
         powerBtn.setOnClickListener {
             val datiActive = activePresetName
