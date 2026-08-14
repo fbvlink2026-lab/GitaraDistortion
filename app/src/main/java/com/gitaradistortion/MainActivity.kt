@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity() {
     private fun forceMainPowerOn() {
         AudioMixer.setAllOn(true)
         mainPowerBtn.text = "🟢 ON"
-        mainPowerBtn.setBackgroundColor(-0x33DD33)
+        mainPowerBtn.setBackgroundColor(0xFF22CC22.toInt())
         if(!AudioEngine.isRunning()) AudioEngine.start(this)
     }
 
@@ -365,7 +365,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 AudioMixer.setAllOn(true)
                 mainPowerBtn.text = "🟢 ON"
-                mainPowerBtn.setBackgroundColor(-0x33DD33)
+                mainPowerBtn.setBackgroundColor(0xFF22CC22.toInt())
                 if(!AudioEngine.isRunning()) AudioEngine.start(this)
                 Toast.makeText(this,"🟢 MAIN ON!",Toast.LENGTH_SHORT).show()
             }
@@ -483,17 +483,24 @@ class MainActivity : AppCompatActivity() {
         pedal.setPadding(16,12,16,12)
         pedal.gravity = Gravity.CENTER
         pedal.layoutParams = LinearLayout.LayoutParams(w - 48, 0, 1f)
+
+        // ✅ POWER BUTTON — ITIM=OFF, BERDE=ON
         val powerBtn = Button(this)
         powerBtn.text = if(preset.isOn) "💡 NAKA-ON" else "⚫ NAKA-OFF"
         powerBtn.textSize = 16f
         powerBtn.setTextColor(Color.WHITE)
-        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF333333.toInt())
+        // ✅ AYOS NA ANG ILAW — ITIM KAPAG OFF, BERDE KAPAG ON!
+        powerBtn.setBackgroundColor(if(preset.isOn) 0xFF22CC22.toInt() else 0xFF1A1A1A.toInt())
         powerBtn.setPadding(24,8,24,8)
         powerBtn.setOnClickListener {
             val datiActive = activePresetName
 
             if(preset.isOn) {
                 preset.isOn = false
+                // ✅ ILAW → ITIM
+                powerBtn.text = "⚫ NAKA-OFF"
+                powerBtn.setBackgroundColor(0xFF1A1A1A.toInt())
+
                 val idx = allPresets.indexOfFirst { it.name == preset.name }
                 if(idx >= defaultCount) {
                     val userPresets = loadUserPresets()
@@ -501,8 +508,6 @@ class MainActivity : AppCompatActivity() {
                     if(uIdx < userPresets.size) { saveMainMixerToPreset(userPresets[uIdx]); saveAllUserPresets(userPresets) }
                 }
                 activePresetName = null
-                powerBtn.text = "⚫ NAKA-OFF"
-                powerBtn.setBackgroundColor(0xFF333333.toInt())
                 refreshAllPresetButtons()
                 Toast.makeText(this,"⚫ ${preset.name} — NAKA-OFF!\n✅ NAISAVE NA!",Toast.LENGTH_SHORT).show()
             } else {
@@ -522,6 +527,10 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 preset.isOn = true
+                // ✅ ILAW → BERDE UMIILAW
+                powerBtn.text = "💡 NAKA-ON"
+                powerBtn.setBackgroundColor(0xFF22EE22.toInt())
+
                 activePresetName = preset.name
                 loadPresetToMainMixer(preset)
                 refreshAllPresetButtons()
@@ -529,6 +538,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         pedal.addView(powerBtn)
+
         val name = TextView(this)
         name.text = preset.name
         name.textSize = 22f
@@ -570,7 +580,7 @@ class MainActivity : AppCompatActivity() {
         volRow.setPadding(0,8,0,8)
         pedal.addView(volRow)
 
-        // ✅ EFFECTS KNOB — HINDI NA DISTORTION!
+        // ✅ EFFECTS KNOB
         val fxRow = LinearLayout(this)
         fxRow.orientation = LinearLayout.HORIZONTAL
         fxRow.gravity = Gravity.CENTER_VERTICAL
