@@ -206,11 +206,6 @@ class MainActivity : AppCompatActivity() {
         return (getFixedDefaultPresets() + loadUserPresets()).toMutableList()
     }
 
-    private fun refreshAllPresetButtons() {
-        pageContainer.removeViews(1, pageContainer.childCount-1)
-        buildCabinetPages()
-    }
-
     private fun turnOffAllPresets() {
         val allPresets = getAllPresets()
         val defaultNames = listOf("Clean", "Blues", "Rock", "Metal")
@@ -383,11 +378,11 @@ class MainActivity : AppCompatActivity() {
         mainPowerBtn.setOnClickListener {
             val isOn = AudioMixer.isAllOn()
             if(isOn) {
-                // ✅ MAIN OFF → PATAY DIN ANG PRESET!
+                // ✅ MAIN OFF → PATAY LAHAT NG PRESET!
                 turnOffAllPresets()
                 updateMainPowerUI(false)
                 refreshAllPresetButtons()
-                Toast.makeText(this,"⚫ MAIN OFF → PATAY DIN ANG PRESET!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"⚫ MAIN OFF → PATAY LAHAT NG PRESET!",Toast.LENGTH_SHORT).show()
             } else {
                 // ✅ MAIN ON → WALANG MANGYAYARI SA PRESET!
                 updateMainPowerUI(true)
@@ -462,6 +457,11 @@ class MainActivity : AppCompatActivity() {
         pageContainer.addView(mainPage)
     }
 
+    private fun refreshAllPresetButtons() {
+        if(pageContainer.childCount > 1) pageContainer.removeViews(1, pageContainer.childCount - 1)
+        buildCabinetPages()
+    }
+
     private fun buildCabinetPages() {
         val allPresets = getAllPresets()
         val w = resources.displayMetrics.widthPixels
@@ -530,21 +530,21 @@ class MainActivity : AppCompatActivity() {
         powerBtn.setPadding(24,8,24,8)
         powerBtn.setOnClickListener {
             if(preset.isOn) {
-                // ✅ PRESET OFF → PATAY DIN ANG MAIN!
+                // ✅ PRESET OFF → MAIN OFF DIN!
                 preset.isOn = false
                 activePresetName = null
                 updateMainPowerUI(false)
                 refreshAllPresetButtons()
-                Toast.makeText(this,"⚫ ${preset.name} — PATAY! PATAY DIN ANG MAIN!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"⚫ ${preset.name} PATAY → MAIN PATAY DIN!",Toast.LENGTH_SHORT).show()
             } else {
-                // ✅ PRESET ON → PATAY MUNA ANG LAHAT NG IBA → BUHAY DIN ANG MAIN!
+                // ✅ PRESET ON → PATAY LAHAT NG IBA → MAIN ON DIN!
                 turnOffAllPresets()
                 preset.isOn = true
                 activePresetName = preset.name
                 loadPresetToMainMixer(preset)
                 updateMainPowerUI(true)
                 refreshAllPresetButtons()
-                Toast.makeText(this,"✅ ${preset.name} — BUHAY! BUHAY DIN ANG MAIN!",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this,"✅ ${preset.name} BUHAY → MAIN BUHAY DIN!",Toast.LENGTH_SHORT).show()
             }
         }
         pedal.addView(powerBtn)
