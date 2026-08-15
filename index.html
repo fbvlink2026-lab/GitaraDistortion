@@ -3,53 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitaraDistortion - Buong Repository</title>
+    <title>GitaraDistortion - Repository</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { background: #0d1117; color: #e6edf3; padding: 20px; max-width: 1000px; margin: 0 auto; }
-        h1 { color: #58a6ff; margin-bottom: 30px; text-align: center; }
-        .folder { margin: 15px 0; border: 1px solid #30363d; border-radius: 8px; background: #161b22; }
-        .folder-header { padding: 12px 16px; background: #21262d; border-bottom: 1px solid #30363d; font-weight: bold; font-size: 16px; color: #58a6ff; }
-        .folder-body { padding: 15px; }
-        .file-block { margin-bottom: 20px; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
-        .file-header { padding: 10px 14px; background: #30363d; display: flex; justify-content: space-between; align-items: center; font-weight: 500; }
-        .copy-btn { background: #238636; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        body { background: #0d1117; color: #e6edf3; padding: 20px; max-width: 900px; margin: 0 auto; }
+        h1 { color: #58a6ff; margin-bottom: 25px; text-align: center; }
+
+        /* 📂 Folder at File Listahan */
+        .folder-item, .file-item { padding: 12px 15px; margin: 5px 0; background: #161b22; border-radius: 6px; border: 1px solid #30363d; cursor: pointer; transition: 0.2s; }
+        .folder-item:hover, .file-item:hover { background: #21262d; border-color: #58a6ff; }
+        .folder-item::before { content: "📂 "; }
+        .file-item::before { content: "📄 "; }
+
+        /* 📂 Laman ng Folder na Lalabas */
+        .folder-contents { margin: 8px 0 8px 25px; display: none; border-left: 2px solid #30363d; padding-left: 15px; }
+        .folder-contents.open { display: block; }
+
+        /* 📦 Kahon na Lalabas ang Laman ng File */
+        .content-box { margin-top: 25px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; display: none; }
+        .content-box.open { display: block; }
+        .box-header { padding: 12px 15px; background: #21262d; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
+        .file-name { font-weight: bold; color: #58a6ff; }
+        .copy-btn { background: #238636; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 14px; }
         .copy-btn:hover { background: #2ea043; }
-        .file-content { padding: 14px; background: #0d1117; white-space: pre-wrap; word-break: break-all; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.6; color: #d4d4d4; max-height: 400px; overflow-y: auto; }
-        .note { padding: 12px; color: #8b949e; font-style: italic; border-left: 3px solid #58a6ff; background: #161b22; }
+        .file-content { padding: 15px; white-space: pre-wrap; word-break: break-all; font-family: monospace; font-size: 13px; line-height: 1.6; max-height: 450px; overflow-y: auto; color: #d4d4d4; }
     </style>
 </head>
 <body>
 
-<h1>🎸 GitaraDistortion - Buong Repository</h1>
+<h1>🎸 GitaraDistortion - Repository</h1>
 
-<!-- 📂 PANGUNAHING LAMAN -->
-<div class="folder">
-    <div class="folder-header">📂 Ugat / Pangunahing Direktoryo</div>
-    <div class="folder-body">
+<!-- 📂 PANGUNAHING LISTAHAN -->
 
-        <!-- 📄 README.md -->
-        <div class="file-block">
-            <div class="file-header">
-                <span>📄 README.md</span>
-                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
-            </div>
-            <div class="file-content">Guitar FX - Gitara Distortion Effect
+<!-- 📂 Ugat Folder -->
+<div class="folder-item" onclick="toggleFolder('rootContents')">📂 Ugat / Pangunahing Direktoryo</div>
+<div class="folder-contents" id="rootContents">
+
+    <!-- 📄 README.md -->
+    <div class="file-item" onclick="showFile('README.md', '✅ README.md — Impormasyon ng Proyekto', `Guitar FX - Gitara Distortion Effect
 
 Proyektong pampaganda ng tunog ng gitara gamit ang Android.
 
 ✅ Kodigo: Kotlin at C++
 ✅ Layunin: Proseso ng tunog at epekto ng distorsyon
-✅ Buuin: ./gradlew assembleDebug</div>
-        </div>
+✅ Buuin: ./gradlew assembleDebug`)">README.md</div>
 
-        <!-- 📄 build.gradle.kts -->
-        <div class="file-block">
-            <div class="file-header">
-                <span>📄 build.gradle.kts</span>
-                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
-            </div>
-            <div class="file-content">// Proyekto: GitaraDistortion
+    <!-- 📄 build.gradle.kts -->
+    <div class="file-item" onclick="showFile('build.gradle.kts', '✅ build.gradle.kts — Pangunahing Pagbuo', `// Proyekto: GitaraDistortion
 // Bersyon: Gradle 8.5
 
 plugins {
@@ -60,7 +60,6 @@ plugins {
 android {
     namespace = "com.example.gitaradistortion"
     compileSdk = 34
-
     defaultConfig {
         applicationId = "com.example.gitaradistortion"
         minSdk = 24
@@ -68,106 +67,102 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-
     buildTypes {
-        release {
-            minifyEnabled = false
-        }
+        release { minifyEnabled = false }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
-}</div>
-        </div>
+}`)">build.gradle.kts</div>
 
-        <!-- 📄 settings.gradle.kts -->
-        <div class="file-block">
-            <div class="file-header">
-                <span>📄 settings.gradle.kts</span>
-                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
-            </div>
-            <div class="file-content">pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-    }
+    <!-- 📄 settings.gradle.kts -->
+    <div class="file-item" onclick="showFile('settings.gradle.kts', '✅ settings.gradle.kts — Mga Setting', `pluginManagement {
+    repositories { google(); mavenCentral() }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
+    repositories { google(); mavenCentral() }
 }
 rootProject.name = "GitaraDistortion"
-include(":app")</div>
-        </div>
+include(":app")`)">settings.gradle.kts</div>
 
-        <!-- 📄 gradle.properties -->
-        <div class="file-block">
-            <div class="file-header">
-                <span>📄 gradle.properties</span>
-                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
-            </div>
-            <div class="file-content">org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+    <!-- 📄 gradle.properties -->
+    <div class="file-item" onclick="showFile('gradle.properties', '✅ gradle.properties — Katangian', `org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
 android.useAndroidX=true
 android.enableJetifier=true
-kotlin.code.style=official</div>
-        </div>
+kotlin.code.style=official`)">gradle.properties</div>
 
-        <!-- 📄 patch_mixer.txt -->
-        <div class="file-block">
-            <div class="file-header">
-                <span>📄 patch_mixer.txt</span>
-                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
-            </div>
-            <div class="file-content">🔧 Ayusin lahat ng parameter:
+    <!-- 📄 patch_mixer.txt -->
+    <div class="file-item" onclick="showFile('patch_mixer.txt', '✅ patch_mixer.txt — Mga Pagbabago', `🔧 Ayusin lahat ng parameter:
 - Float na halaga
 - Triple na halaga
 - 3 na parameter
 
-Layunin: Tamang paghahalo ng tunog at distorsyon</div>
-        </div>
+Layunin: Tamang paghahalo ng tunog at distorsyon`)">patch_mixer.txt</div>
 
-        <!-- 📂 app/ -->
-        <div class="folder" style="margin:0; border:1px solid #30363d;">
-            <div class="folder-header">📂 app/ — Kodigo ng Aplikasyon</div>
-            <div class="folder-body">
-                <p class="note">Ang buong laman ng folder na <strong>app/</strong> ay makikita sa GitHub:<br>
-🔗 https://github.com/fbvlink2026-lab/GitaraDistortion/tree/main/app</p>
-            </div>
-        </div>
-
-        <!-- 📂 gradle/wrapper/ -->
-        <div class="folder" style="margin:0; border:1px solid #30363d; margin-top:15px !important;">
-            <div class="folder-header">📂 gradle/wrapper/ — Kasangkapan sa Pagbuo</div>
-            <div class="folder-body">
-                <p class="note">Ang buong laman ay makikita sa GitHub:<br>
-🔗 https://github.com/fbvlink2026-lab/GitaraDistortion</p>
-            </div>
-        </div>
-
+    <!-- 📂 app/ Folder -->
+    <div class="folder-item" onclick="toggleFolder('appContents')">📂 app/ — Kodigo ng Aplikasyon</div>
+    <div class="folder-contents" id="appContents">
+        <div class="file-item" onclick="showFile('app/build.gradle.kts', '✅ app/build.gradle.kts — Kodigo ng App', `// Kodigo sa loob ng app/ folder
+// Makikita ang buong laman sa GitHub:
+// 🔗 https://github.com/fbvlink2026-lab/GitaraDistortion/tree/main/app`)">app/build.gradle.kts</div>
+        <div class="file-item" onclick="showFile('app/src', '✅ app/src — Pinagkukunan ng Kodigo', `// Lahat ng pinagkukunan ng kodigo:
+// 🔗 https://github.com/fbvlink2026-lab/GitaraDistortion/tree/main/app/src`)">app/src/</div>
     </div>
+
+    <!-- 📂 gradle/wrapper/ Folder -->
+    <div class="folder-item" onclick="toggleFolder('gradleContents')">📂 gradle/wrapper/ — Kasangkapan sa Pagbuo</div>
+    <div class="folder-contents" id="gradleContents">
+        <div class="file-item" onclick="showFile('gradle-wrapper.properties', '✅ gradle-wrapper.properties', `distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists`)">gradle-wrapper.properties</div>
+    </div>
+
+</div>
+
+<!-- 📦 KAHON NA LALABAS ANG LAMAN NG FILE -->
+<div class="content-box" id="contentBox">
+    <div class="box-header">
+        <span class="file-name" id="fileName"></span>
+        <button class="copy-btn" onclick="copyFileContent()">📋 Kopyahin</button>
+    </div>
+    <div class="file-content" id="fileContentBox"></div>
 </div>
 
 <script>
-function copyThis(btn) {
-    const block = btn.closest('.file-block');
-    const content = block.querySelector('.file-content').textContent;
-    navigator.clipboard.writeText(content).then(() => {
-        btn.textContent = "✅ NAKAKOPYA!";
-        setTimeout(() => { btn.textContent = "📋 Kopyahin"; }, 2000);
+// ✅ BUKSA O ISARA ANG FOLDER
+function toggleFolder(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+}
+
+// ✅ IPAKITA ANG LAMAN NG FILE SA KAHON
+let currentFileContent = "";
+
+function showFile(path, title, content) {
+    const box = document.getElementById('contentBox');
+    document.getElementById('fileName').textContent = title;
+    document.getElementById('fileContentBox').textContent = content;
+    currentFileContent = content;
+    box.classList.add('open');
+    window.scrollTo({ top: box.offsetTop - 10, behavior: 'smooth' });
+}
+
+// ✅ KOPYAHIN ANG LAMAN
+function copyFileContent() {
+    navigator.clipboard.writeText(currentFileContent).then(() => {
+        alert("✅ NAKAKOPYA NA!");
     }).catch(() => {
-        alert("❌ Hindi makopya. Piliin at kopyahin nang kamay ang laman.");
+        alert("❌ Hindi makopya. Piliin at kopyahin nang kamay.");
     });
 }
 </script>
