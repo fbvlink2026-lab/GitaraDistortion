@@ -1,252 +1,145 @@
 <!DOCTYPE html>
 <html lang="tl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitaraDistortion - Kumpletong Repository</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { background: #0d1117; color: #e6edf3; padding: 20px; max-width: 900px; margin: 0 auto; }
-        h1 { color: #58a6ff; margin-bottom: 25px; text-align: center; }
-
-        /* 📂 Folder Button */
-        .folder { margin: 6px 0; }
-        .folder-btn { padding: 11px 15px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; color: #58a6ff; width: 100%; text-align: left; }
-        .folder-btn:hover { background: #30363d; }
-
-        /* 📄 Listahan — may Indent para makita ang Subfolder */
-        .list { margin: 8px 0 8px 22px; display: none; border-left: 2px solid #30363d; padding-left: 14px; }
-        .list.open { display: block; }
-        .file { padding: 10px 14px; margin: 5px 0; background: #161b22; border: 1px solid #30363d; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .file:hover { background: #21262d; border-color: #58a6ff; }
-        .file::before { content: "📄 "; }
-
-        /* 📦 Kahon ng Laman */
-        .content-box { margin-top: 30px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; display: none; }
-        .content-box.open { display: block; }
-        .box-header { padding: 12px 16px; background: #21262d; border-bottom: 1px solid #30363d; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; }
-        .file-name { font-weight: bold; color: #58a6ff; }
-        .copy-btn { background: #238636; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .copy-btn:hover { background: #2ea043; }
-        .file-content { padding: 16px; white-space: pre-wrap; word-break: break-all; font-family: Consolas, Monaco, monospace; font-size: 13px; line-height: 1.6; color: #d4d4d4; max-height: 500px; overflow-y: auto; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitaraDistortion — Lahat ng File</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #0d1117; padding: 10px; color: #e6edf3; }
+    h1 { text-align: center; color: #58a6ff; margin-bottom: 15px; font-size: 22px; }
+    
+    .container { display: flex; flex-wrap: wrap; gap: 15px; max-width: 100%; margin: 0; }
+    
+    .file-list { 
+      width: 300px; flex-shrink: 0; background: #161b22; 
+      border-radius: 8px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      max-height: 85vh; overflow-y: auto; border: 1px solid #30363d;
+    }
+    
+    .file-content { 
+      flex: 1; min-width: 320px; background: #161b22; 
+      border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      min-height: 80vh; overflow-y: auto; border: 1px solid #30363d;
+    }
+    
+    .file-item { padding: 6px 10px; margin: 2px 0; cursor: pointer; border-radius: 4px; font-size: 14px; }
+    .file-item:hover { background: #21262d; }
+    .file-item.active { background: #238636; color: white; }
+    .folder-item { padding: 8px 10px; margin: 4px 0; cursor: pointer; border-radius: 4px; font-weight: bold; background: #21262d; }
+    .folder-item:hover { background: #30363d; }
+    
+    /* ✅ LAMAN NG CODE */
+    .code-wrapper { position: relative; margin-top: 10px; }
+    
+    /* ✅ BUTTON — LAGING NAKIKITA SA TAAS-KANAN */
+    .copy-button {
+      position: absolute; top: 6px; right: 6px;
+      background: #238636; color: white; border: none;
+      border-radius: 4px; padding: 5px 12px;
+      font-size: 13px; font-weight: bold; cursor: pointer;
+      z-index: 999; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .copy-button:hover { background: #2ea043; }
+    .copy-button.copied { background: #28A745; }
+    
+    pre {
+      white-space: pre; overflow-x: auto;
+      font-family: Consolas, monospace; font-size: 13px; line-height: 1.5;
+      padding: 42px 12px 12px 12px; margin: 0;
+      background: #0d1117; border-radius: 6px; border: 1px solid #30363d;
+      color: #d4d4d4;
+    }
+    
+    .loading { color: #8b949e; font-style: italic; }
+    .path { color: #8b949e; font-size: 12px; margin-bottom: 10px; word-break: break-all; }
+    h3 { font-size: 16px; margin-bottom: 8px; color: #58a6ff; }
+  </style>
 </head>
 <body>
 
-<h1>🎸 GitaraDistortion - Kumpletong Repository</h1>
+  <h1>🎸 GitaraDistortion — Lahat ng File</h1>
 
-<!-- ====================================== -->
-<!-- 📂 UGAT / PANGUNAHING DIREKTORYO -->
-<!-- ====================================== -->
-<div class="folder">
-    <button class="folder-btn" onclick="toggle('root')">📂 Ugat / Pangunahing Direktoryo</button>
-    <div class="list" id="root">
-
-        <div class="file" onclick="show('README.md', 'Guitar FX - Gitara Distortion Effect
-
-Proyektong pampaganda ng tunog ng gitara gamit ang Android.
-
-✅ Kodigo: Kotlin at C++
-✅ Layunin: Proseso ng tunog at epekto ng distorsyon
-✅ Buuin: ./gradlew assembleDebug')">README.md</div>
-
-        <div class="file" onclick="show('build.gradle.kts', '// Proyekto: GitaraDistortion
-// Bersyon: Gradle 8.5
-
-plugins {
-    id(\"com.android.application\")
-    id(\"org.jetbrains.kotlin.android\")
-}
-
-android {
-    namespace = \"com.example.gitaradistortion\"
-    compileSdk = 34
-    defaultConfig {
-        applicationId = \"com.example.gitaradistortion\"
-        minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = \"1.0\"
-    }
-    buildTypes { release { minifyEnabled = false } }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions { jvmTarget = \"17\" }
-}
-
-dependencies {
-    implementation(\"androidx.core:core-ktx:1.12.0\")
-    implementation(\"androidx.appcompat:appcompat:1.6.1\")
-}')">build.gradle.kts</div>
-
-        <div class="file" onclick="show('settings.gradle.kts', 'pluginManagement {
-    repositories { google(); mavenCentral() }
-}
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories { google(); mavenCentral() }
-}
-rootProject.name = \"GitaraDistortion\"
-include(\":app\")')">settings.gradle.kts</div>
-
-        <div class="file" onclick="show('gradle.properties', 'org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-android.useAndroidX=true
-android.enableJetifier=true
-kotlin.code.style=official')">gradle.properties</div>
-
-        <div class="file" onclick="show('gradlew', '#!/bin/sh
-# Gradle startup script')">gradlew</div>
-
-        <div class="file" onclick="show('gradlew.bat', '@rem Gradle startup script
-@echo off')">gradlew.bat</div>
-
-        <div class="file" onclick="show('patch_mixer.txt', '🔧 Ayusin lahat ng parameter:
-- Float na halaga
-- Triple na halaga
-- 3 na parameter
-
-Layunin: Tamang paghahalo ng tunog at distorsyon')">patch_mixer.txt</div>
-
-        <!-- 📂 SUBFOLDER: .github -->
-        <div class="folder">
-            <button class="folder-btn" onclick="toggle('github')">📂 .github/</button>
-            <div class="list" id="github">
-                <div class="folder">
-                    <button class="folder-btn" onclick="toggle('workflows')">📂 workflows/</button>
-                    <div class="list" id="workflows">
-                        <div class="file" onclick="show('build.yml', 'name: Build APK
-on: push
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with: { java-version: \"17\", distribution: \"temurin\" }
-      - run: chmod +x gradlew
-      - run: ./gradlew assembleDebug')">build.yml</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 📂 SUBFOLDER: app/ -->
-        <div class="folder">
-            <button class="folder-btn" onclick="toggle('app')">📂 app/</button>
-            <div class="list" id="app">
-                <div class="file" onclick="show('app/build.gradle.kts', 'plugins { id(\"com.android.application\") }
-android {
-    namespace = \"com.example.gitaradistortion\"
-    compileSdk = 34
-    defaultConfig {
-        applicationId = \"com.example.gitaradistortion\"
-        minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = \"1.0\"
-    }
-}
-dependencies {
-    implementation(\"androidx.core:core-ktx:1.12.0\")
-}')">app/build.gradle.kts</div>
-
-                <!-- 📂 SUB-SUBFOLDER: app/src/ -->
-                <div class="folder">
-                    <button class="folder-btn" onclick="toggle('appsrc')">📂 src/</button>
-                    <div class="list" id="appsrc">
-                        <div class="folder">
-                            <button class="folder-btn" onclick="toggle('appmain')">📂 main/</button>
-                            <div class="list" id="appmain">
-                                <div class="file" onclick="show('AndroidManifest.xml', '<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">
-    <uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>
-    <uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\"/>
-    <application android:allowBackup=\"true\" android:icon=\"@mipmap/ic_launcher\">
-        <activity android:name=\".MainActivity\" android:exported=\"true\">
-            <intent-filter><action android:name=\"android.intent.action.MAIN\"/>
-            <category android:name=\"android.intent.category.LAUNCHER\"/></intent-filter>
-        </activity>
-    </application>
-</manifest>')">AndroidManifest.xml</div>
-
-                                <!-- 📂 SUB-SUB-SUBFOLDER: java/ -->
-                                <div class="folder">
-                                    <button class="folder-btn" onclick="toggle('javafolder')">📂 java/</button>
-                                    <div class="list" id="javafolder">
-                                        <div class="file" onclick="show('MainActivity.kt', 'package com.example.gitaradistortion
-
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-
-class MainActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-    }
-}')">MainActivity.kt</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 📂 SUBFOLDER: gradle/ -->
-        <div class="folder">
-            <button class="folder-btn" onclick="toggle('gradle')">📂 gradle/</button>
-            <div class="list" id="gradle">
-                <div class="folder">
-                    <button class="folder-btn" onclick="toggle('wrapper')">📂 wrapper/</button>
-                    <div class="list" id="wrapper">
-                        <div class="file" onclick="show('gradle-wrapper.properties', 'distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists')">gradle-wrapper.properties</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+  <div class="container">
+    <div class="file-list">
+      <h3>📂 Mga File</h3>
+      <div id="file-list-area"><p class="loading">Naglo-load...</p></div>
     </div>
-</div>
 
-<!-- ====================================== -->
-<!-- 📦 KAHON NG LAMAN NG FILE -->
-<!-- ====================================== -->
-<div class="content-box" id="contentBox">
-    <div class="box-header">
-        <span class="file-name" id="fname"></span>
-        <button class="copy-btn" onclick="copy()">📋 Kopyahin</button>
+    <div class="file-content">
+      <h3 id="filename">Pumili ng file sa kaliwa</h3>
+      <div id="filepath" class="path"></div>
+      <div id="content-area" class="loading">Pumili ng file...</div>
     </div>
-    <div class="file-content" id="fcontent"></div>
-</div>
+  </div>
 
-<script>
-// ✅ BUKSA / ISARA ANG FOLDER AT SUBFOLDER
-function toggle(id) {
-    document.getElementById(id).classList.toggle('open');
-}
+  <script>
+    const BASE_RAW = "https://raw.githubusercontent.com/fbvlink2026-lab/GitaraDistortion/main/";
+    const BASE_API = "https://api.github.com/repos/fbvlink2026-lab/GitaraDistortion/git/trees/main?recursive=1";
 
-// ✅ IPAKITA ANG LAMAN NG FILE SA KAHON
-let content = "";
-function show(name, text) {
-    document.getElementById('fname').textContent = "📄 " + name;
-    document.getElementById('fcontent').textContent = text;
-    content = text;
-    document.getElementById('contentBox').classList.add('open');
-    window.scrollTo({ top: document.getElementById('contentBox').offsetTop - 10, behavior: 'smooth' });
-}
+    let allFiles = [], currentFile = null;
 
-// ✅ KOPYAHIN ANG LAMAN
-function copy() {
-    navigator.clipboard.writeText(content).then(() => alert("✅ NAKAKOPYA NA!"));
-}
-</script>
+    fetch(BASE_API)
+      .then(r => r.json())
+      .then(d => {
+        if (!d.tree) return;
+        allFiles = d.tree.filter(x => x.type === "blob").sort((a,b) => a.path.localeCompare(b.path));
+        renderFileList();
+      });
 
+    function renderFileList() {
+      const list = document.getElementById("file-list-area");
+      list.innerHTML = "";
+      let structure = {};
+      allFiles.forEach(file => {
+        const parts = file.path.split("/");
+        let cur = structure;
+        parts.forEach((p, i) => {
+          if (i === parts.length - 1) { if (!cur._files) cur._files = []; cur._files.push({n:p,p:file.path}); }
+          else { if (!cur[p]) cur[p] = {_files:[]}; cur = cur[p]; }
+        });
+      });
+      function render(o, par, ind="") {
+        if (o._files) o._files.forEach(f=>{
+          const el = document.createElement("div");
+          el.className = "file-item" + (currentFile===f.p?" active":"");
+          el.textContent = "📄 "+f.n; el.style.paddingLeft = (ind.length*8+10)+"px";
+          el.onclick = ()=>loadFile(f.p); par.appendChild(el);
+        });
+        Object.keys(o).forEach(k=>{
+          if(k==="_files") return;
+          const el = document.createElement("div");
+          el.className = "folder-item"; el.textContent = "📁 "+k+"/";
+          el.style.paddingLeft = (ind.length*8+10)+"px"; par.appendChild(el);
+          render(o[k], par, ind+"  ");
+        });
+      }
+      render(structure, list);
+    }
+
+    function loadFile(path) {
+      currentFile = path;
+      document.getElementById("filename").textContent = "📄 " + path.split("/").pop();
+      document.getElementById("filepath").textContent = "📍 " + path;
+      document.getElementById("content-area").innerHTML = "<p class='loading'>Naglo-load...</p>";
+      renderFileList();
+
+      fetch(BASE_RAW + path).then(r=>r.text()).then(text=>{
+        document.getElementById("content-area").innerHTML = `
+          <div class="code-wrapper">
+            <button class="copy-button" onclick="copyText(this)">📋 KOPYA</button>
+            <pre>${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+          </div>`;
+      });
+    }
+
+    function copyText(btn) {
+      const txt = btn.nextElementSibling.textContent;
+      navigator.clipboard.writeText(txt).then(()=>{
+        btn.textContent = "✅ NAKOPYA!"; btn.classList.add("copied");
+        setTimeout(()=>{ btn.textContent="📋 KOPYA"; btn.classList.remove("copied"); }, 2000);
+      });
+    }
+  </script>
 </body>
 </html>
