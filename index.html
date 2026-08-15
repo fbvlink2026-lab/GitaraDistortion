@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitaraDistortion - Repository</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+        body { background: #0d1117; color: #c9d1d9; padding: 20px; max-width: 900px; margin: 0 auto; }
+        h1 { color: #58a6ff; margin-bottom: 25px; text-align: center; }
+        .folder, .file { padding: 12px 15px; margin: 5px 0; background: #161b22; border-radius: 6px; cursor: pointer; border: 1px solid #30363d; transition: 0.2s; }
+        .folder:hover, .file:hover { background: #21262d; border-color: #58a6ff; }
+        .folder::before { content: "📂 "; }
+        .file::before { content: "📄 "; }
+        .content-box { margin-top: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 15px; display: none; }
+        .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #30363d; }
+        .copy-btn { background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .copy-btn:hover { background: #2ea043; }
+        pre { white-space: pre-wrap; word-break: break-all; font-family: monospace; font-size: 13px; line-height: 1.5; color: #e6edf3; }
+        .path { color: #8b949e; font-size: 13px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<h1>🎸 GitaraDistortion - Repository</h1>
+
+<div id="fileList">
+    <div class="folder" onclick="showContent('app/', '📂 app/ - Kodigo ng Aplikasyon')">app/</div>
+    <div class="folder" onclick="showContent('.github/workflows/', '📂 .github/workflows/ - Awtomatikong Pagbuo')">.github/workflows/</div>
+    <div class="folder" onclick="showContent('gradle/wrapper/', '📂 gradle/wrapper/ - Kasangkapan sa Pagbuo')">gradle/wrapper/</div>
+    
+    <div class="file" onclick="showContent('README.md', '📄 README.md - Impormasyon ng Proyekto')">README.md</div>
+    <div class="file" onclick="showContent('build.gradle.kts', '📄 build.gradle.kts - Pangunahing Pagbuo')">build.gradle.kts</div>
+    <div class="file" onclick="showContent('settings.gradle.kts', '📄 settings.gradle.kts - Mga Setting')">settings.gradle.kts</div>
+    <div class="file" onclick="showContent('gradle.properties', '📄 gradle.properties - Katangian')">gradle.properties</div>
+    <div class="file" onclick="showContent('gradlew', '📄 gradlew - Tagapagbuo')">gradlew</div>
+    <div class="file" onclick="showContent('gradlew.bat', '📄 gradlew.bat - Tagapagbuo (Windows)')">gradlew.bat</div>
+    <div class="file" onclick="showContent('patch_mixer.txt', '📄 patch_mixer.txt - Mga Pagbabago')">patch_mixer.txt</div>
+</div>
+
+<div class="content-box" id="contentBox">
+    <div class="box-header">
+        <span class="path" id="filePath"></span>
+        <button class="copy-btn" onclick="copyContent()">📋 Kopyahin</button>
+    </div>
+    <pre id="fileContent">Piliin ang file o folder upang makita ang laman.</pre>
+</div>
+
+<script>
+async function showContent(path, title) {
+    const box = document.getElementById('contentBox');
+    const filePath = document.getElementById('filePath');
+    const fileContent = document.getElementById('fileContent');
+    
+    box.style.display = "block";
+    filePath.textContent = title + "\nLokasyon: " + path;
+    fileContent.textContent = "Kumukuha ng laman...";
+    
+    try {
+        const response = await fetch(path);
+        if (response.ok) {
+            const text = await response.text();
+            fileContent.textContent = text;
+        } else {
+            fileContent.textContent = "ℹ️ Paalala: " + path + "\n\n" +
+            "Ang buong laman ng repositoryo ay makikita dito:\n" +
+            "🔗 https://github.com/fbvlink2026-lab/GitaraDistortion";
+        }
+    } catch (err) {
+        fileContent.textContent = "ℹ️ " + path + "\n\n" +
+        "Ang buong laman ng repositoryo ay makikita dito:\n" +
+        "🔗 https://github.com/fbvlink2026-lab/GitaraDistortion";
+    }
+}
+
+function copyContent() {
+    const text = document.getElementById('fileContent').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        alert("✅ NAKAKOPYA NA!");
+    }).catch(() => {
+        alert("❌ Hindi makopya. Pumili at kopyahin nang kamay.");
+    });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+
+# === Pansamantalang file — HINDI NA MAIPASA ===
+.gradle/
+app/build/
+output.txt
+error_log.txt
+new_errors.txt
+latest.txt
+temp.md

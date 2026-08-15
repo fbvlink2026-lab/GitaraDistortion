@@ -1,16 +1,21 @@
 name: Build Gitara Distortion APK
+
 on:
   push:
     branches: [ main, master ]
+    paths-ignore:
+      - 'README.md'
+      - 'errors.md'
+      - 'LICENSE'
+      - '**.md'
+      - '**.txt'
   workflow_dispatch: {}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      # ✅ PIGILAN ANG AWTOMATIKONG PAGBABAGO NG GRADLE
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dkotlin.statistics.enabled=false
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -28,10 +33,61 @@ jobs:
           gradle wrapper --gradle-version 8.2
           chmod +x gradlew
 
-      - name: 📦 Bumuo ng APK — WALANG DAGDAG NA ERROR!
-        run: ./gradlew assembleDebug --no-daemon --no-build-cache
+      - name: 📦 Bumuo ng APK + KUHANIN ANG ERROR
+        id: build_step
+        run: |
+          ./gradlew assembleDebug --no-daemon --no-build-cache 2>&1 > output.txt
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "ERROR_FOUND=true" >> $GITHUB_OUTPUT
+            grep -E "^e:|error:|FAILED" output.txt | head -20 > error_log.txt
+          else
+            echo "ERROR_FOUND=false" >> $GITHUB_OUTPUT
+          fi
+          exit $EXIT_CODE
+        shell: bash
+
+      - name: 📝 ILAGAY SA errors.md KUNG MAY ERROR
+        if: steps.build_step.outputs.ERROR_FOUND == 'true'
+        run: |
+          DATE=$(date "+%Y-%m-%d %H:%M:%S")
+          {
+            echo "========================================"
+            echo "❌ BUILD ERROR — $DATE"
+            echo "========================================"
+            cat error_log.txt
+            echo ""
+          } > new_errors.txt
+          if [ -f errors.md ]; then
+            cat new_errors.txt errors.md > temp.md && mv temp.md errors.md
+          else
+            mv new_errors.txt errors.md
+          fi
+          echo "✅ NAISULAT SA errors.md!"
+
+      - name: ✅ WALANG ERROR — ILAGAY SA errors.md
+        if: steps.build_step.outputs.ERROR_FOUND == 'false'
+        run: |
+          DATE=$(date "+%Y-%m-%d %H:%M:%S")
+          echo "✅ MALINIS ANG BUILD — $DATE" > latest.txt
+          if [ -f errors.md ]; then
+            echo "" >> latest.txt
+            cat errors.md >> latest.txt
+          fi
+          mv latest.txt errors.md
+          echo "✅ NAISULAT SA errors.md!"
+
+      - name: 💾 I-COMMIT ANG errors.md SA GITHUB
+        if: always()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add errors.md
+          git commit -m "✅ Auto-update errors.md" || true
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/fbvlink2026-lab/GitaraDistortion.git HEAD:main || true
 
       - uses: actions/upload-artifact@v4
+        if: steps.build_step.outputs.ERROR_FOUND == 'false'
         with:
           name: Gitara-Distortion-APK
           path: app/build/outputs/apk/debug/app-debug.apk
