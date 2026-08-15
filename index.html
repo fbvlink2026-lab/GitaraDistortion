@@ -3,82 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitaraDistortion - Repository</title>
+    <title>GitaraDistortion - Buong Repository</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-        body { background: #0d1117; color: #c9d1d9; padding: 20px; max-width: 900px; margin: 0 auto; }
-        h1 { color: #58a6ff; margin-bottom: 25px; text-align: center; }
-        .folder, .file { padding: 12px 15px; margin: 5px 0; background: #161b22; border-radius: 6px; cursor: pointer; border: 1px solid #30363d; transition: 0.2s; }
-        .folder:hover, .file:hover { background: #21262d; border-color: #58a6ff; }
-        .folder::before { content: "📂 "; }
-        .file::before { content: "📄 "; }
-        .content-box { margin-top: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 15px; display: none; }
-        .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #30363d; }
-        .copy-btn { background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: #0d1117; color: #e6edf3; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        h1 { color: #58a6ff; margin-bottom: 30px; text-align: center; }
+        .folder { margin: 15px 0; border: 1px solid #30363d; border-radius: 8px; background: #161b22; }
+        .folder-header { padding: 12px 16px; background: #21262d; border-bottom: 1px solid #30363d; font-weight: bold; font-size: 16px; color: #58a6ff; }
+        .folder-body { padding: 15px; }
+        .file-block { margin-bottom: 20px; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+        .file-header { padding: 10px 14px; background: #30363d; display: flex; justify-content: space-between; align-items: center; font-weight: 500; }
+        .copy-btn { background: #238636; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .copy-btn:hover { background: #2ea043; }
-        pre { white-space: pre-wrap; word-break: break-all; font-family: monospace; font-size: 13px; line-height: 1.5; color: #e6edf3; }
-        .path { color: #8b949e; font-size: 13px; margin-bottom: 10px; }
+        .file-content { padding: 14px; background: #0d1117; white-space: pre-wrap; word-break: break-all; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.6; color: #d4d4d4; max-height: 400px; overflow-y: auto; }
+        .note { padding: 12px; color: #8b949e; font-style: italic; border-left: 3px solid #58a6ff; background: #161b22; }
     </style>
 </head>
 <body>
 
-<h1>🎸 GitaraDistortion - Repository</h1>
+<h1>🎸 GitaraDistortion - Buong Repository</h1>
 
-<div id="fileList">
-    <div class="folder" onclick="showContent('app/', '📂 app/ - Kodigo ng Aplikasyon')">app/</div>
-    <div class="folder" onclick="showContent('.github/workflows/', '📂 .github/workflows/ - Awtomatikong Pagbuo')">.github/workflows/</div>
-    <div class="folder" onclick="showContent('gradle/wrapper/', '📂 gradle/wrapper/ - Kasangkapan sa Pagbuo')">gradle/wrapper/</div>
-    
-    <div class="file" onclick="showContent('README.md', '📄 README.md - Impormasyon ng Proyekto')">README.md</div>
-    <div class="file" onclick="showContent('build.gradle.kts', '📄 build.gradle.kts - Pangunahing Pagbuo')">build.gradle.kts</div>
-    <div class="file" onclick="showContent('settings.gradle.kts', '📄 settings.gradle.kts - Mga Setting')">settings.gradle.kts</div>
-    <div class="file" onclick="showContent('gradle.properties', '📄 gradle.properties - Katangian')">gradle.properties</div>
-    <div class="file" onclick="showContent('gradlew', '📄 gradlew - Tagapagbuo')">gradlew</div>
-    <div class="file" onclick="showContent('gradlew.bat', '📄 gradlew.bat - Tagapagbuo (Windows)')">gradlew.bat</div>
-    <div class="file" onclick="showContent('patch_mixer.txt', '📄 patch_mixer.txt - Mga Pagbabago')">patch_mixer.txt</div>
-</div>
+<!-- 📂 PANGUNAHING LAMAN -->
+<div class="folder">
+    <div class="folder-header">📂 Ugat / Pangunahing Direktoryo</div>
+    <div class="folder-body">
 
-<div class="content-box" id="contentBox">
-    <div class="box-header">
-        <span class="path" id="filePath"></span>
-        <button class="copy-btn" onclick="copyContent()">📋 Kopyahin</button>
-    </div>
-    <pre id="fileContent">Piliin ang file o folder upang makita ang laman.</pre>
-</div>
+        <!-- 📄 README.md -->
+        <div class="file-block">
+            <div class="file-header">
+                <span>📄 README.md</span>
+                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
+            </div>
+            <div class="file-content">Guitar FX - Gitara Distortion Effect
 
-<script>
-async function showContent(path, title) {
-    const box = document.getElementById('contentBox');
-    const filePath = document.getElementById('filePath');
-    const fileContent = document.getElementById('fileContent');
-    
-    box.style.display = "block";
-    filePath.textContent = title + "\nLokasyon: " + path;
-    fileContent.textContent = "Kumukuha ng laman...";
-    
-    try {
-        const response = await fetch(path);
-        if (response.ok) {
-            const text = await response.text();
-            fileContent.textContent = text;
-        } else {
-            fileContent.textContent = "ℹ️ Paalala: " + path + "\n\n" +
-            "Ang buong laman ng repositoryo ay makikita dito:\n" +
-            "🔗 https://github.com/fbvlink2026-lab/GitaraDistortion";
+Proyektong pampaganda ng tunog ng gitara gamit ang Android.
+
+✅ Kodigo: Kotlin at C++
+✅ Layunin: Proseso ng tunog at epekto ng distorsyon
+✅ Buuin: ./gradlew assembleDebug</div>
+        </div>
+
+        <!-- 📄 build.gradle.kts -->
+        <div class="file-block">
+            <div class="file-header">
+                <span>📄 build.gradle.kts</span>
+                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
+            </div>
+            <div class="file-content">// Proyekto: GitaraDistortion
+// Bersyon: Gradle 8.5
+
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+android {
+    namespace = "com.example.gitaradistortion"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.example.gitaradistortion"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
         }
-    } catch (err) {
-        fileContent.textContent = "ℹ️ " + path + "\n\n" +
-        "Ang buong laman ng repositoryo ay makikita dito:\n" +
-        "🔗 https://github.com/fbvlink2026-lab/GitaraDistortion";
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
-function copyContent() {
-    const text = document.getElementById('fileContent').textContent;
-    navigator.clipboard.writeText(text).then(() => {
-        alert("✅ NAKAKOPYA NA!");
+dependencies {
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+}</div>
+        </div>
+
+        <!-- 📄 settings.gradle.kts -->
+        <div class="file-block">
+            <div class="file-header">
+                <span>📄 settings.gradle.kts</span>
+                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
+            </div>
+            <div class="file-content">pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "GitaraDistortion"
+include(":app")</div>
+        </div>
+
+        <!-- 📄 gradle.properties -->
+        <div class="file-block">
+            <div class="file-header">
+                <span>📄 gradle.properties</span>
+                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
+            </div>
+            <div class="file-content">org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+android.useAndroidX=true
+android.enableJetifier=true
+kotlin.code.style=official</div>
+        </div>
+
+        <!-- 📄 patch_mixer.txt -->
+        <div class="file-block">
+            <div class="file-header">
+                <span>📄 patch_mixer.txt</span>
+                <button class="copy-btn" onclick="copyThis(this)">📋 Kopyahin</button>
+            </div>
+            <div class="file-content">🔧 Ayusin lahat ng parameter:
+- Float na halaga
+- Triple na halaga
+- 3 na parameter
+
+Layunin: Tamang paghahalo ng tunog at distorsyon</div>
+        </div>
+
+        <!-- 📂 app/ -->
+        <div class="folder" style="margin:0; border:1px solid #30363d;">
+            <div class="folder-header">📂 app/ — Kodigo ng Aplikasyon</div>
+            <div class="folder-body">
+                <p class="note">Ang buong laman ng folder na <strong>app/</strong> ay makikita sa GitHub:<br>
+🔗 https://github.com/fbvlink2026-lab/GitaraDistortion/tree/main/app</p>
+            </div>
+        </div>
+
+        <!-- 📂 gradle/wrapper/ -->
+        <div class="folder" style="margin:0; border:1px solid #30363d; margin-top:15px !important;">
+            <div class="folder-header">📂 gradle/wrapper/ — Kasangkapan sa Pagbuo</div>
+            <div class="folder-body">
+                <p class="note">Ang buong laman ay makikita sa GitHub:<br>
+🔗 https://github.com/fbvlink2026-lab/GitaraDistortion</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function copyThis(btn) {
+    const block = btn.closest('.file-block');
+    const content = block.querySelector('.file-content').textContent;
+    navigator.clipboard.writeText(content).then(() => {
+        btn.textContent = "✅ NAKAKOPYA!";
+        setTimeout(() => { btn.textContent = "📋 Kopyahin"; }, 2000);
     }).catch(() => {
-        alert("❌ Hindi makopya. Pumili at kopyahin nang kamay.");
+        alert("❌ Hindi makopya. Piliin at kopyahin nang kamay ang laman.");
     });
 }
 </script>
